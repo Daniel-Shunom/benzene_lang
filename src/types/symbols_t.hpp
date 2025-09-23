@@ -9,6 +9,7 @@ typedef enum {
   TOKEN_SLASH_BACKWARD,
   TOKEN_ASTERISK,
   TOKEN_ASSIGN,
+  TOKEN_DELIM,
 
   TOKEN_BOOLEAN_EQUAL,
   TOKEN_BOOLEAN_OR,
@@ -34,6 +35,7 @@ typedef enum {
   TOKEN_QUOTE_DOUBLE,
 
   TOKEN_RETURN_TYPE,
+  TOKEN_CONSTANT,
 
   TOKEN_SYMBOL,
   TOKEN_STRING_LITERAL,
@@ -53,44 +55,46 @@ typedef enum {
 } TOKEN_TYPE;
 
 static const std::map<std::string, TOKEN_TYPE> TokenLookupTable{
-  {"+", TOKEN_PLUS},
-  {"-", TOKEN_MINUS},
-  {"/", TOKEN_SLASH_FORWARD},
+  {"+",  TOKEN_PLUS},
+  {"-",  TOKEN_MINUS},
+  {"/",  TOKEN_SLASH_FORWARD},
   {"\\", TOKEN_SLASH_BACKWARD},
-  {"*", TOKEN_ASTERISK},
-  {"=", TOKEN_ASSIGN},
+  {"*",  TOKEN_ASTERISK},
+  {"=",  TOKEN_ASSIGN},
+  {"#",  TOKEN_CONSTANT},
+  {",",  TOKEN_DELIM},
 
   {"==", TOKEN_BOOLEAN_EQUAL},
   {"$$", TOKEN_BOOLEAN_OR},
   {"&&", TOKEN_BOOLEAN_AND},
-  {"~", TOKEN_BOOLEAN_NOT},
+  {"~",  TOKEN_BOOLEAN_NOT},
 
-  {">", TOKEN_GREATER},
-  {"<", TOKEN_LESS},
+  {">",  TOKEN_GREATER},
+  {"<",  TOKEN_LESS},
   {">=", TOKEN_GREATER_EQUAL},
   {"<=", TOKEN_LESS_EQUAL},
 
-  {"(", TOKEN_PAREN_LEFT},
-  {")", TOKEN_PAREN_RIGHT},
-  {"[", TOKEN_SQUARE_BRAC_LEFT},
-  {"]", TOKEN_SQUARE_BRAC_RIGHT},
-  {"{", TOKEN_SQUIG_BRAC_LEFT},
-  {"}", TOKEN_SQUIG_BRAC_RIGHT},
+  {"(",  TOKEN_PAREN_LEFT},
+  {")",  TOKEN_PAREN_RIGHT},
+  {"[",  TOKEN_SQUARE_BRAC_LEFT},
+  {"]",  TOKEN_SQUARE_BRAC_RIGHT},
+  {"{",  TOKEN_SQUIG_BRAC_LEFT},
+  {"}",  TOKEN_SQUIG_BRAC_RIGHT},
 
-  {";", TOKEN_SEMI_COLON},
-  {":", TOKEN_COLON},
+  {";",  TOKEN_SEMI_COLON},
+  {":",  TOKEN_COLON},
 
   {":>", TOKEN_RETURN_TYPE},
 
-  {"'", TOKEN_QUOTE_SINGLE},
+  {"'",  TOKEN_QUOTE_SINGLE},
   {"\"", TOKEN_QUOTE_DOUBLE},
 
   {"if", KEYWORD_IF},
 
-  {"True", KEYWORD_TRUE},
+  {"True",  KEYWORD_TRUE},
   {"False", KEYWORD_FALSE},
-  {"Nil", KEYWORD_NIL},
-  
+  {"Nil",   KEYWORD_NIL},
+
   {"func", KEYWORD_FUNC_BEG},
   {"end.", KEYWORD_FUNC_END},
 };
