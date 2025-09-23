@@ -1,8 +1,9 @@
 #include "../lib/files.hpp"
 #include "./cmd/cmd.hpp"
 #include "./lexer/lex.hpp"
-#include "./syntax/symbols.hpp"
-#include "syntax/syntax.hpp"
+#include "./types/symbols_t.hpp"
+#include "./types/syntax_t.hpp"
+#include "../lib/logger.hpp"
 #include <cstdio>
 #include <vector>
 

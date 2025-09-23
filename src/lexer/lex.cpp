@@ -119,12 +119,19 @@ Token Lex::readString() {
   this->pos++;
   this->col++;
 
+  TOKEN_TYPE type = TOKEN_UNDEF;
   while (this->pos < this->ref_stream.size()) {
     char c = this->ref_stream[this->pos];
 
     if (c == quote) {
+      type = TOKEN_STRING_LITERAL;
       this->pos++;
       this->col++;
+      break;
+    } else if (c == '\r' || c == '\n') {
+      this->pos++;
+      this->line++;
+      this->col = 0;
       break;
     }
 
@@ -145,7 +152,7 @@ Token Lex::readString() {
   }
 
   return {
-    .tok_type = TOKEN_STRING_LITERAL,
+    .tok_type = type,
     .tok_val  = literal,
     .tok_row  = this->line,
     .tok_col  = this->col
@@ -280,6 +287,7 @@ bool Lex::isOperator(char ch) {
   || ch == '~'
   || ch == '>'
   || ch == '<'
+  || ch == ','
   || TokenLookupTable.contains(std::string() + ch);
 }
 

@@ -1,8 +1,6 @@
 #pragma once
-#include "../syntax/syntax.hpp"
-#include "../syntax/symbols.hpp"
 #include <string>
-#include <vector>
+#include "../types/syntax_t.hpp"
 
 class Lex {
 public:
