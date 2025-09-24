@@ -20,6 +20,7 @@ private:
   char peekChar();
   bool isOperator(char);
   bool isStringOpen(char);
+  bool isSymbol(char);
   Token readNumber();
   Token readString();
   Token readSymbol();

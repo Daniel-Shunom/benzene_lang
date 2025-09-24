@@ -44,7 +44,7 @@ Token Lex::advance() {
 
   if (std::isdigit(chr)) {
     return this->readNumber();
-  } else if (std::isalnum(chr)) {
+  } else if (this->isSymbol(chr)) {
     return this->readSymbol();
   } else if (this->isStringOpen(chr)) {
     return this->readString();
@@ -82,9 +82,7 @@ Token Lex::readSymbol() {
   std::string buf;
   while(
     this->pos < this->ref_stream.size()
-    && (std::isalnum(this->peekChar()) 
-    || this->peekChar() == '_'
-    || this->peekChar() == '.')
+    && (this->isSymbol(this->peekChar()))
   ) {
     if (this->peekChar() == '\n' || this->peekChar() == '\r') {
       this->pos++;
@@ -291,7 +289,13 @@ bool Lex::isOperator(char ch) {
   || TokenLookupTable.contains(std::string() + ch);
 }
 
+bool Lex::isSymbol(char c) {
+  return std::isalnum(c)
+  || c == '.'
+  || c == '_'
+  || c == ':';
+}
+
 bool Lex::isStringOpen(char ch) {
   return ch == '\"';
 }
-
