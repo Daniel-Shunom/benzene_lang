@@ -34,6 +34,9 @@ inline const char* tokenTypeToString(TOKEN_TYPE type) {
     case TOKEN_SEMI_COLON: return "TOKEN_SEMI_COLON";
     case TOKEN_COLON: return "TOKEN_COLON";
 
+    case TOKEN_CASE_OPEN: return "TOKEN_CASE_OPEN";
+    case TOKEN_CASE_CLOSE: return "TOKEN_CASE_CLOSE";
+
     case TOKEN_QUOTE_SINGLE: return "TOKEN_QUOTE_SINGLE";
     case TOKEN_QUOTE_DOUBLE: return "TOKEN_QUOTE_DOUBLE";
 
@@ -48,9 +51,13 @@ inline const char* tokenTypeToString(TOKEN_TYPE type) {
     case KEYWORD_FALSE: return "KEYWORD_FALSE";
     case KEYWORD_TRUE: return "KEYWORD_TRUE";
     case KEYWORD_NIL: return "KEYWORD_NIL";
+    case KEYWORD_CASE: return "KEYWORD_CASE";
+    case KEYWORD_DEFAULT: return "KEYWORD_DEFAULT";
 
     case TOKEN_EOF: return "TOKEN_EOF";
     case TOKEN_UNDEF: return "TOKEN_UNDEF";
+    case TOKEN_PIPE_OPERATOR: return "TOKEN_PIPE_OPERATOR";
+
     default: return "UNKOWN_TOKEN";
   }
 }
