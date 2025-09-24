@@ -10,6 +10,7 @@ typedef enum {
   TOKEN_ASTERISK,
   TOKEN_ASSIGN,
   TOKEN_DELIM,
+  TOKEN_PIPE_OPERATOR,
 
   TOKEN_BOOLEAN_EQUAL,
   TOKEN_BOOLEAN_OR,
@@ -30,6 +31,9 @@ typedef enum {
 
   TOKEN_SEMI_COLON,
   TOKEN_COLON,
+  
+  TOKEN_CASE_OPEN,
+  TOKEN_CASE_CLOSE,
 
   TOKEN_QUOTE_SINGLE,
   TOKEN_QUOTE_DOUBLE,
@@ -45,6 +49,9 @@ typedef enum {
   KEYWORD_IF,
   KEYWORD_FUNC_BEG,
   KEYWORD_FUNC_END,
+
+  KEYWORD_CASE,
+  KEYWORD_DEFAULT,
 
   KEYWORD_TRUE,
   KEYWORD_FALSE,
@@ -63,6 +70,7 @@ static const std::map<std::string, TOKEN_TYPE> TokenLookupTable{
   {"=",  TOKEN_ASSIGN},
   {"#",  TOKEN_CONSTANT},
   {",",  TOKEN_DELIM},
+  {"|=", TOKEN_PIPE_OPERATOR},
 
   {"==", TOKEN_BOOLEAN_EQUAL},
   {"$$", TOKEN_BOOLEAN_OR},
@@ -84,6 +92,9 @@ static const std::map<std::string, TOKEN_TYPE> TokenLookupTable{
   {";",  TOKEN_SEMI_COLON},
   {":",  TOKEN_COLON},
 
+  {"::", TOKEN_CASE_OPEN},
+  {"end::", TOKEN_CASE_CLOSE},
+
   {":>", TOKEN_RETURN_TYPE},
 
   {"'",  TOKEN_QUOTE_SINGLE},
@@ -94,7 +105,9 @@ static const std::map<std::string, TOKEN_TYPE> TokenLookupTable{
   {"True",  KEYWORD_TRUE},
   {"False", KEYWORD_FALSE},
   {"Nil",   KEYWORD_NIL},
+  {"default", KEYWORD_DEFAULT},
 
+  {"case", KEYWORD_CASE},
   {"func", KEYWORD_FUNC_BEG},
   {"end.", KEYWORD_FUNC_END},
 };
