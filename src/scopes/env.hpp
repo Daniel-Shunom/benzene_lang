@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <stdexcept>
 #include <unordered_map>
 #include "../ast/node_val_t.hpp"
 
@@ -36,7 +37,7 @@ public:
       return this->parent->get(name);
     }
 
-    throw std::exception("Invalid argument");
+    throw std::runtime_error("Invalid argument");
   }
 
 private:
