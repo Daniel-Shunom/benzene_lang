@@ -404,8 +404,7 @@ bool Lex::isOperator(const std::string& ch) {
 bool Lex::isSymbol(char c) {
   return std::isalnum(c)
   || c == '.'
-  || c == '_'
-  || c == ':';
+  || c == '_';
 }
 
 bool Lex::isStringOpen(char ch) {
