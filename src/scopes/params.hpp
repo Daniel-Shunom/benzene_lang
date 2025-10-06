@@ -11,6 +11,7 @@
 #include "../types/types_t.hpp"
 
 using FuncBooklet = std::pair<FunctionDef, std::shared_ptr<std::vector<Expr>>>;
+
 class FunctionRegistry {
 public:
   void assign(std::string name, FuncBooklet def) {
