@@ -1,4 +1,5 @@
 #pragma once
+#include <vector>
 #include <string>
 #include "../types/syntax_t.hpp"
 
@@ -12,6 +13,7 @@ public:
     this->ref_stream = stream;
   }
 private:
+  std::vector<Token> tokens;
   std::string ref_stream;
   size_t pos;
   size_t line;
@@ -29,4 +31,6 @@ private:
 public:
   TOKEN_TYPE peek();
   Token advance();
+  void extractAllTokens();
+  std::vector<Token> getTokenList();
 };

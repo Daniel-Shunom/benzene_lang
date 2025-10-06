@@ -299,3 +299,18 @@ bool Lex::isSymbol(char c) {
 bool Lex::isStringOpen(char ch) {
   return ch == '\"';
 }
+
+void Lex::extractAllTokens() {
+  while (true) {
+    Token t = this->advance();
+    this->tokens.push_back(t);
+
+    if (t.tok_type == TOKEN_EOF) {
+      break;
+    }
+  }
+}
+
+std::vector<Token> Lex::getTokenList() {
+  return this->tokens;
+}
