@@ -12,17 +12,19 @@ enum class Type {
   String,
   Bool,
   Nil,
-  Function
+  Function,
+  Undefined
 };
 
+
 typedef struct {
-  /*
-   * This is actually so cool.
-   * So since in the declaration of the function, the
-   * paramters are symbols, with values, we can just,
-   * look at the corresponding scoped symbol table and
-   * retrieve the values from there.
-  */
-  std::vector<std::string> params;
-  std::vector<std::unique_ptr<FuncBody>> body;
-} Function;
+  std::string name;
+  Type type;
+} Param;
+
+typedef struct {
+  std::string name;
+  std::vector<Param> params;
+  Type return_type;
+} FunctionDef;
+
