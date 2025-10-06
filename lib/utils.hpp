@@ -1,12 +1,17 @@
 #pragma once
 
 #include "../src/types/symbols_t.hpp"
+#include "../src/types/types_t.hpp"
+#include "../src/scopes/params.hpp"
+#include <vector>
 
 inline const char* tokenTypeToString(TOKEN_TYPE type) {
   switch (type) {
     case TOKEN_PLUS: return "TOKEN_PLUS";
     case TOKEN_MINUS: return "TOKEN_MINUS";
     case TOKEN_SLASH_FORWARD: return "TOKEN_SLASH_FORWARD";
+    case TOKEN_MODULO: return "TOKEN_MODULO";
+    case TOKEN_EXPONENT: return "TOKEN_EXPONENT";
     case TOKEN_SLASH_BACKWARD: return "TOKEN_SLASH_BACKWARD";
     case TOKEN_ASTERISK: return "TOKEN_ASTERISK";
     case TOKEN_ASSIGN: return "TOKEN_ASSIGN";
@@ -50,6 +55,12 @@ inline const char* tokenTypeToString(TOKEN_TYPE type) {
     case KEYWORD_FUNC_END: return "KEYWORD_FUNC_END";
     case KEYWORD_FALSE: return "KEYWORD_FALSE";
     case KEYWORD_TRUE: return "KEYWORD_TRUE";
+
+    case KEYWORD_INT: return "KEYWORD_INT";
+    case KEYWORD_FLOAT: return "KEYWORD_FLOAT";
+    case KEYWORD_STRING: return "KEYWORD_STRING";
+    case KEYWORD_BOOL: return "KEYWORD_BOOL";
+
     case KEYWORD_NIL: return "KEYWORD_NIL";
     case KEYWORD_CASE: return "KEYWORD_CASE";
     case KEYWORD_DEFAULT: return "KEYWORD_DEFAULT";
@@ -61,3 +72,4 @@ inline const char* tokenTypeToString(TOKEN_TYPE type) {
     default: return "UNKOWN_TOKEN";
   }
 }
+
