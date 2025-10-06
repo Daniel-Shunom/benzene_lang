@@ -72,6 +72,10 @@ ExprKind Parser::peek() {
       break;
     }
 
+    case (TOKEN_EOF): {
+      break;
+    }
+
     case (TOKEN_CONSTANT): {
       last_match = ExprKind::Constant;
       break;
@@ -307,7 +311,8 @@ Expr Parser::parseFuncExpression() {
     // func_body.emplace_back(this->parseExpression());
     this->pos++;
   }
-  this->pos++;
+  //
+  // this->pos++;
 
   this->function_registry.assign(func_symbol->tok_val, FuncBooklet((FunctionDef) {
     .name = func_symbol->tok_val,
@@ -492,10 +497,15 @@ void Parser::parseTokens() {
   );
   size_t start_pos = this->pos;
   while (this->pos < this->tokens.size()) {
-    std::printf("\nBegining token parsing\n");
     auto&& expr = this->parseExpression();
+
+    if (expr.kind == ExprKind::Undefined) {
+      break;
+    }
+
     std::printf("Parsed Expression: %s\n", 
                 exprKindToStr(expr.kind));
+
     this->expressions.push_back(std::move(expr));
     this->pos++;
   }
