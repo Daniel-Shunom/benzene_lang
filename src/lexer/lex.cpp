@@ -2,73 +2,179 @@
 #include <cctype>
 #include <cstdio>
 
+
 TOKEN_TYPE Lex::peek() {
   if (this->pos >= this->ref_stream.size()) {
     return TOKEN_EOF;
   }
 
   size_t cnt = this->pos;
+  char c = this->ref_stream[cnt];
 
-  std::string buf;
-  std::string last_match;
-  TOKEN_TYPE tok_type = TOKEN_UNDEF;
+  // --- Skip whitespace ---
+  while (cnt < this->ref_stream.size() && 
+         (this->ref_stream[cnt] == ' ' || this->ref_stream[cnt] == '\t' || 
+          this->ref_stream[cnt] == '\n' || this->ref_stream[cnt] == '\r')) {
+    cnt++;
+  }
 
-  while (cnt < this->ref_stream.size()) {
-    buf += this->ref_stream[cnt];
-    if (TokenLookupTable.contains(buf)) {
-      last_match = buf;
-      tok_type = TokenLookupTable.at(buf);
-      cnt++;
-    } else {
-      break;
+  if (cnt >= this->ref_stream.size()) {
+    return TOKEN_EOF;
+  }
+
+  c = this->ref_stream[cnt];
+
+  // --- Handle digits ---
+  if (std::isdigit(c)) {
+    return TOKEN_INTEGER_LITERAL;
+  }
+
+  // --- Handle string literal opening ---
+  if (this->isStringOpen(c)) {
+    return TOKEN_STRING_LITERAL;
+  }
+
+  // --- Handle operators ---
+  {
+    std::string buf(1, c);
+    size_t lookahead = cnt + 1;
+
+    // Check for possible multi-char operators
+    while (lookahead < this->ref_stream.size()) {
+      std::string next = buf + this->ref_stream[lookahead];
+      if (this->isOperator(next)) {
+        buf = next;
+        lookahead++;
+      } else {
+        break;
+      }
+    }
+
+    if (this->isOperator(buf)) {
+      return TokenLookupTable.contains(buf)
+               ? TokenLookupTable.at(buf)
+               : TOKEN_UNDEF;
     }
   }
 
-  if (!last_match.empty()) {
-    return tok_type;
-  } else {
+  // --- Handle symbols or identifiers ---
+  if (this->isSymbol(c)) {
+    std::string buf;
+    while (cnt < this->ref_stream.size() && this->isSymbol(this->ref_stream[cnt])) {
+      buf += this->ref_stream[cnt];
+      cnt++;
+    }
+
+    // Check if keyword
+    if (TokenLookupTable.contains(buf)) {
+      return TokenLookupTable.at(buf);
+    }
+
     return TOKEN_SYMBOL;
   }
+
+  // --- Fallback ---
+  return TOKEN_UNDEF;
 }
 
+
+
 Token Lex::advance() {
+  // Skip all whitespace and newlines before reading
   this->skipWhitespace();
 
-  char chr = this->peekChar();
-
-  if (chr == '\n' || chr == '\r') {
-    this->pos++;
-    this->line++;
-    this->col = 0;
-  }
-
-  if (std::isdigit(chr)) {
-    return this->readNumber();
-  } else if (this->isSymbol(chr)) {
-    return this->readSymbol();
-  } else if (this->isStringOpen(chr)) {
-    return this->readString();
-  } else if (this->isOperator(chr)) {
-    return this->readOperator();
-  } else if (chr == EOF) {
-    this->pos++;
-    return (Token) {
+  // End of stream check
+  if (this->pos >= this->ref_stream.size()) {
+    return {
       .tok_type = TOKEN_EOF,
       .tok_val  = "",
       .tok_row  = this->line,
       .tok_col  = this->col
     };
-  } else {
-    this->pos++;
-    this->col++;
-    return (Token) {
-      .tok_type = TOKEN_UNDEF,
-      .tok_val  = std::string(1, chr),
+  }
+
+  char c = this->peekChar();
+
+  // --- Handle numbers ---
+  if (std::isdigit(c)) {
+    return this->readNumber();
+  }
+
+  // --- Handle strings ---
+  if (this->isStringOpen(c)) {
+    return this->readString();
+  }
+
+  // --- Handle operators (including multi-character) ---
+  {
+    std::string buf(1, c);
+    size_t lookahead = this->pos + 1;
+
+    // Attempt to extend multi-character operator
+    while (lookahead < this->ref_stream.size()) {
+      std::string next = buf + this->ref_stream[lookahead];
+      if (this->isOperator(next)) {
+        buf = next;
+        lookahead++;
+      } else {
+        break;
+      }
+    }
+
+    if (this->isOperator(buf)) {
+      TOKEN_TYPE type = TokenLookupTable.contains(buf)
+                          ? TokenLookupTable.at(buf)
+                          : TOKEN_UNDEF;
+
+      // Advance position by operator length
+      this->pos += buf.size();
+      this->col += buf.size();
+
+      return {
+        .tok_type = type,
+        .tok_val  = buf,
+        .tok_row  = this->line,
+        .tok_col  = this->col
+      };
+    }
+  }
+
+  // --- Handle symbols / identifiers ---
+  if (this->isSymbol(c)) {
+    std::string buf;
+    while (this->pos < this->ref_stream.size() && this->isSymbol(this->peekChar())) {
+      buf += this->peekChar();
+      this->pos++;
+      this->col++;
+    }
+
+    TOKEN_TYPE type = TOKEN_SYMBOL;
+
+    // Check for keyword
+    if (TokenLookupTable.contains(buf)) {
+      type = TokenLookupTable.at(buf);
+    }
+
+    return {
+      .tok_type = type,
+      .tok_val  = buf,
       .tok_row  = this->line,
       .tok_col  = this->col
     };
   }
+
+  // --- Fallback for undefined characters ---
+  this->pos++;
+  this->col++;
+
+  return {
+    .tok_type = TOKEN_UNDEF,
+    .tok_val  = std::string(1, c),
+    .tok_row  = this->line,
+    .tok_col  = this->col
+  };
 }
+
 
 char Lex::peekChar() {
   if (this->pos >= this->ref_stream.size()) {
@@ -273,19 +379,25 @@ void Lex::skipWhitespace() {
   }
 }
 
-bool Lex::isOperator(char ch) {
-  return ch == '+'
-  || ch == '-'
-  || ch == '/'
-  || ch == '\\'
-  || ch == '='
-  || ch == '*'
-  || ch == '$'
-  || ch == '&'
-  || ch == '~'
-  || ch == '>'
-  || ch == '<'
-  || ch == ','
+bool Lex::isOperator(const std::string& ch) {
+  return ch == "+"
+  || ch == "-"
+  || ch == "/"
+  || ch == "\\"
+  || ch == "="
+  || ch == "*"
+  || ch == "$"
+  || ch == "&"
+  || ch == "~"
+  || ch == ">"
+  || ch == "<"
+  || ch == ","
+  || ch == "::"
+  || ch == ":>"
+  || ch == "|="
+  || ch == ">="
+  || ch == "<="
+  || ch == "=="
   || TokenLookupTable.contains(std::string() + ch);
 }
 

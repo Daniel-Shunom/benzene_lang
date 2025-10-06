@@ -20,7 +20,7 @@ private:
   size_t col;
 
   char peekChar();
-  bool isOperator(char);
+  bool isOperator(const std::string&);
   bool isStringOpen(char);
   bool isSymbol(char);
   Token readNumber();
