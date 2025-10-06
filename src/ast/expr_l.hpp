@@ -1,6 +1,7 @@
 #pragma once
 
 #include "./node_val_t.hpp"
+#include <vector>
 
 struct Expr;
 
@@ -9,7 +10,11 @@ enum class ExprKind {
   Variable,
   Constant,
   BinaryOp,
+  BooleanOp,
   FuncCall,
+  FuncDef,
+  ConstExpr,
+  Undefined,
 };
 
 /*
@@ -45,9 +50,21 @@ typedef struct {
 } BinaryExpr;
 
 typedef struct {
+  std::string op;
+  std::unique_ptr<Expr> left;
+  std::unique_ptr<Expr> right;
+} BooleanExpr;
+
+typedef struct {
   std::string callee;
-  std::unique_ptr<Expr> expr;
+  std::shared_ptr<std::vector<Expr>> expr;
 } FuncCallExpr;
+
+typedef struct {
+  std::string func_name;
+  FunctionDef def;
+  std::unique_ptr<std::vector<Expr>> body;
+} FuncDefExpr;
 
 /*
  * An expression is something that evaluates to. 
@@ -55,6 +72,7 @@ typedef struct {
  * value hence all functions and "variables" are
  * expressions
 */
+typedef struct {} UndefinedExpr;
 
 struct Expr {
   ExprKind kind;
@@ -63,6 +81,51 @@ struct Expr {
     VariableExpr,
     ConstantExpr,
     BinaryExpr,
-    FuncCallExpr
+    BooleanExpr,
+    FuncCallExpr,
+    FuncDefExpr,
+    UndefinedExpr
   > node;
 };
+
+static inline const char* exprKindToStr(ExprKind kind) {
+  switch (kind) {
+    case (ExprKind::Undefined): {
+      return "Undefined Term";
+    }
+
+    case (ExprKind::FuncCall): {
+      return "Function call";
+    }
+
+    case (ExprKind::BinaryOp): {
+      return "Binary Operation";
+    }
+
+    case (ExprKind::BooleanOp): {
+      return "Boolean operation";
+    }
+
+    case (ExprKind::Constant): {
+      return "Constant";
+    }
+    
+    case (ExprKind::FuncDef): {
+      return "Function defintion";
+    }
+
+    case (ExprKind::Literal): {
+      return "Literal";
+    }
+
+    case (ExprKind::Variable): {
+      return "Variable";
+    }
+
+    case (ExprKind::ConstExpr): {
+      return "Constant Expression";
+    }
+  }
+
+  return "Undefined";
+}

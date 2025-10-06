@@ -11,6 +11,6 @@ typedef struct {
     std::string, 
     bool,
     std::monostate,
-    std::shared_ptr<Function>
+    std::shared_ptr<FunctionDef>
   > value;
 } Value;
