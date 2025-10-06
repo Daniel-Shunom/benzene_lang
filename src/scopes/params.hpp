@@ -1,6 +1,5 @@
 #pragma once
 
-#include <algorithm>
 #include <optional>
 #include <unordered_map>
 #include <memory>
