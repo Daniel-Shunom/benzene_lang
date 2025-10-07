@@ -1,9 +1,6 @@
 #pragma once
 
 #include "../src/types/symbols_t.hpp"
-#include "../src/types/types_t.hpp"
-#include "../src/scopes/params.hpp"
-#include <vector>
 
 inline const char* tokenTypeToString(TOKEN_TYPE type) {
   switch (type) {
