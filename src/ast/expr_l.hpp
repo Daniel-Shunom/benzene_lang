@@ -1,6 +1,7 @@
 #pragma once
 
 #include "./node_val_t.hpp"
+#include "../scopes/env.hpp"
 #include <vector>
 
 struct Expr;
@@ -64,6 +65,7 @@ typedef struct {
   std::string func_name;
   FunctionDef def;
   std::unique_ptr<std::vector<Expr>> body;
+  std::shared_ptr<Env> local_scope;
 } FuncDefExpr;
 
 /*
