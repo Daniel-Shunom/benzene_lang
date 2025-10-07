@@ -7,6 +7,7 @@ static inline bool isBinaryOp(const Token& token) {
     || token.tok_type == TOKEN_MINUS
     || token.tok_type == TOKEN_MODULO
     || token.tok_type == TOKEN_EXPONENT
+    || token.tok_type == TOKEN_ASTERISK
     || token.tok_type == TOKEN_SLASH_FORWARD;
 }
 
