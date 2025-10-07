@@ -6,6 +6,7 @@
 #include <optional>
 #include <utility>
 #include <vector>
+#include "../../lib/utils.hpp"
 
 using TokenBuf = std::vector<Token>;
 ExprKind Parser::peek() {
@@ -86,6 +87,24 @@ ExprKind Parser::peek() {
       break;
     }
 
+    case (TOKEN_FLOAT_LITERAL):
+    case (TOKEN_INTEGER_LITERAL): {
+      auto&& op = this->peekNextTok();
+
+      if (!op) {
+        last_match = ExprKind::Literal;
+        break;
+      }
+
+      if (isBooleanOp(*op)) {
+        last_match = ExprKind::BooleanOp;
+        break;
+      } else if (isBinaryOp(*op)) {
+        last_match = ExprKind::BinaryOp;
+        break;
+      } 
+    }
+
     default: {
       last_match = ExprKind::Undefined;
       break;
@@ -100,26 +119,35 @@ Expr Parser::parseExpression() {
     case (ExprKind::Literal):
     case (ExprKind::FuncCall): {
       return this->parseVarExpression();
+      break;
     }
 
     case (ExprKind::FuncDef): {
       return this->parseFuncExpression();
+      break;
     }
 
     case (ExprKind::Constant): {
       return this->parseConstExpression();
+      break;
     }
 
     case (ExprKind::BinaryOp): {
+      this->advanceNext();
+      this->advanceNext();
       return this->parseBinaryOp();
+      break;
     }
 
     case (ExprKind::BooleanOp): {
+      this->advanceNext();
+      this->advanceNext();
       return this->parseBooleanOp();
+      break;
     }
 
     default: {
-      this->pos++;
+      this->advanceNext();
       return (Expr) {
         .kind = ExprKind::Undefined,
         .node = UndefinedExpr()
@@ -139,42 +167,47 @@ Expr Parser::parseExpression() {
  * binary expression.
 */
 Expr Parser::parseBinaryOp() {
-  Expr expr;
+  Expr expr = (Expr) {
+    .kind = ExprKind::BinaryOp,
+    .node = UndefinedExpr()
+  };
+
   auto left = this->tokens[this->pos];
+  auto&& q_op = this->peekNextTok();
   if (left.tok_type != TOKEN_SYMBOL
       && left.tok_type != TOKEN_FLOAT_LITERAL
       && left.tok_type != TOKEN_INTEGER_LITERAL
   ) {
-    expr.kind = ExprKind::Undefined;
-    expr.node = UndefinedExpr();
+    return expr;
+  } else if (left.tok_type == TOKEN_SYMBOL
+             && q_op && !isBinaryOp(*q_op)
+  ) {
     return expr;
   }
 
+  BinaryExpr bin_expr;
   auto&& left_op_val = (LiteralExpr) {
     .value = (Value) {
       .type = tokToType(left),
       .value = left.tok_val
     }
   };
-
-  BinaryExpr bin_expr;
+  
   bin_expr.left = std::make_unique<Expr>((Expr) {
     .kind = ExprKind::Literal,
     .node = left_op_val
   });
 
-  auto op = this->peekNextTok();
+  auto&& op = this->peekNextTok();
   if (op && isBinaryOp(*op)) {
-    this->pos++;
+    this->advanceNext();
     bin_expr.op = op->tok_val;
-    this->pos++;
+    this->advanceNext();
     bin_expr.right = std::make_unique<Expr>(parseBinaryOp());
-  } else {
-    expr.kind = ExprKind::BinaryOp;
-    expr.node = std::move(bin_expr);
-    this->pos++;
   }
 
+  expr.kind = ExprKind::BinaryOp;
+  expr.node = std::move(bin_expr);
   return expr;
 }
 
@@ -215,14 +248,15 @@ Expr Parser::parseBooleanOp() {
 
   auto op = this->peekNextTok();
   if (op && isBooleanOp(*op)) {
-    this->pos++;
+    this->advanceNext();
     bin_expr.op = op->tok_val;
-    this->pos++;
+    this->advanceNext();
     bin_expr.right = std::make_unique<Expr>(parseBooleanOp());
   } else {
     expr.kind = ExprKind::BooleanOp;
     expr.node = std::move(bin_expr);
   }
+  this->advanceNext();
 
   return expr;
 }
@@ -234,23 +268,20 @@ Expr Parser::parseFuncExpression() {
   };
 
   if (this->tokens[this->pos].tok_type != KEYWORD_FUNC_BEG) {
-    std::printf("\nNot FuncBegin Keyword\n");
     return expr;
   }
 
   auto&& func_symbol = this->peekNextTok();
 
   if (func_symbol->tok_type != TOKEN_SYMBOL) {
-    std::printf("\nNot function symbol Keyword\n");
     return expr;
   }
 
-  this->pos++;
+  this->advanceNext();
 
   auto&& param_open = this->peekNextTok();
 
   if (param_open->tok_type != TOKEN_PAREN_LEFT) {
-    std::printf("\nNot function opening parantheses\n");
     return expr;
   }
 
@@ -270,7 +301,6 @@ Expr Parser::parseFuncExpression() {
         || (!type || !isValidBenzeneType(*type)
             || type->tok_type == TOKEN_PAREN_RIGHT)
     ) {
-      std::printf("\nNot function params\n");
       break;
     }
 
@@ -284,35 +314,48 @@ Expr Parser::parseFuncExpression() {
     if (this->pos < this->tokens.size()
         && this->tokens[this->pos].tok_type == TOKEN_DELIM
     ) {
-      this->pos++;
+      this->advanceNext();
       continue;
     }
   }
 
-  this->pos++;
+  this->advanceNext();
 
   Type return_type = Type::Undefined;
   if (auto&& t = this->tokens[this->pos]; t.tok_type == TOKEN_RETURN_TYPE) {
-    this->pos++;
+    this->advanceNext();
     if (auto&& n = this->tokens[this->pos]; isValidBenzeneType(n)) {
       return_type = getTypeAnnotation(n);
     }
   }
 
   if (this->peekNextTok()->tok_type != TOKEN_DELIM) {
-    std::printf("\nNot function opening delimter\n");
     return expr;
   }
 
+  this->advanceNext();
   std::vector<Expr> func_body;
+  auto local_scope = std::make_shared<Env>(this->scope);
+  this->advanceNext();
+  printf("Current token at cursor: %s\n", this->tokens[this->pos].tok_val.data());
+  printf("\n\n\nFUNCTION_BODY_BEGIN\n");
   while (this->pos < this->tokens.size() 
          && this->tokens[this->pos].tok_type != KEYWORD_FUNC_END
   ) {
-    // func_body.emplace_back(this->parseExpression());
-    this->pos++;
+
+    auto expr = this->parseExpression();
+    if (expr.kind == ExprKind::Undefined) {
+      break;
+    }
+
+    printf("\nFunction Body Expression"
+           "\nExpression type: %s\n", 
+           exprKindToStr(expr.kind));
+
+    func_body.push_back(std::move(expr));
+    this->advanceNext();
   }
-  //
-  // this->pos++;
+  printf("\nFUNCTION_BODY_END\n\n\n");
 
   this->function_registry.assign(func_symbol->tok_val, FuncBooklet((FunctionDef) {
     .name = func_symbol->tok_val,
@@ -340,16 +383,16 @@ Expr Parser::parseVarExpression() {
     .node = UndefinedExpr()
   };
 
-  Token& current = this->tokens[this->pos];
+  Token& var_name = this->tokens[this->pos];
   auto&& assign  = this->peekNextTok();
 
   if (!assign) {
     expr.kind = ExprKind::Undefined;
-    this->pos++;
+    this->advanceNext();
     return expr;
   } else if (assign->tok_type != TOKEN_ASSIGN) {
     expr.kind = ExprKind::Undefined;
-    this->pos++;
+    this->advanceNext();
     return expr;
   }
 
@@ -382,9 +425,13 @@ Expr Parser::parseVarExpression() {
         : nullptr
     };
     this->pos += 2;
+  } else if (value == ExprKind::BinaryOp) {
+    expr = this->parseBinaryOp();
+  } else if (value == ExprKind::BooleanOp) {
+    expr = this->parseBooleanOp();
   }
 
-  this->scope.assign(current.tok_val, (Value) {
+  this->scope.assign(var_name.tok_val, (Value) {
     .type  = getTypeAnnotation(*val_tok),
     .value = val_tok->tok_val
   });
@@ -399,69 +446,43 @@ Expr Parser::parseConstExpression() {
   };
 
   if (this->tokens[this->pos].tok_type != TOKEN_CONSTANT) {
-    printf("\nreturning early from const expr parser\n");
     return expr;
   }
-  this->pos++;
 
-  Token& current = this->tokens[this->pos];
+  this->advanceNext();
+  Token& const_var_name = this->tokens[this->pos];
   auto&& assign  = this->peekNextTok();
 
   if (!assign) {
     expr.kind = ExprKind::Undefined;
-    printf("\nreturning early from const expr parser 1\n");
     return expr;
   } else if (assign->tok_type != TOKEN_ASSIGN) {
-    printf("\nreturning early from const expr parser 2\n");
     expr.kind = ExprKind::Undefined;
     return expr;
   }
 
-  if (current.tok_type != TOKEN_SYMBOL) {
-    printf("\nreturning early from const expr parser 3\n");
+  if (const_var_name.tok_type != TOKEN_SYMBOL) {
     return expr;
   }
 
   this->pos += 2;
-
-  auto&& value = this->peek();
+  // auto&& value = this->peek();
   auto&& val_tok = this->tokFromCurrPos(0);
 
   if (!val_tok) {
     expr.kind = ExprKind::Undefined;
-    printf("\nreturning early from const expr parser 4\n");
     return expr;
   } else if (val_tok->tok_type != TOKEN_STRING_LITERAL
              && val_tok->tok_type != TOKEN_INTEGER_LITERAL
              && val_tok->tok_type != TOKEN_FLOAT_LITERAL
   ) {
     expr.kind = ExprKind::Undefined;
-    printf("\nreturning early from const expr parser 5\n");
     return expr;
   }
 
-  if (value == ExprKind::Literal) {
-    expr.kind = ExprKind::Literal;
-    expr.node = (LiteralExpr) {
-      .value = (Value) {
-        .type = getTypeAnnotation(*val_tok),
-        .value = val_tok->tok_val
-      }
-    };
-    this->pos++;
-  } else if (value == ExprKind::FuncCall) {
-    auto&& def = this->function_registry.getDefinition(val_tok->tok_val);
-    expr.kind = ExprKind::FuncCall;
-    expr.node = (FuncCallExpr) {
-      .callee = val_tok->tok_val,
-      .expr   = def.has_value()
-        ? def.value().second
-        : nullptr
-    };
-    this->pos++;
-  }
 
-  this->scope.assign(current.tok_val, (Value) {
+
+  this->scope.assign(const_var_name.tok_val, (Value) {
     .type  = getTypeAnnotation(*val_tok),
     .value = val_tok->tok_val
   });
@@ -503,14 +524,15 @@ void Parser::parseTokens() {
       break;
     }
 
-    std::printf("Parsed Expression: %s\n", 
-                exprKindToStr(expr.kind));
+    std::printf("\nParsed Expression: %s\nCurrent value at cursor: %s\n", 
+                exprKindToStr(expr.kind),
+                this->tokens[this->pos].tok_val.data());
 
     this->expressions.push_back(std::move(expr));
-    this->pos++;
+    this->advanceNext();
   }
 
   if (this->pos == start_pos) {
-    this->pos++;
+    this->advanceNext();
   }
 }

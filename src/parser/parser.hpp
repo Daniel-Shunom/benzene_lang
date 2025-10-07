@@ -19,6 +19,9 @@ public:
   Token match();
  
   void parseTokens();
+  void advanceNext() {
+    this->pos++;
+  }
   Expr parseExpression();
   Expr parseBinaryOp();
   Expr parseBooleanOp();
