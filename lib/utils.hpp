@@ -1,6 +1,8 @@
 #pragma once
 
+#include <iostream>
 #include "../src/types/symbols_t.hpp"
+#include "../src/ast/expr_l.hpp"
 
 inline const char* tokenTypeToString(TOKEN_TYPE type) {
   switch (type) {
@@ -67,6 +69,130 @@ inline const char* tokenTypeToString(TOKEN_TYPE type) {
     case TOKEN_PIPE_OPERATOR: return "TOKEN_PIPE_OPERATOR";
 
     default: return "UNKOWN_TOKEN";
+  }
+}
+
+
+
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <memory>
+
+// helpers to print indentation
+static inline void pad(int indent) {
+  for (int i = 0; i < indent; ++i) std::cout << "  ";
+}
+
+// fallback type->string. Replace/extend this with your real Type names if you have them.
+static inline std::string typeToString(Type t) {
+  // Example: if Type is an enum class, cast to int for now.
+  return std::to_string(static_cast<int>(t));
+}
+
+// visitor to stringify the Value::value variant
+struct ValuePrinter {
+  std::string operator()(int i) const {
+    return std::to_string(i);
+  }
+  std::string operator()(double d) const {
+    std::ostringstream ss;
+    ss << d;
+    return ss.str();
+  }
+  std::string operator()(const std::string &s) const {
+    return "\"" + s + "\"";
+  }
+  std::string operator()(bool b) const {
+    return b ? "true" : "false";
+  }
+  std::string operator()(std::monostate) const {
+    return "null";
+  }
+  std::string operator()(const std::shared_ptr<FunctionDef> &fn) const {
+    if (!fn) return "<FunctionDef:nullptr>";
+    // FunctionDef appears to have a .name field in your code; adjust if different.
+    return "<FunctionDef:" + fn->name + ">";
+  }
+};
+
+static inline std::string stringifyValue(const Value &v) {
+  return std::visit(ValuePrinter{}, v.value);
+}
+
+// The tree printer for Expr (matches your Expr/variant layout)
+
+
+
+static inline void printExprTree(const Expr& expr, int depth = 0) {
+  std::string indent(depth * 2, ' ');
+
+  switch (expr.kind) {
+    case ExprKind::BinaryOp: {
+      const auto& bin = std::get<BinaryExpr>(expr.node);
+      std::cout << indent << "Binary Operation";
+      if (!bin.op.empty()) {
+        std::cout << " (op='" << bin.op << "')";
+      }
+      std::cout << "\n";
+
+      std::cout << indent << "  |-- Left:\n";
+      if (bin.left)
+        printExprTree(*bin.left, depth + 2);
+      else
+        std::cout << indent << "    <null>\n";
+
+      std::cout << indent << "  |-- Right:\n";
+      if (bin.right)
+        printExprTree(*bin.right, depth + 2);
+      else
+        std::cout << indent << "    <null>\n";
+      break;
+    }
+
+    case ExprKind::BooleanOp: {
+      const auto& boolOp = std::get<BooleanExpr>(expr.node);
+      std::cout << indent << "Boolean Operation";
+      if (!boolOp.op.empty()) {
+        std::cout << " (op='" << boolOp.op << "')";
+      }
+      std::cout << "\n";
+
+      std::cout << indent << "  |-- Left:\n";
+      if (boolOp.left)
+        printExprTree(*boolOp.left, depth + 2);
+      else
+        std::cout << indent << "    <null>\n";
+
+      std::cout << indent << "  |-- Right:\n";
+      if (boolOp.right)
+        printExprTree(*boolOp.right, depth + 2);
+      else
+        std::cout << indent << "    <null>\n";
+      break;
+    }
+
+    case ExprKind::Literal: {
+      const auto& lit = std::get<LiteralExpr>(expr.node);
+      std::cout << indent << "Literal: " << stringifyValue(lit.value) << "\n";
+      break;
+    }
+
+    case ExprKind::Variable: {
+      const auto& var = std::get<VariableExpr>(expr.node);
+      std::cout << indent << "Variable: " << var.variable << "\n";
+      break;
+    }
+
+    case ExprKind::Constant: {
+      const auto& cst = std::get<ConstantExpr>(expr.node);
+      std::cout << indent << "Constant: " << cst.variable << "\n";
+      break;
+    }
+
+    default:
+      std::cout << indent << "<unknown>\n";
+      break;
   }
 }
 
