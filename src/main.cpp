@@ -1,8 +1,6 @@
 #include "../lib/files.hpp"
 #include "./cmd/cmd.hpp"
-#include "./lexer/lex.hpp"
-#include "./types/symbols_t.hpp"
-#include "./types/syntax_t.hpp"
+#include "./tokenizer/tok.hpp"
 #include "../lib/logger.hpp"
 #include "parser/parser.hpp"
 #include <cstdio>
@@ -10,7 +8,7 @@
 
 int main(int argc, char* argv[]) {
   Args args = GetArgs(argc, argv);
-  Lex lexer(FileToString(args.file_path));
+  Tokenizer tokenizer(FileToString(args.file_path));
  
   std::printf(
     "\nLexing current file\n"
@@ -18,8 +16,8 @@ int main(int argc, char* argv[]) {
     args.file_path.data()
   );
 
-  lexer.extractAllTokens();
-  auto&& tokens = lexer.getTokenList();
+  tokenizer.extractAllTokens();
+  auto&& tokens = tokenizer.getTokenList();
 
   std::printf(
     "\nDone lexing '%s'\n"

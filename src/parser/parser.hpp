@@ -22,18 +22,27 @@ public:
   void advanceNext() {
     this->pos++;
   }
+
   Expr parseExpression();
-  Expr parseBinaryOp();
+  Expr parseBinaryOp(float = 0);
+
+  Expr parsePrefixExpression();
+  Expr parseSuffixExpression();
+
+  Expr parseCaseExpression();
+
   Expr parseBooleanOp();
+  Expr parseFuncExpression();
+
+  Expr parseVarExpression();
+  Expr parseConstExpression();
+  
+  std::pair<float, float> getBinOpPrecedence(std::string&);
+  std::pair<float, float> getBoolOpPrecedence(std::string&);
 
 private:
   Env scope;
   FunctionRegistry function_registry;
-
-  Expr parseFuncExpression();
-  Expr parseVarExpression();
-  Expr parseConstExpression();
-
   size_t pos = 0;
   std::vector<Token> tokens;
   std::vector<Expr>  expressions;

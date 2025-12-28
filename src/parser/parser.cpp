@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <memory>
 #include <optional>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 #include "../../lib/utils.hpp"
@@ -87,6 +88,10 @@ ExprKind Parser::peek() {
       break;
     }
 
+    case (KEYWORD_CASE): {
+      this->parseCaseExpression();
+    }
+
     case (TOKEN_FLOAT_LITERAL):
     case (TOKEN_INTEGER_LITERAL): {
       auto&& op = this->peekNextTok();
@@ -103,6 +108,12 @@ ExprKind Parser::peek() {
         last_match = ExprKind::BinaryOp;
         break;
       } 
+    }
+
+    case (TOKEN_PAREN_LEFT):
+    case (TOKEN_SQUIG_BRAC_LEFT): {
+      last_match = ExprKind::ScopeExpr;
+      break;
     }
 
     default: {
@@ -166,49 +177,62 @@ Expr Parser::parseExpression() {
  * the necessary type that we will need to have a valid 
  * binary expression.
 */
-Expr Parser::parseBinaryOp() {
+Expr Parser::parseBinaryOp(float min_precedence) {
   Expr expr = (Expr) {
     .kind = ExprKind::BinaryOp,
     .node = UndefinedExpr()
   };
 
+  if (this->pos >= this->tokens.size()) {
+    return expr;
+  }
+
   auto left = this->tokens[this->pos];
-  auto&& q_op = this->peekNextTok();
   if (left.tok_type != TOKEN_SYMBOL
       && left.tok_type != TOKEN_FLOAT_LITERAL
       && left.tok_type != TOKEN_INTEGER_LITERAL
   ) {
     return expr;
-  } else if (left.tok_type == TOKEN_SYMBOL
-             && q_op && !isBinaryOp(*q_op)
-  ) {
-    return expr;
   }
 
-  BinaryExpr bin_expr;
-  auto&& left_op_val = (LiteralExpr) {
-    .value = (Value) {
-      .type = tokToType(left),
-      .value = left.tok_val
+  Expr left_expr = (Expr) {
+    .kind = ExprKind::Literal,
+    .node = (LiteralExpr) {
+      .value = (Value) {
+        .type = tokToType(left),
+        .value = left.tok_val
+      }
     }
   };
-  
-  bin_expr.left = std::make_unique<Expr>((Expr) {
-    .kind = ExprKind::Literal,
-    .node = left_op_val
-  });
 
-  auto&& op = this->peekNextTok();
-  if (op && isBinaryOp(*op)) {
+  BinaryExpr bin_expr;
+  while (true) {
+    auto&& left_op = this->peekNextTok();
+    if (!left_op || !isBinaryOp(*left_op)) {
+      break;
+    }
+
+    auto [left_prec, right_prec] = this->getBinOpPrecedence(left_op->tok_val);
+    if (left_prec < min_precedence) {
+      break;
+    }
+
     this->advanceNext();
-    bin_expr.op = op->tok_val;
     this->advanceNext();
-    bin_expr.right = std::make_unique<Expr>(parseBinaryOp());
+
+    Expr right_expr = this->parseBinaryOp(right_prec);
+
+    left_expr = (Expr) {
+      .kind = ExprKind::BinaryOp,
+      .node = (BinaryExpr) {
+        .op = left_op->tok_val,
+        .left  = std::make_shared<Expr>(left_expr),
+        .right = std::make_shared<Expr>(right_expr),
+      }
+    };
   }
 
-  expr.kind = ExprKind::BinaryOp;
-  expr.node = std::move(bin_expr);
-  return expr;
+  return left_expr;
 }
 
 /*
@@ -241,7 +265,7 @@ Expr Parser::parseBooleanOp() {
   };
 
   BooleanExpr bin_expr;
-  bin_expr.left = std::make_unique<Expr>((Expr) {
+  bin_expr.left = std::make_shared<Expr>((Expr) {
     .kind = ExprKind::Literal,
     .node = left_op_val
   });
@@ -251,12 +275,11 @@ Expr Parser::parseBooleanOp() {
     this->advanceNext();
     bin_expr.op = op->tok_val;
     this->advanceNext();
-    bin_expr.right = std::make_unique<Expr>(parseBooleanOp());
+    bin_expr.right = std::make_shared<Expr>(parseBooleanOp());
   } else {
     expr.kind = ExprKind::BooleanOp;
     expr.node = std::move(bin_expr);
   }
-  this->advanceNext();
 
   return expr;
 }
@@ -337,6 +360,7 @@ Expr Parser::parseFuncExpression() {
   std::vector<Expr> func_body;
   auto local_scope = std::make_shared<Env>(this->scope);
   this->advanceNext();
+
   printf("Current token at cursor: %s\n", this->tokens[this->pos].tok_val.data());
   printf("\n\n\nFUNCTION_BODY_BEGIN\n");
   while (this->pos < this->tokens.size() 
@@ -371,7 +395,7 @@ Expr Parser::parseFuncExpression() {
       .params = params,
       .return_type = return_type,
     },
-    .body = std::make_unique<std::vector<Expr>>(std::move(func_body))
+    .body = std::make_shared<std::vector<Expr>>(std::move(func_body))
   };
 
   return expr;
@@ -508,6 +532,43 @@ std::unique_ptr<Token> Parser::tokFromCurrPos(size_t idx) {
   return std::make_unique<Token>(tok);
 }
 
+Expr Parser::parseCaseExpression() {
+  Expr e = (Expr) {
+    .kind = ExprKind::CaseExpr,
+    .node = UndefinedExpr()
+  };
+
+  this->advance();
+
+  if (this->tokens[this->pos].tok_type != TOKEN_PAREN_LEFT) {
+    return e;
+  }
+
+  this->advance();
+
+  Expr condition = this->parseExpression();
+
+  if (this->tokens[this->pos].tok_type != TOKEN_PAREN_RIGHT
+      || this->tokFromCurrPos(1)->tok_type != TOKEN_CASE_OPEN
+  ) {
+    return e;
+  }
+
+  this->advance();
+  this->advance();
+
+  // Here, based on the type the condition-expression is to return,we
+  // check if the type can have one or more forms. If so, we proceed
+  // with the parsing. Otherwise, we emit a warning in the ast that this
+  // can be re-written without the use of a case statement.
+  while (this->tokens[this->pos].tok_type != TOKEN_CASE_CLOSE) {
+
+  }
+
+  return e;
+}
+
+
 void Parser::parseTokens() {
   std::printf(
     "\nParsing tokens\n"
@@ -524,15 +585,29 @@ void Parser::parseTokens() {
       break;
     }
 
+    if (expr.kind == ExprKind::BinaryOp) {
+      printExprTree(expr);
+    }
+
     std::printf("\nParsed Expression: %s\nCurrent value at cursor: %s\n", 
                 exprKindToStr(expr.kind),
                 this->tokens[this->pos].tok_val.data());
 
     this->expressions.push_back(std::move(expr));
     this->advanceNext();
-  }
 
-  if (this->pos == start_pos) {
-    this->advanceNext();
+    if (this->pos == start_pos) {
+      this->advanceNext();
+    }
+  }
+}
+
+std::pair<float, float> Parser::getBinOpPrecedence(std::string& op) {
+  if (op == "+" || op == "-") {
+    return std::make_pair(1.0, 1.1);
+  } else if (op == "*" || op == "/") {
+    return std::make_pair(2.0, 2.1);
+  } else {
+    throw std::runtime_error("Not a valid operator");
   }
 }

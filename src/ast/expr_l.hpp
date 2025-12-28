@@ -15,6 +15,8 @@ enum class ExprKind {
   FuncCall,
   FuncDef,
   ConstExpr,
+  CaseExpr,
+  ScopeExpr,
   Undefined,
 };
 
@@ -46,15 +48,21 @@ typedef struct {
 */
 typedef struct {
   std::string op;
-  std::unique_ptr<Expr> left;
-  std::unique_ptr<Expr> right;
+  std::shared_ptr<Expr> left;
+  std::shared_ptr<Expr> right;
 } BinaryExpr;
 
 typedef struct {
   std::string op;
-  std::unique_ptr<Expr> left;
-  std::unique_ptr<Expr> right;
+  std::shared_ptr<Expr> left;
+  std::shared_ptr<Expr> right;
 } BooleanExpr;
+
+typedef struct {
+  ExprKind scope_expr_kind;
+  Type return_type;
+  std::shared_ptr<Expr> expression;
+} ScopedExpr;
 
 typedef struct {
   std::string callee;
@@ -64,7 +72,7 @@ typedef struct {
 typedef struct {
   std::string func_name;
   FunctionDef def;
-  std::unique_ptr<std::vector<Expr>> body;
+  std::shared_ptr<std::vector<Expr>> body;
   std::shared_ptr<Env> local_scope;
 } FuncDefExpr;
 
