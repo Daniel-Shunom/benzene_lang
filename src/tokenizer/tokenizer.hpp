@@ -22,6 +22,8 @@ public:
 
   std::vector<Token> get_tokens();
 
+  void print_tokens();
+
 private: 
   uint64_t position{0};
 

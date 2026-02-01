@@ -1,6 +1,8 @@
 #include "tokenizer.hpp"
 #include "token_types.hpp"
 #include <cctype>
+#include <format>
+#include <iostream>
 #include <string>
 #include "tables/keyword_table.hpp"
 #include "tables/operator_table.hpp"
@@ -208,4 +210,10 @@ void Tokenizer::make_token(TokenType type, std::string value) {
 
 std::vector<Token> Tokenizer::get_tokens() {
   return this->tokens;
+}
+
+void Tokenizer::print_tokens() {
+  for (const auto& token: this->tokens) {
+    std::cout << std::format("[TOKEN]\t Type: {}, value: {}", typeToStr(token.token_type), token.token_value);
+  }
 }
