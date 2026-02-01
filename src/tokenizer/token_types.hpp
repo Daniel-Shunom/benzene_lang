@@ -30,7 +30,7 @@ struct Token {
 };
 
 
-static std::string typeToStr(TokenType type) {
+inline static std::string typeToStr(TokenType type) {
   using t = TokenType;
   switch (type) {
     case t::Identifier: return "Identifier";

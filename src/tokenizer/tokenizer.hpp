@@ -1,16 +1,24 @@
 #pragma once
 #include <cstdint>
 #include <string>
+#include <string_view>
 #include <vector>
 #include "token_types.hpp"
 
 class Tokenizer {
 public:
-  Tokenizer(std::string input) {
+  Tokenizer(std::string_view input) {
     this->input = input;
   };
 
   void scan_tokens();
+
+  std::vector<Token> get_tokens();
+
+  void print_tokens();
+
+private: 
+  uint64_t position{0};
 
   void scan_string();
 
@@ -19,13 +27,6 @@ public:
   bool scan_operator();
 
   void scan_keyword_or_identifier();
-
-  std::vector<Token> get_tokens();
-
-  void print_tokens();
-
-private: 
-  uint64_t position{0};
 
   bool is_file_end();
 
@@ -45,7 +46,7 @@ private:
 
   void make_token(TokenType, std::string);
 
-  std::string input{};
+  std::string_view input{};
 
   std::vector<Token> tokens{};
 };
