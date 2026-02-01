@@ -1,10 +1,7 @@
 #include "../lib/files.hpp"
 #include "./cmd/cmd.hpp"
-#include "./tokenizer/tok.hpp"
-#include "../lib/logger.hpp"
-#include "parser/parser.hpp"
+#include "tokenizer/tokenizer.hpp"
 #include <cstdio>
-#include <vector>
 
 int main(int argc, char* argv[]) {
   Args args = GetArgs(argc, argv);
@@ -15,25 +12,14 @@ int main(int argc, char* argv[]) {
     "File path: %s\n",
     args.file_path.data()
   );
+  
+  tokenizer.scan_tokens();
+  tokenizer.print_tokens();
 
-  tokenizer.extractAllTokens();
-  auto&& tokens = tokenizer.getTokenList();
+  auto tokens = tokenizer.get_tokens();
 
   std::printf(
     "\nDone lexing '%s'\n"
-    "Resulting tokens:\n",
-    args.file_path.data()
-  );
-
-  for (const auto &tok: tokens) {
-    logToken(tok);
-  }
-
-  Parser parser(tokens);
-  parser.parseTokens();
-
-  std::printf(
-    "\nDone parsing tokens'%s'\n"
     "Resulting tokens:\n",
     args.file_path.data()
   );
