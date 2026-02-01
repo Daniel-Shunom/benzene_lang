@@ -2,10 +2,13 @@
 #include "./cmd/cmd.hpp"
 #include "tokenizer/tokenizer.hpp"
 #include <cstdio>
+#include <string_view>
 
 int main(int argc, char* argv[]) {
   Args args = GetArgs(argc, argv);
-  Tokenizer tokenizer(FileToString(args.file_path));
+  std::string src_code = FileToString(args.file_path);
+  std::string_view contents{src_code};
+  Tokenizer tokenizer(contents);
  
   std::printf(
     "\nLexing current file\n"
