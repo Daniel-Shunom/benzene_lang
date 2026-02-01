@@ -27,6 +27,8 @@ enum class TokenType {
 struct Token {
   TokenType token_type;
   std::string token_value;
+  size_t line_number;
+  size_t column_number;
 };
 
 

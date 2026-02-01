@@ -12,7 +12,13 @@ void Tokenizer::scan_tokens() {
   while(!this->is_file_end()) {
     char c = this->peek();
 
-    if (this->is_whitespace(c)) {
+    if (this->is_whitespace_or_newline(c)) {
+      if (c != '\n') {
+        this->advance();
+        continue;
+      }
+      this->increment_line_number();
+      this->reset_column_number();
       this->advance();
       continue;
     }
@@ -36,25 +42,21 @@ void Tokenizer::scan_tokens() {
       continue;
     }
 
-    switch (c) {
-      case '(': this->advance(); this->make_token(TokenType::LParen, "("); continue;
-      case ')': this->advance(); this->make_token(TokenType::RParen, ")"); continue;
-      case '{': this->advance(); this->make_token(TokenType::LBrace, "{"); continue;
-      case '}': this->advance(); this->make_token(TokenType::RBrace, "}"); continue;
-      case '[': this->advance(); this->make_token(TokenType::LBrac, "["); continue;
-      case ']': this->advance(); this->make_token(TokenType::RBrac, "]"); continue;
-      case ':': this->advance(); this->make_token(TokenType::Colon, ":"); continue;
-      default: this->advance(); this->make_token(TokenType::Unknown, ""); continue;
+    if (this->scan_other_symbol()) {
+      continue;
     }
+
+    this->make_token(TokenType::Unknown, {c});
+    continue;
   }
 
-  this->tokens.emplace_back(Token({
-    .token_type = TokenType::EoF,
-    .token_value = std::string{}
-  }));
+  this->make_token(TokenType::EoF, "");
 }
 
 void Tokenizer::scan_keyword_or_identifier() {
+  this->token_start_line = this->get_line_number();
+  this->token_start_column = this->get_column_number();
+
   std::string id{};
 
   while(
@@ -73,20 +75,16 @@ void Tokenizer::scan_keyword_or_identifier() {
   auto it = KeywordTable.find(id);
 
   if (it == KeywordTable.end()) {
-    this->tokens.emplace_back(Token({
-      .token_type = TokenType::Identifier,
-      .token_value = id
-    }));
-    return;
+    this->make_token(TokenType::Identifier, id);
+  } else {
+    this->make_token(it->second, id);
   }
-
-  this->tokens.emplace_back(Token({
-    .token_type = it->second,
-    .token_value = id
-  }));
 }
 
 void Tokenizer::scan_number() {
+  this->token_start_line = this->get_line_number();
+  this->token_start_column = this->get_column_number();
+
   std::string number("");
 
   while (!this->is_file_end() && std::isdigit(this->peek())) {
@@ -108,22 +106,19 @@ void Tokenizer::scan_number() {
   }
 
   if (is_decimal) {
-    this->tokens.emplace_back(Token({
-      .token_type = TokenType::Float,
-      .token_value = number
-    }));
+    this->make_token(TokenType::Float, number);
   } else {
-    this->tokens.emplace_back(Token({
-      .token_type = TokenType::Integer,
-      .token_value = number
-    }));
+    this->make_token(TokenType::Integer, number);
   }
 }
 
 bool Tokenizer::scan_operator() {
+  this->token_start_line = this->get_line_number();
+  this->token_start_column = this->get_column_number();
+
   for (const auto& [op, type]: OperatorList) {
     if (this->input.compare(this->position, op.size(), op) == 0) {
-      this->position += op.size();
+      for (const auto& _: op) this->advance();
       this->make_token(type, op);
       return true;
     }
@@ -132,10 +127,66 @@ bool Tokenizer::scan_operator() {
   return false;
 }
 
+
+bool Tokenizer::scan_other_symbol() {
+  this->token_start_line = this->get_line_number();
+  this->token_start_column = this->get_column_number();
+
+  if (this->is_file_end()) return false;
+
+  char c = this->peek();
+
+  switch (c) {
+    case '(':
+      this->advance();
+      this->make_token(TokenType::LParen, "(");
+      return true;
+
+    case ')':
+      this->advance();
+      this->make_token(TokenType::RParen, ")");
+      return true;
+
+    case '{':
+      this->advance();
+      this->make_token(TokenType::LBrace, "{");
+      return true;
+
+    case '}':
+      this->advance();
+      this->make_token(TokenType::RBrace, "}");
+      return true;
+
+    case '[':
+      this->advance();
+      this->make_token(TokenType::LBrac, "[");
+      return true;
+
+    case ']':
+      this->advance();
+      this->make_token(TokenType::RBrac, "]");
+      return true;
+
+    case ':':
+      this->advance();
+      this->make_token(TokenType::Colon, ":");
+      return true;
+
+    default:
+      this->advance();
+      this->make_token(TokenType::Unknown, std::string(1, c));
+      return true;
+  }
+}
+
+
 void Tokenizer::scan_string() {
   if (!this->is_string_apo(this->peek())) {
     return;
   }
+
+  this->token_start_line = this->get_line_number();
+  this->token_start_column = this->get_column_number();
 
   std::string value{};
   value.push_back(this->peek());
@@ -158,6 +209,12 @@ void Tokenizer::scan_string() {
           default: value.push_back(this->peek()); this->advance(); break;
         }
       }
+    } else if (this->peek() == '\n') {
+      this->make_token(TokenType::Unknown, value);
+      this->increment_line_number();
+      this->reset_column_number();
+      this->advance();
+      return;
     } else {
       value.push_back(this->peek());
       this->advance();
@@ -165,15 +222,12 @@ void Tokenizer::scan_string() {
   }
 
   value.push_back(this->peek());
+  this->make_token(TokenType::String, value);
   this->advance();
-  this->tokens.emplace_back(Token({
-    .token_type = TokenType::String,
-    .token_value = value
-  }));
 }
 
 
-bool Tokenizer::match(std::string& expected) {
+bool Tokenizer::match(const std::string& expected) {
   for (char c: expected) {
     if (this->peek() != c) return false;
     this->advance();
@@ -195,6 +249,7 @@ char Tokenizer::advance() {
     return '\0';
   }
 
+  this->increment_column_number();
   return this->input[this->position++];
 }
 
@@ -202,26 +257,28 @@ bool Tokenizer::is_file_end() {
   return this->position >= this->input.size();
 }
 
-bool Tokenizer::is_identifier_char(char c) {
+bool Tokenizer::is_identifier_char(const char& c) {
   return std::isalnum(c) || (c == '_');
 }
 
-bool Tokenizer::is_string_apo(char c) {
+bool Tokenizer::is_string_apo(const char& c) {
   return c == '\"';
 }
 
-bool Tokenizer::is_whitespace(char c) {
+bool Tokenizer::is_whitespace_or_newline(const char& c) {
   return c == ' ' || c == '\t' || c == '\r' || c == '\n';
 }
 
-bool Tokenizer::is_digit(char c) {
+bool Tokenizer::is_digit(const char& c) {
   return std::isdigit(c);
 }
 
 void Tokenizer::make_token(TokenType type, std::string value) {
   this->tokens.emplace_back(Token({
     .token_type = type,
-    .token_value = value
+    .token_value = value,
+    .line_number = this->token_start_line,
+    .column_number = this->token_start_column,
   }));
 }
 
@@ -232,10 +289,31 @@ std::vector<Token> Tokenizer::get_tokens() {
 void Tokenizer::print_tokens() {
   for (const auto& token : this->tokens) {
     std::cout << std::format(
-      "[TOKEN]  {:<20} | {}\n",
+      "[TOKEN]  {:<20} | {:<25} | Ln {:>4}, Cn {:>4}\n",
       typeToStr(token.token_type),
-      token.token_value
+      token.token_value,
+      token.line_number,
+      token.column_number
     );
   }
 }
 
+void Tokenizer::increment_line_number() {
+  this->line_number++;
+}
+
+void Tokenizer::increment_column_number() {
+  this->column_number++;
+}
+
+void Tokenizer::reset_column_number() {
+  this->column_number = 1;
+}
+
+size_t Tokenizer::get_line_number() {
+  return this->line_number;
+}
+
+size_t Tokenizer::get_column_number() {
+  return this->column_number;
+}

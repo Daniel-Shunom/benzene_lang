@@ -1,5 +1,5 @@
 #pragma once
-#include <cstdint>
+#include <cstddef>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -9,6 +9,9 @@ class Tokenizer {
 public:
   Tokenizer(std::string_view input) {
     this->input = input;
+    this->line_number = 1;
+    this->column_number = 1;
+    this->token_start_line = 1;
   };
 
   void scan_tokens();
@@ -18,7 +21,15 @@ public:
   void print_tokens();
 
 private: 
-  uint64_t position{0};
+  size_t position{};
+
+  size_t line_number{};
+
+  size_t column_number{};
+
+  size_t token_start_line{};
+
+  size_t token_start_column{};
 
   void scan_string();
 
@@ -26,23 +37,37 @@ private:
 
   bool scan_operator();
 
+  bool scan_other_symbol();
+
   void scan_keyword_or_identifier();
+
+  bool is_newline(const char&);
 
   bool is_file_end();
 
-  bool is_whitespace(char);
+  bool is_whitespace_or_newline(const char&);
 
-  bool is_identifier_char(char);
+  bool is_identifier_char(const char&);
 
-  bool is_string_apo(char);
+  bool is_string_apo(const char&);
 
-  bool is_digit(char);
+  bool is_digit(const char&);
 
-  bool match(std::string& expected);
+  bool match(const std::string& expected);
 
   char peek();
 
   char advance();
+
+  void increment_line_number();
+
+  void increment_column_number();
+
+  void reset_column_number();
+
+  size_t get_line_number();
+
+  size_t get_column_number();
 
   void make_token(TokenType, std::string);
 
