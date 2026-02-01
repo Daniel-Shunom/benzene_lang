@@ -12,7 +12,12 @@ void Tokenizer::scan_tokens() {
   while(!this->is_file_end()) {
     char c = this->peek();
 
-    if (this->is_identifier_char(c)) {
+    if (this->is_whitespace(c)) {
+      this->advance();
+      continue;
+    }
+
+    if (std::isalpha(c)) {
       this->scan_keyword_or_identifier();
       continue;
     }
@@ -38,6 +43,7 @@ void Tokenizer::scan_tokens() {
       case '}': this->advance(); this->make_token(TokenType::RBrace, "}"); continue;
       case '[': this->advance(); this->make_token(TokenType::LBrac, "["); continue;
       case ']': this->advance(); this->make_token(TokenType::RBrac, "]"); continue;
+      case ':': this->advance(); this->make_token(TokenType::Colon, ":"); continue;
       default: this->advance(); this->make_token(TokenType::Unknown, ""); continue;
     }
   }
@@ -55,6 +61,11 @@ void Tokenizer::scan_keyword_or_identifier() {
     !this->is_file_end() 
     && this->is_identifier_char(this->peek())
   ) {
+    id.push_back(this->peek());
+    this->advance();
+  }
+
+  if(this->peek() == '.') {
     id.push_back(this->peek());
     this->advance();
   }
@@ -127,6 +138,7 @@ void Tokenizer::scan_string() {
   }
 
   std::string value{};
+  value.push_back(this->peek());
   this->advance();
 
   while (
@@ -152,6 +164,7 @@ void Tokenizer::scan_string() {
     }
   }
 
+  value.push_back(this->peek());
   this->advance();
   this->tokens.emplace_back(Token({
     .token_type = TokenType::String,
@@ -197,6 +210,10 @@ bool Tokenizer::is_string_apo(char c) {
   return c == '\"';
 }
 
+bool Tokenizer::is_whitespace(char c) {
+  return c == ' ' || c == '\t' || c == '\r' || c == '\n';
+}
+
 bool Tokenizer::is_digit(char c) {
   return std::isdigit(c);
 }
@@ -213,7 +230,12 @@ std::vector<Token> Tokenizer::get_tokens() {
 }
 
 void Tokenizer::print_tokens() {
-  for (const auto& token: this->tokens) {
-    std::cout << std::format("[TOKEN]\t Type: {}, value: {}", typeToStr(token.token_type), token.token_value);
+  for (const auto& token : this->tokens) {
+    std::cout << std::format(
+      "[TOKEN]  {:<20} | {}\n",
+      typeToStr(token.token_type),
+      token.token_value
+    );
   }
 }
+

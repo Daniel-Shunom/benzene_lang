@@ -18,13 +18,13 @@ enum class TokenType {
 
   Case, Default,
 
-  LParen, RParen, LBrac, RBrac, LBrace, RBrace, Pipe,
+  LParen, RParen, LBrac, RBrac, LBrace, RBrace, Pipe, Colon,
 
   EoF, Unknown
 };
 
 
-using Token = struct {
+struct Token {
   TokenType token_type;
   std::string token_value;
 };
@@ -67,7 +67,10 @@ static std::string typeToStr(TokenType type) {
     case t::LBrace: return "LBrace";
     case t::RBrace: return "RBrace";
     case t::Pipe: return "Pipe";
+    case t::Colon: return "Colon";
     case t::EoF: return "EoF";
     case t::Unknown: return "Unknown";
   }
+
+  return "Unknown";
 }

@@ -29,6 +29,8 @@ private:
 
   bool is_file_end();
 
+  bool is_whitespace(char);
+
   bool is_identifier_char(char);
 
   bool is_string_apo(char);
