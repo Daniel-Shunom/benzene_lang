@@ -3,6 +3,8 @@
 #include <string>
 
 static const std::vector<std::pair<std::string, TokenType>> OperatorList = {
+  {"|=> ", TokenType::PipeOp},
+
   {">=", TokenType::Ge},
 
   {"<=", TokenType::Le},

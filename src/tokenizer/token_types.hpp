@@ -53,7 +53,7 @@ enum class TokenType {
   LBrace,
   RBrace,
 
-  Pipe,
+  PipeOp,
   Colon,
   Delim,
   Dot,
@@ -111,12 +111,12 @@ inline static std::string typeToStr(TokenType type) {
     case t::RBrac: return "RBrac";
     case t::LBrace: return "LBrace";
     case t::RBrace: return "RBrace";
-    case t::Pipe: return "Pipe";
+    case t::PipeOp: return "Pipe Operator";
     case t::Colon: return "Colon";
     case t::Delim: return "Delimitter";
     case t::Dot: return "Dot";
     case t::CommentKeyword: return "CommentKeyword";
-    case t::SLComment: return "Comment";
+    case t::SLComment: return "Single-Line Comment";
     case t::MLComment: return "Multi-Line Comment";
     case t::UTComment: return "UT Comment";
     case t::EoF: return "EoF";
