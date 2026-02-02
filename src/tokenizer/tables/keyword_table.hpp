@@ -6,6 +6,8 @@
 static const std::unordered_map<std::string, TokenType> KeywordTable({
   {"Load", TokenType::ImportKeyword},
 
+  {"Cmt", TokenType::CommentKeyword},
+
   {"const", TokenType::ConstantKeyword},
 
   {"let", TokenType::LetKeyword},
@@ -18,7 +20,7 @@ static const std::unordered_map<std::string, TokenType> KeywordTable({
 
   {"func", TokenType::FuncStart},
 
-  {"end.", TokenType::FuncEnd},
+  {"end", TokenType::EndStmt},
 
   {"case", TokenType::Case},
 

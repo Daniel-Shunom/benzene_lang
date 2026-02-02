@@ -16,9 +16,9 @@ public:
 
   void scan_tokens();
 
-  std::vector<Token> get_tokens();
-
   void print_tokens();
+
+  std::vector<Token> get_tokens();
 
 private: 
   size_t position{};
@@ -41,17 +41,29 @@ private:
 
   void scan_keyword_or_identifier();
 
+  void scan_comment();
+
+  void scan_import_module();
+
+  void scan_multi_line_comment();
+
   bool is_newline(const char&);
 
   bool is_file_end();
 
   bool is_whitespace_or_newline(const char&);
 
+  bool is_whitespace(const char&);
+
   bool is_identifier_char(const char&);
 
   bool is_string_apo(const char&);
 
+  bool is_dot(const char&);
+
   bool is_digit(const char&);
+
+  bool is_delim(const char&);
 
   bool match(const std::string& expected);
 
@@ -59,15 +71,11 @@ private:
 
   char advance();
 
-  void increment_line_number();
-
-  void increment_column_number();
-
-  void reset_column_number();
-
   size_t get_line_number();
 
   size_t get_column_number();
+
+  void set_token_start();
 
   void make_token(TokenType, std::string);
 

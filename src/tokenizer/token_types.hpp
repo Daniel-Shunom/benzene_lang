@@ -3,26 +3,63 @@
 
 enum class TokenType {
   ImportKeyword,
+  ImportModule,
+  Identifier,
 
-  Identifier, 
+  CommentKeyword,
+  MLComment,
+  SLComment,
+  UTComment,
 
-  ConstantKeyword, LetKeyword,
+  ConstantKeyword,
+  LetKeyword,
 
-  Integer, Float, String,
+  IntegerLiteral,
+  FloatLiteral,
+  StringLiteral,
+  UTStringLiteral,
+  TrueLiteral,
+  FalseLiteral,
+  NilLiteral,
 
-  TrueLiteral, FalseLiteral, NilLiteral,
+  PlusOp,
+  MinusOp,
+  DivideOp,
+  MultiplyOp,
+  PercentOp,
 
-  Plus, Minus, Divide, Multiply, Percent,
+  Gt,
+  Ge,
+  Lt,
+  Le,
+  Eq,
+  EqEq,
 
-  Gt, Ge, Lt, Le, Eq, EqEq,
+  FuncStart,
+  EndStmt,
+  RtnTypeOp,
 
-  FuncStart, FuncEnd, RtnTypeOp, And, Or, Not,
+  AndOp,
+  OrOp,
+  NotOp,
 
-  Case, Default,
+  Case,
+  Default,
 
-  LParen, RParen, LBrac, RBrac, LBrace, RBrace, Pipe, Colon,
+  LParen,
+  RParen,
+  LBrac,
+  RBrac,
+  LBrace,
+  RBrace,
 
-  EoF, Unknown
+  Pipe,
+  Colon,
+  Delim,
+  Dot,
+
+  EoF,
+  Unknown
 };
 
 
@@ -38,20 +75,22 @@ inline static std::string typeToStr(TokenType type) {
   using t = TokenType;
   switch (type) {
     case t::ImportKeyword: return "ImportKeyword";
+    case t::ImportModule: return "ImportModule";
     case t::Identifier: return "Identifier";
     case t::LetKeyword: return "LetKeyword";
     case t::ConstantKeyword: return "ConstantKeyword";
-    case t::Integer: return "Integer";
-    case t::Float: return "Float";
-    case t::String: return "String";
+    case t::IntegerLiteral: return "IntegerLiteral";
+    case t::FloatLiteral: return "FloatLiteral";
+    case t::StringLiteral: return "StringLiteral";
+    case t::UTStringLiteral: return "UT StringLiteral";
     case t::TrueLiteral: return "TrueLiteral";
     case t::FalseLiteral: return "FalseLiteral";
     case t::NilLiteral: return "NilLiteral";
-    case t::Plus: return "Plus";
-    case t::Minus: return "Minus";
-    case t::Divide: return "Divide";
-    case t::Multiply: return "Multiply";
-    case t::Percent: return "Percent";
+    case t::PlusOp: return "Plus";
+    case t::MinusOp: return "Minus";
+    case t::DivideOp: return "Divide";
+    case t::MultiplyOp: return "Multiply";
+    case t::PercentOp: return "Percent";
     case t::Gt: return "Gt";
     case t::Ge: return "Ge";
     case t::Lt: return "Lt";
@@ -59,11 +98,11 @@ inline static std::string typeToStr(TokenType type) {
     case t::Eq: return "Eq";
     case t::EqEq: return "EqEq";
     case t::FuncStart: return "FuncStart";
-    case t::FuncEnd: return "FuncEnd";
+    case t::EndStmt: return "EndStmt";
     case t::RtnTypeOp: return "RtnTypeOp";
-    case t::And: return "And";
-    case t::Or: return "Or";
-    case t::Not: return "Not";
+    case t::AndOp: return "And";
+    case t::OrOp: return "Or";
+    case t::NotOp: return "Not";
     case t::Case: return "Case";
     case t::Default: return "Default";
     case t::LParen: return "LParen";
@@ -74,6 +113,12 @@ inline static std::string typeToStr(TokenType type) {
     case t::RBrace: return "RBrace";
     case t::Pipe: return "Pipe";
     case t::Colon: return "Colon";
+    case t::Delim: return "Delimitter";
+    case t::Dot: return "Dot";
+    case t::CommentKeyword: return "CommentKeyword";
+    case t::SLComment: return "Comment";
+    case t::MLComment: return "Multi-Line Comment";
+    case t::UTComment: return "UT Comment";
     case t::EoF: return "EoF";
     case t::Unknown: return "Unknown";
   }

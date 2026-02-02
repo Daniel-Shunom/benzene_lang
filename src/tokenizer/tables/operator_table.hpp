@@ -9,21 +9,21 @@ static const std::vector<std::pair<std::string, TokenType>> OperatorList = {
 
   {"==", TokenType::EqEq},
 
-  {"&&", TokenType::And},
+  {"&&", TokenType::AndOp},
 
-  {"||", TokenType::Or},
+  {"||", TokenType::OrOp},
 
   {":>", TokenType::RtnTypeOp},
 
-  {"+", TokenType::Plus},
+  {"+", TokenType::PlusOp},
 
-  {"-", TokenType::Minus},
+  {"-", TokenType::MinusOp},
 
-  {"*", TokenType::Multiply},
+  {"*", TokenType::MultiplyOp},
 
-  {"/", TokenType::Divide},
+  {"/", TokenType::DivideOp},
 
-  {"%", TokenType::Percent},
+  {"%", TokenType::PercentOp},
 
   {">", TokenType::Gt},
 
@@ -31,6 +31,6 @@ static const std::vector<std::pair<std::string, TokenType>> OperatorList = {
 
   {"=", TokenType::Eq},
 
-  {"~", TokenType::Not},
+  {"~", TokenType::NotOp},
 };
 
