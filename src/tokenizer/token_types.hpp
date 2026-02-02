@@ -4,7 +4,7 @@
 enum class TokenType {
   Identifier, 
 
-  ConstantKeyword,
+  ConstantKeyword, LetKeyword,
 
   Integer, Float, String,
 
@@ -36,6 +36,7 @@ inline static std::string typeToStr(TokenType type) {
   using t = TokenType;
   switch (type) {
     case t::Identifier: return "Identifier";
+    case t::LetKeyword: return "LetKeyword";
     case t::ConstantKeyword: return "ConstantKeyword";
     case t::Integer: return "Integer";
     case t::Float: return "Float";

@@ -6,6 +6,8 @@
 static const std::unordered_map<std::string, TokenType> KeywordTable({
   {"const", TokenType::ConstantKeyword},
 
+  {"let", TokenType::LetKeyword},
+
   {"Nil", TokenType::NilLiteral},
 
   {"True", TokenType::TrueLiteral},
