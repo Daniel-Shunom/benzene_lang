@@ -2,6 +2,8 @@
 #include <string>
 
 enum class TokenType {
+  ImportKeyword,
+
   Identifier, 
 
   ConstantKeyword, LetKeyword,
@@ -35,6 +37,7 @@ struct Token {
 inline static std::string typeToStr(TokenType type) {
   using t = TokenType;
   switch (type) {
+    case t::ImportKeyword: return "ImportKeyword";
     case t::Identifier: return "Identifier";
     case t::LetKeyword: return "LetKeyword";
     case t::ConstantKeyword: return "ConstantKeyword";

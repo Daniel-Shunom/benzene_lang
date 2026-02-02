@@ -4,6 +4,8 @@
 #include "..\token_types.hpp"
 
 static const std::unordered_map<std::string, TokenType> KeywordTable({
+  {"Load", TokenType::ImportKeyword},
+
   {"const", TokenType::ConstantKeyword},
 
   {"let", TokenType::LetKeyword},
