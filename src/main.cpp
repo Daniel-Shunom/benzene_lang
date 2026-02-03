@@ -1,6 +1,6 @@
 #include "../lib/files.hpp"
 #include "./cmd/cmd.hpp"
-#include "tokenizer/tokenizer.hpp"
+#include "lexer/lexer.hpp"
 #include <cstdio>
 #include <string_view>
 
@@ -8,7 +8,7 @@ int main(int argc, char* argv[]) {
   Args args = GetArgs(argc, argv);
   std::string src_code = FileToString(args.file_path);
   std::string_view contents{src_code};
-  Tokenizer tokenizer(contents);
+  Lexer lexer(contents);
  
   std::printf(
     "\nLexing current file\n"
@@ -16,10 +16,10 @@ int main(int argc, char* argv[]) {
     args.file_path.data()
   );
   
-  tokenizer.scan_tokens();
-  tokenizer.print_tokens();
+  lexer.scan_tokens();
+  lexer.print_tokens();
 
-  auto tokens = tokenizer.get_tokens();
+  auto tokens = lexer.get_tokens();
 
   std::printf(
     "\nDone lexing '%s'\n"
