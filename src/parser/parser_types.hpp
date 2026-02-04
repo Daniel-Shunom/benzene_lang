@@ -4,6 +4,7 @@
 #include <expected>
 #include <functional>
 #include <string>
+#include <vector>
 
 template<typename St>
 struct ParserState {
@@ -16,6 +17,10 @@ struct ParserState {
 
   void advance() {
     this->current_position++;
+  }
+
+  void set_state_list(std::vector<St> s) {
+    this->state_list = s;
   }
 
   std::optional<St> current() {

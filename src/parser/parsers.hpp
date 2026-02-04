@@ -3,12 +3,15 @@
 #include "../nodes/node.hpp"
 #include "../lexer/token_types.hpp"
 #include <format>
+#include <functional>
 #include <memory>
+#include <utility>
 #include <vector>
 
 using TokenState = ParserState<Token>;
 using ASTParser = Parser<Token, ASTPtr>;
 using ASTResult = ParseResult<ASTPtr, Token>;
+using ASTFunc = std::function<ASTParser (ASTPtr)>;
 
 ASTParser parse_expr();
 
@@ -19,9 +22,15 @@ ASTParser parse_constant_expr();
 ASTParser parse_identifier_expr();
 
 // need a helper with this one
-ASTParser parse_binaryop_expr();
+ASTParser m_parse_binaryop_expr();
 
-ASTParser parse_unaryop_expr();
+ASTParser m_parse_unaryop_expr();
+
+ASTParser m_parse_primary();
+
+ASTParser m_parse_mulplicative();
+
+ASTParser m_parser_additive();
 
 ASTParser parse_let_bind_expr();
 
@@ -69,7 +78,30 @@ inline ASTParser p_parse_seq(std::vector<ASTParser> parsers) {
   };
 }
 
-inline ASTParser p_parse_first_match(std::vector<ASTParser> parsers) {
+inline ASTParser p_parse_optional(ASTParser parser) {
+  return ASTParser {
+    [parser](TokenState& state) -> ASTResult {
+      if (state.is_end()) {
+        return std::unexpected(ParseError<Token>{
+          .error_value = Token{},
+          .message = "Error: reached unexpected EoF token"
+        });
+      }
+
+      auto res = parser.apply(state);
+      if (!res) {
+        return ParseSuccess<ASTPtr, Token>{
+          .value = nullptr,
+          .state = state
+        };
+      }
+
+      return res;
+    }
+  };
+}
+
+inline ASTParser p_parse_options(std::vector<ASTParser> parsers) {
   return ASTParser{
     [parsers](TokenState& state) -> ASTResult {
       auto start_pos = state.current_position;
@@ -88,7 +120,7 @@ inline ASTParser p_parse_first_match(std::vector<ASTParser> parsers) {
 
       return std::unexpected(ParseError<Token>{
         .error_value = Token{},
-        .message = ""
+        .message = "Error: no matching parser found"
       });
     }
   };
@@ -128,6 +160,68 @@ inline ASTParser p_parse_match(TokenType type) {
   };
 }
 
-inline ASTParser p_parse_option_of(std::vector<ASTParser> parsers) {
+inline ASTParser p_parse_bind(ASTParser parser, ASTFunc next) {
+  return ASTParser{ 
+    [parser, next](TokenState& state) -> ASTResult {
+      if (state.is_end()) {
+        return std::unexpected(ParseError<Token>{
+          .error_value = Token{},
+          .message = "Error: unexpected EoF token reached."
+        });
+      }
 
+      auto res = parser.apply(state);
+      if (!res) return res;
+
+      ASTParser next_parser = next(std::move(res.value().value));
+      return next_parser.apply(state);
+    }
+  };
 }
+
+inline ASTParser m_parse_chain_left(ASTParser term, ASTParser op) {
+  return ASTParser{
+    [term, op](TokenState& state) -> ASTResult {
+      if(state.is_end()) {
+        return std::unexpected(ParseError<Token>{
+          .error_value = Token{},
+          .message = "Error: unexpected EoF token reached."
+        });
+      }
+
+      auto left_term = term.apply(state);
+      if (!left_term) return left_term;
+
+      while(true) {
+        size_t start_pos = state.current_position;
+
+        auto oper = op.apply(state);
+        if (!oper) {
+          state.current_position = start_pos;
+          break;
+        }
+
+        auto right_term = term.apply(state);
+        if (!right_term) {
+          state.current_position = start_pos;
+          break;
+        }
+
+        std::string op_str = static_cast<TokNode*>(oper->value.get())->token.token_value;
+
+        auto binary_operation = std::make_unique<BinOpExpr>(
+          std::move(left_term.value().value),
+          op_str,
+          std::move(right_term.value().value)
+        );
+
+        left_term->value = std::move(binary_operation);
+      }
+
+      return ParseSuccess<ASTPtr, Token>{
+        .value = std::move(left_term.value().value),
+        .state = state
+      };
+    }
+  };
+};
