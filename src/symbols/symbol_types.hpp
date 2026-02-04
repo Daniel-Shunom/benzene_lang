@@ -4,9 +4,10 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include "../lexer/token_types.hpp"
+#include "../tokens/token_types.hpp"
 
 enum class SymbolKind {
+  UnResolved,
   Function,
   Binding,
   Constant,
