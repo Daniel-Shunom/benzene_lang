@@ -10,6 +10,10 @@ using TypeRef = std::shared_ptr<Type>;
 
 struct ASTNode {
   TypeRef type_ref;
+  bool poisoned;
+  bool is_poisoned() {
+    return this->poisoned;
+  }
   virtual ~ASTNode() = default;
 };
 
@@ -26,6 +30,11 @@ struct SeqNode: ASTNode {
 struct TokNode: ASTNode {
   TokNode(Token tok) { this->token=tok;}
   Token token;
+};
+
+struct ImportStmt: ASTNode {
+  Symbol* symbol;
+  Token import_token;
 };
 
 struct LiteralExpr: ASTNode {
