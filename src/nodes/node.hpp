@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <string>
 #include <utility>
 #include <vector>
@@ -37,6 +38,11 @@ struct IdentifierExpr: ASTNode {
 };
 
 struct BinOpExpr: ASTNode {
+  BinOpExpr(ASTPtr left, std::string op, ASTPtr right) {
+    this->left = std::move(left);
+    this->op = op;
+    this->right = std::move(right);
+  }
   ASTPtr left;
   std::string op;
   ASTPtr right;
