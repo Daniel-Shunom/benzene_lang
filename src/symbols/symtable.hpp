@@ -1,5 +1,5 @@
 #pragma once
-#include "../lexer/token_types.hpp"
+#include "../tokens/token_types.hpp"
 #include "scopes.hpp"
 #include "symbol_types.hpp"
 #include <string>
