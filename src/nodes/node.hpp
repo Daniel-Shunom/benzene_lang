@@ -1,5 +1,4 @@
 #pragma once
-#include <algorithm>
 #include <string>
 #include <utility>
 #include <vector>
@@ -73,6 +72,10 @@ struct FunctionDeclExpr: ASTNode {
   Symbol* symbol;
   std::vector<ASTPtr> params;
   ASTPtr body;
+};
+
+struct FunctionDeclBody: ASTNode {
+  std::vector<ASTPtr> statements;
 };
 
 struct ConstExpr: ASTNode {
