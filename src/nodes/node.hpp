@@ -14,23 +14,10 @@ struct ASTNode {
   bool is_poisoned() {
     return this->poisoned;
   }
-  virtual ~ASTNode() = default;
 };
 
 using ASTPtr = std::unique_ptr<ASTNode>;
 using Case = std::pair<std::vector<ASTPtr>, ASTNode*>;
-
-struct SeqNode: ASTNode {
-  SeqNode(std::vector<ASTPtr> nodes) {
-    this->children = std::move(nodes);
-  }
-  std::vector<ASTPtr> children;
-};
-
-struct TokNode: ASTNode {
-  TokNode(Token tok) { this->token=tok;}
-  Token token;
-};
 
 struct ImportStmt: ASTNode {
   Symbol* symbol;
