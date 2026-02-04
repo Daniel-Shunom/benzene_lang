@@ -2,6 +2,7 @@
 #include <optional>
 #include <span>
 #include <expected>
+#define _GLIBCXX_USE_CONSTEXPR_FUNCTIONAL 0
 #include <functional>
 #include <string>
 #include <vector>

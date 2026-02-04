@@ -44,6 +44,8 @@ ASTParser p_parse_seq(std::vector<ASTParser> parsers);
 
 ASTParser p_parse_options(std::vector<ASTParser> parsers);
 
+ASTParser p_parse_many();
+
 ASTParser p_parse_optional(ASTParser parser);
 
 ASTParser p_parse_match(TokenType type);

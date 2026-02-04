@@ -130,7 +130,7 @@ ASTResult run_parser(ASTParser parser, TokenState& state) {
 
 ASTParser m_parse_chain_left(ASTParser term, ASTParser op) {
   return ASTParser{
-    [&term, &op](TokenState& state) mutable -> ASTResult {
+    [term, op](TokenState& state) mutable -> ASTResult {
       if(state.is_end()) {
         return std::unexpected(ParseError<Token>{
           .error_value = Token{},
@@ -177,7 +177,7 @@ ASTParser m_parse_chain_left(ASTParser term, ASTParser op) {
 
 ASTParser p_parse_bind(ASTParser parser, ASTFunc next) {
   return ASTParser{ 
-    [&parser, &next](TokenState& state) mutable -> ASTResult {
+    [parser, &next](TokenState& state) mutable -> ASTResult {
       if (state.is_end()) {
         return std::unexpected(ParseError<Token>{
           .error_value = Token{},
@@ -196,7 +196,7 @@ ASTParser p_parse_bind(ASTParser parser, ASTFunc next) {
 
 ASTParser p_parse_match(TokenType type) {
   return ASTParser{
-    [&type](TokenState& state) mutable -> ASTResult {
+    [type](TokenState& state) mutable -> ASTResult {
       auto current = state.current();
       if (!current.has_value()) {
         std::string message("Error: toke not found for matching");
@@ -233,7 +233,7 @@ ASTParser p_parse_match(TokenType type) {
 
 ASTParser p_parse_options(std::vector<ASTParser> parsers) {
   return ASTParser{
-    [&parsers](TokenState& state) mutable -> ASTResult {
+    [parsers](TokenState& state) mutable -> ASTResult {
       auto start_pos = state.current_position;
       for (const auto& parser : parsers) {
         state.current_position = start_pos;
@@ -258,7 +258,7 @@ ASTParser p_parse_options(std::vector<ASTParser> parsers) {
 
 ASTParser parse_func_decl_body() {
   return ASTParser{
-    [&](TokenState& state) mutable -> ASTResult {
+    [](TokenState& state) mutable -> ASTResult {
       std::vector<ASTPtr> statements;
 
       if (state.is_end()) {
@@ -290,7 +290,7 @@ ASTParser parse_func_decl_body() {
 
 ASTParser p_parse_seq(std::vector<ASTParser> parsers) {
   return ASTParser{
-    [&parsers](TokenState& state) mutable -> ASTResult {
+    [parsers](TokenState& state) mutable -> ASTResult {
       auto start_pos = state.current_position;
       std::vector<ASTPtr> nodes{};
 
@@ -325,7 +325,7 @@ ASTParser p_parse_seq(std::vector<ASTParser> parsers) {
 
 ASTParser p_parse_optional(ASTParser parser) {
   return ASTParser {
-    [&parser](TokenState& state) mutable -> ASTResult {
+    [parser](TokenState& state) mutable -> ASTResult {
       if (state.is_end()) {
         return std::unexpected(ParseError<Token>{
           .error_value = Token{},
