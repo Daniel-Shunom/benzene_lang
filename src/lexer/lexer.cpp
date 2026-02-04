@@ -1,11 +1,11 @@
-#include "lexer.hpp"
-#include "token_types.hpp"
 #include <cctype>
 #include <format>
 #include <iostream>
 #include <string>
-#include "tables/keyword_table.hpp"
-#include "tables/operator_table.hpp"
+#include "lexer.hpp"
+#include "../tokens/token_types.hpp"
+#include "../tables/keyword_table.hpp"
+#include "../tables/operator_table.hpp"
 
 
 void Lexer::scan_tokens() {
