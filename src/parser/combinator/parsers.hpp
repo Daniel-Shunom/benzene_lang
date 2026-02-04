@@ -1,7 +1,7 @@
 #pragma once
 #include "parser_types.hpp"
-#include "../nodes/node.hpp"
-#include "../lexer/token_types.hpp"
+#include "../../nodes/node.hpp"
+#include "../../lexer/token_types.hpp"
 #include <functional>
 #include <vector>
 
