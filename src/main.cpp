@@ -1,7 +1,9 @@
 #include "../lib/files.hpp"
-#include "./cmd/cmd.hpp"
+#include "cmd/cmd.hpp"
 #include "lexer/lexer.hpp"
+#include "parsers/combinator/parsers.hpp"
 #include <cstdio>
+#include <print>
 #include <string_view>
 
 int main(int argc, char* argv[]) {
@@ -27,5 +29,12 @@ int main(int argc, char* argv[]) {
     args.file_path.data()
   );
 
+  auto parser = parse_expr();
+  auto state = TokenState();
+  state.set_state_list(tokens);
+  
+  std::println("Beginning Parsing");
+  auto res = run_parser(parser, state);
+  std::println("Ended parsing");
   return 0;
 }
