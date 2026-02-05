@@ -50,7 +50,8 @@ struct UnaryOpExpr: ASTNode {
 
 struct LetBindExpr: ASTNode {
   Symbol* symbol;
-  ASTPtr value;
+  ASTPtr identifier;
+  ASTPtr expr;
 };
 
 struct FuncInvocExpr: ASTNode {
