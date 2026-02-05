@@ -1,13 +1,15 @@
+#include <algorithm>
 #include <format>
 #include <memory>
 #include <optional>
+#include <utility>
 #include "td_parser.hpp"
 #include "../../tables/utils.hpp"
 
 Result TDParser::parse_let_bind_expr() {
   size_t start = this->current_position;
   MResult let_token = this->m_match_token_type(TokenType::LetKeyword);
-  
+
   if (!let_token) {
     this->reset_position(start);
     return std::unexpected(let_token.error());
@@ -24,15 +26,13 @@ Result TDParser::parse_let_bind_expr() {
     this->reset_position(start);
     return std::unexpected(bound_expr.error());
   }
-  
+
   auto* ident = static_cast<IdentifierExpr*>(identifier.value().get());
-  LetBindExpr expr = {
+  return std::make_unique<LetBindExpr>(LetBindExpr({
     .symbol = ident->identifier_sym,
     .identifier = std::move(identifier.value()),
     .expr = std::move(bound_expr.value())
-  };
-
-  return std::make_unique<ASTNode>(expr);
+  }));
 }
 
 Result TDParser::parse_identifier_expr() {
@@ -58,7 +58,7 @@ Result TDParser::parse_identifier_expr() {
   }
 
   IdentifierExpr expr = {.identifier_sym=sym};
-  return std::make_unique<ASTNode>(expr);
+  return std::make_unique<IdentifierExpr>(expr);
 }
 
 Result TDParser::parse_literal_expr() {
@@ -77,17 +77,8 @@ Result TDParser::parse_literal_expr() {
     return this->make_err(token.value(), message);
   }
 
-  Symbol* sym = this->sym_table.lookup(token->token_value);
-  if (sym == nullptr) {
-    Symbol* inserted_sym = sym_table.declare(token.value(), SymbolKind::UnResolved);
-    IdentifierExpr expr = {
-      .identifier_sym = inserted_sym
-    };
-    return std::make_unique<ASTNode>(expr);
-  }
-
-  IdentifierExpr expr = {.identifier_sym=sym};
-  return std::make_unique<ASTNode>(expr);
+  LiteralExpr expr = {.literal=token.value()};
+  return std::make_unique<LiteralExpr>(expr);
 }
 
 MResult TDParser::m_match_token_type(TokenType type) {
