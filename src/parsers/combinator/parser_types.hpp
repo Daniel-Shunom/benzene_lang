@@ -1,13 +1,18 @@
 #pragma once
+#include <cstdio>
 #include <functional>
 #include <span>
+#include <string>
 #include "../../tokens/token_types.hpp"
 #include "../../symbols/symtable.hpp"
 
 struct ParserState {
-  std::span<Token> tokens;
+  std::vector<Token> tokens;
   SymbolTable sym_table;
   size_t pos{};
+
+
+  std::vector<std::string> logs;
 
   void reset_pos(size_t at) {
     if (at < tokens.size()) pos = at;
@@ -15,6 +20,32 @@ struct ParserState {
 
   bool is_at_end() {
     return pos >= tokens.size();
+  }
+
+  bool logs_enabled = false;
+
+  void activivate_logs() {
+    logs_enabled = true;
+  }
+
+  void log(std::string log) {
+    if(not logs_enabled) return;
+    auto l = std::string("[PARSER LOG DEBUG]\t"+log);
+    logs.push_back(l);
+  }
+
+  void log_err(std::string log) {
+    this->log("[Err]\t"+log);
+  }
+
+  void log_success(std::string log) {
+    this->log("[Ok ]\t"+log);
+  }
+
+  void display_logs() {
+    for (auto& log: logs) {
+      std::printf("%s\n", log.data());
+    }
   }
 
   void set_state(std::vector<Token> tokens) {
