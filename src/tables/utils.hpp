@@ -15,5 +15,5 @@ static inline bool is_operator(Token& token) {
 }
 
 static inline bool is_literal(Token& token) {
-  return LiteralTable.contains(token.token_value);
+  return LiteralTable.contains(token.token_type);
 }

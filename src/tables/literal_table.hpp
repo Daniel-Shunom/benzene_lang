@@ -1,16 +1,13 @@
 #pragma once
-#include <unordered_map>
-#include <string>
+#include <unordered_set>
 #include "../tokens/token_types.hpp"
 
-static const std::unordered_map<std::string, TokenType> LiteralTable({
-  {"Nil", TokenType::NilLiteral},
-
-  {"True", TokenType::TrueLiteral},
-
-  {"False", TokenType::TrueLiteral},
-
-  {"Int", TokenType::IntegerLiteral},
-
-  {"Float", TokenType::FloatLiteral},
-});
+static const std::unordered_set<TokenType> LiteralTable = {
+  TokenType::NilLiteral,
+  TokenType::TrueLiteral,
+  TokenType::FalseLiteral,
+  TokenType::IntegerLiteral,
+  TokenType::FloatLiteral,
+  TokenType::StringLiteral,
+  TokenType::UTStringLiteral,
+};
