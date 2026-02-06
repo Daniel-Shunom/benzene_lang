@@ -2,9 +2,14 @@
 #include <stdexcept>
 #include <string>
 
-typedef struct {
+struct Args {
   std::string file_path;
-} Args;
+  std::string logs_enabled;
+
+  bool is_logs_enabled() {
+    return logs_enabled == "--wlogs";
+  }
+};
 
 inline Args GetArgs(int argc, char* argv[]) {
   if (argc < 2) {
@@ -13,6 +18,7 @@ inline Args GetArgs(int argc, char* argv[]) {
 
   return (Args) {
     .file_path = argv[1],
+    .logs_enabled = argv[2] ? argv[2] : std::string{}
   };
 }
 
