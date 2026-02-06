@@ -17,6 +17,10 @@ struct NDLiteral: Node {
   Token literal;
 };
 
+struct NDImportDirective: Node {
+  Token import_directive;
+};
+
 struct NDIdentifier: Node {
   Symbol* identifier_symbol;
   Token identifier;
@@ -35,6 +39,10 @@ struct NDConstExpr: Node {
 struct NDCallExpr: Node {
   std::unique_ptr<NDIdentifier> identifier;
   std::vector<NDPtr> args;
+};
+
+struct NDCallChain: Node {
+  std::vector<NDPtr> calls;
 };
 
 struct NDFuncDeclExpr: Node {
