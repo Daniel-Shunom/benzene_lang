@@ -1,8 +1,11 @@
 #include "../lib/files.hpp"
 #include "cmd/cmd.hpp"
 #include "lexer/lexer.hpp"
+#include "parsers/combinator/parser_types.hpp"
 #include "parsers/combinator/parsers.hpp"
+#include "tokens/token_types.hpp"
 #include <cstdio>
+#include <print>
 #include <string_view>
 
 int main(int argc, char* argv[]) {
@@ -17,16 +20,35 @@ int main(int argc, char* argv[]) {
     args.file_path.data()
   );
   
+  if (args.is_logs_enabled()) {
+    std::printf("[LOGS ENABLED]\n");
+  }
+
   lexer.scan_tokens();
   lexer.print_tokens();
 
   auto tokens = lexer.get_tokens();
+  auto state = ParserState();
+  state.set_state(tokens);
 
-  std::printf(
-    "\nDone lexing '%s'\n"
-    "Resulting tokens:\n",
-    args.file_path.data()
-  );
+  if (args.is_logs_enabled()) state.activivate_logs();
+  std::printf("Beginning AST Parsing\n");
+
+  PResult<Parent> parent = run_parser(state);
+  
+  if(!parent) {
+    std::printf("Parsing failed, Displaying Parse Logs\n");
+    state.display_logs();
+    std::printf("Ended AST Parsing\n");
+  } else {
+    std::printf(
+      "[MAIN] Parse Success!\n"
+      "[MAIN] Total Captured Expressions: %zu\n",
+      parent.value().children.size()
+    );
+    state.display_logs();
+    state.display_captured_exprs();
+  }
 
   return 0;
 }
