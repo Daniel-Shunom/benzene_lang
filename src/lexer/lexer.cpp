@@ -100,47 +100,47 @@ void Lexer::scan_comment() {
     return this->scan_multi_line_comment();
   }
 
-  std::string comment{};
+  // std::string comment{};
 
   while (
     !this->is_file_end()
     && !this->is_newline(this->peek())
   ) {
-    comment.push_back(this->peek());
+    // comment.push_back(this->peek());
     this->advance();
   }
 
-  this->make_token(TokenType::SLComment, comment);
+  // this->make_token(TokenType::SLComment, comment);
 }
 
 void Lexer::scan_multi_line_comment() {
   this->set_token_start();
-  std::string ml_comment{};
+  // std::string ml_comment{};
 
   while (
     !this->is_file_end()
   ) {
     if (this->peek() == '}') {
-      this->make_token(TokenType::MLComment, ml_comment);
+      // this->make_token(TokenType::MLComment, ml_comment);
       this->advance();
       return;
     }
 
     if (this->peek() == '`') {
-      ml_comment.push_back(this->peek());
+      // ml_comment.push_back(this->peek());
       this->advance();
       if (!this->is_file_end()) {
-        ml_comment.push_back(this->peek());
+        // ml_comment.push_back(this->peek());
         this->advance();
         continue;
       }
     }
 
-    ml_comment.push_back(this->peek());
+    // ml_comment.push_back(this->peek());
     this->advance();
   }
 
-  this->make_token(TokenType::UTComment, ml_comment);
+  // this->make_token(TokenType::UTComment, ml_comment);
 }
 
 void Lexer::scan_import_module() {
