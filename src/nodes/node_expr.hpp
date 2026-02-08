@@ -6,48 +6,57 @@
 #include <memory>
 #include <vector>
 
+class Visitor;
 struct Node {
   std::optional<Token> type;
   virtual ~Node() = default;
+  virtual void accept(Visitor&) = 0;
 };
+
+using NDPtr = std::unique_ptr<Node>;
 
 struct FuncParam {
   std::string param_name;
   std::optional<Token> param_type;
 };
 
-using NDPtr = std::unique_ptr<Node>;
-
 struct NDLiteral: Node {
   Token literal;
+  void accept(Visitor&) override;
 };
 
 struct NDImportDirective: Node {
   Token import_directive;
+  void accept(Visitor&) override;
 };
 
 struct NDIdentifier: Node {
   Symbol* identifier_symbol;
   Token identifier;
+  void accept(Visitor&) override;
 };
 
 struct NDLetBindExpr: Node {
   std::unique_ptr<NDIdentifier> identifier;
   NDPtr bound_value;
+  void accept(Visitor&) override;
 };
 
 struct NDConstExpr: Node {
   std::unique_ptr<NDIdentifier> identifier;
   NDLiteral literal;
+  void accept(Visitor&) override;
 };
 
 struct NDCallExpr: Node {
   std::unique_ptr<NDIdentifier> identifier;
   std::vector<NDPtr> args;
+  void accept(Visitor&) override;
 };
 
 struct NDCallChain: Node {
   std::vector<NDPtr> calls;
+  void accept(Visitor&) override;
 };
 
 struct NDFuncDeclExpr: Node {
@@ -55,6 +64,7 @@ struct NDFuncDeclExpr: Node {
   std::optional<Token> return_type;
   std::vector<FuncParam> func_params;
   std::vector<NDPtr> func_body;
+  void accept(Visitor&) override;
 };
 
 struct NDCaseExpr: Node {
@@ -64,6 +74,7 @@ struct NDCaseExpr: Node {
   };
   std::vector<NDPtr> conditions;
   std::vector<Branch> branches;
+  void accept(Visitor&) override;
 };
 
 struct Parent {
