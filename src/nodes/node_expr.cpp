@@ -18,3 +18,9 @@ void NDCallChain::accept(Visitor& v) { v.visit(*this); }
 void NDFuncDeclExpr::accept(Visitor& v) { v.visit(*this); }
 
 void NDCaseExpr::accept(Visitor& v) { v.visit(*this); }
+
+void NDBinaryExpr::accept(Visitor& v) { v.visit(*this); }
+
+void NDUnaryExpr::accept(Visitor& v) { v.visit(*this); }
+
+void NDScopeExpr::accept(Visitor& v) { v.visit(*this); }

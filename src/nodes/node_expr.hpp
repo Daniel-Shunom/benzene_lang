@@ -25,6 +25,24 @@ struct NDLiteral: Node {
   void accept(Visitor&) override;
 };
 
+struct NDUnaryExpr: Node {
+  Token op;
+  NDPtr rhs;
+  void accept(Visitor &) override;
+};
+
+struct NDBinaryExpr: Node {
+  NDPtr lhs;
+  Token op;
+  NDPtr rhs;
+  void accept(Visitor&) override;
+};
+
+struct NDScopeExpr: Node {
+  NDPtr expression;
+  void accept(Visitor &) override;
+};
+
 struct NDImportDirective: Node {
   Token import_directive;
   void accept(Visitor&) override;
