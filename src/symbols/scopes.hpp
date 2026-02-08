@@ -4,10 +4,11 @@
 enum class ScopeType {
   Application,
   Module,
-  Function,
+  Expression,
 };
 
 struct Scope {
   ScopeType scope_type;
   SymTable scope_sym_table;
 };
+
