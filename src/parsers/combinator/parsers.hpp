@@ -24,4 +24,8 @@ Parser<NDPtr> parse_expression();
 
 Parser<Token> match(TokenType);
 
+Parser<Token> parse_type_annotation();
+
 PResult<Parent> run_parser(ParserState& state);
+
+auto fail(ParserState&, size_t&);

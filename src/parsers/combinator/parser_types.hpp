@@ -1,13 +1,12 @@
 #pragma once
+#include <optional>
 #include <cstdio>
 #include <functional>
 #include <string>
 #include "../../tokens/token_types.hpp"
-#include "../../symbols/symtable.hpp"
 
 struct ParserState {
   std::vector<Token> tokens;
-  SymbolTable sym_table;
   size_t pos{};
 
 
@@ -65,7 +64,7 @@ struct ParserState {
   }
 
   std::optional<Token> peek() { 
-    if (is_at_end()) return Token{.token_type=TokenType::EoF};
+    if (is_at_end()) return std::nullopt;
     return tokens[pos];
   }
 
@@ -76,15 +75,17 @@ struct ParserState {
   }
 
   Token advance() {
-    while(!is_at_end()) {
-      if (auto p = this->peek(); p && is_comment(p->token_type)) {
-        pos++;
-        continue;
-      }
+    if (!this->is_at_end()) return this->tokens[pos++];
+    return tokens.back();
+  }
 
-      return this->tokens[this->pos++];
+  void skip_until(TokenType type) {
+    while(!is_at_end()) {
+      if(auto p = peek(); p->token_type == type) {
+        return;
+      }
+      this->advance();
     }
-    return Token{.token_type=TokenType::EoF};
   }
 };
 
@@ -152,4 +153,34 @@ Parser<B> bind(Parser<A> p, std::function<Parser<B>(A)> f) {
 template<typename T>
 PResult<T> run(Parser<T> t, ParserState& state) {
   return t(state);
+}
+
+struct ParseCheckpoint {
+  ParserState& state;
+  size_t start;
+  bool committed = false;
+
+  ParseCheckpoint(ParserState& s)
+    : state(s), start(s.pos) {}
+
+  void commit() {
+    committed = true;
+  }
+
+  ~ParseCheckpoint() {
+    if (!committed) {
+      state.reset_pos(start);
+    }
+  }
+};
+
+
+template<typename T>
+std::optional<T> optional(Parser<T> p, ParserState& state) {
+  ParseCheckpoint ck(state);
+  if (auto r = p(state)) {
+    ck.commit();
+    return r;
+  }
+  return std::nullopt;
 }
