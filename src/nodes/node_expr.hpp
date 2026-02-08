@@ -39,7 +39,7 @@ struct NDBinaryExpr: Node {
 };
 
 struct NDScopeExpr: Node {
-  NDPtr expression;
+  std::vector<NDPtr> expressions;
   void accept(Visitor &) override;
 };
 
