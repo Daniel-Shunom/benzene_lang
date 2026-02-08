@@ -2,14 +2,13 @@
 #include "scopes.hpp"
 #include "symbol_types.hpp"
 #include <memory>
-#include <optional>
 
 Symbol* SymbolTable::declare(const Token& token, SymbolKind kind) {
   std::string name = token.token_value;
   auto sym = std::make_unique<Symbol>(Symbol{
     .name = token.token_value,
     .symbol_kind = kind,
-    .type_info = std::nullopt,
+    .type_info = TypeInfo(),
     .symbol_token = token,
   });
 
@@ -17,8 +16,8 @@ Symbol* SymbolTable::declare(const Token& token, SymbolKind kind) {
     return nullptr;
   }
 
-  this->scopes.back().scope_sym_table[name] = std::move(sym);
   Symbol* ptr = sym.get();
+  this->scopes.back().scope_sym_table[name] = std::move(sym);
   return ptr;
 }
 
