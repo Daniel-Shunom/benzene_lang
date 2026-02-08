@@ -1,14 +1,19 @@
+#pragma once
 #include "../tokens/token_types.hpp"
 #include "../symbols/symbol_types.hpp"
 #include "../typing/types.hpp"
+#include <optional>
 #include <memory>
 #include <vector>
 
-struct Node {virtual ~Node() = default;};
+struct Node {
+  std::optional<Token> type;
+  virtual ~Node() = default;
+};
 
 struct FuncParam {
   std::string param_name;
-  Type param_type;
+  std::optional<Token> param_type;
 };
 
 using NDPtr = std::unique_ptr<Node>;
@@ -47,6 +52,7 @@ struct NDCallChain: Node {
 
 struct NDFuncDeclExpr: Node {
   Token func_identifier;
+  std::optional<Token> return_type;
   std::vector<FuncParam> func_params;
   std::vector<NDPtr> func_body;
 };
