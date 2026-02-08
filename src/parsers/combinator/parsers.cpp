@@ -3,6 +3,7 @@
 #include "parser_types.hpp"
 #include <memory>
 #include <optional>
+#include <utility>
 
 PResult<Parent> run_parser(ParserState& state) {
   Parent parent;
@@ -20,6 +21,11 @@ Parser<NDPtr> parse_expression() {
   //         * Add support for binary expressions
   //           and arithmetic expressions
   return [=](ParserState& state) -> PResult<NDPtr> {
+
+    if (auto scoped_expr = parse_scoped_expression()(state)) {
+      state.log_captured_expr("`ScopedExpression`");
+      return std::make_unique<NDScopeExpr>(std::move(*scoped_expr));
+    }
 
     if (auto import_directive = parse_import_stmt()(state)) {
       state.log_captured_expr("`ImportDirective`");
@@ -96,7 +102,7 @@ Parser<NDCallExpr> parse_call_expression() {
     if (!open_paren) return std::nullopt;
 
     std::vector<NDPtr> args;
-    while (true) {
+    while (!state.is_at_end()) {
       if (auto close_paren = match(TokenType::RParen)(state)) {
         break;
       }
@@ -134,6 +140,8 @@ Parser<NDPtr> parse_call_exprs() {
 
     if (auto p = state.peek(); p->token_type != TokenType::PipeOp) {
       auto ptr = std::make_unique<NDCallExpr>(std::move(func.value()));
+
+      checkpoint.commit();
       return ptr;
     }
 
@@ -275,6 +283,33 @@ Parser<NDCaseExpr> parse_case_expression() {
   };
 }
 
+Parser<NDScopeExpr> parse_scoped_expression() {
+  return [=](ParserState& state) -> PResult<NDScopeExpr>{
+    ParseCheckpoint checkpoint(state);
+
+    if (!match(TokenType::LBrace)(state)) {
+      return std::nullopt;
+    }
+
+    std::vector<NDPtr> exprs{};
+    while (!match(TokenType::RBrace)(state)) {
+      auto expr = parse_expression()(state);
+      if (!expr) {
+        state.skip_until(TokenType::RBrace);
+        break;
+      }
+      exprs.push_back(std::move(expr.value()));
+    }
+
+    NDScopeExpr scope_expr;
+    scope_expr.expressions = std::move(exprs);
+
+    state.log_success("Sucessfully parsed `ScopedExpression`");
+
+    checkpoint.commit();
+    return scope_expr;
+  };
+}
 
 Parser<NDLetBindExpr> parse_let_expression() {
   return [=](ParserState& state) -> PResult<NDLetBindExpr> {

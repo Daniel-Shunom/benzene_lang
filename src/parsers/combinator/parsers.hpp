@@ -6,11 +6,13 @@ Parser<NDLiteral> parse_literal();
 
 Parser<NDIdentifier> parse_identifier();
 
+Parser<NDConstExpr> parse_const_expression();
+
 Parser<NDLetBindExpr> parse_let_expression();
 
-Parser<NDImportDirective> parse_import_stmt();
+Parser<NDScopeExpr> parse_scoped_expression();
 
-Parser<NDConstExpr> parse_const_expression();
+Parser<NDImportDirective> parse_import_stmt();
 
 Parser<NDFuncDeclExpr> parse_function_declaration();
 
@@ -27,5 +29,3 @@ Parser<Token> match(TokenType);
 Parser<Token> parse_type_annotation();
 
 PResult<Parent> run_parser(ParserState& state);
-
-auto fail(ParserState&, size_t&);
