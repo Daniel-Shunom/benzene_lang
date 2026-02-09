@@ -34,22 +34,24 @@ int main(int argc, char* argv[]) {
     std::printf("Parsing failed, Displaying Parse Logs\n");
     state.display_logs();
     std::printf("Ended AST Parsing\n");
-  } else {
-    std::printf(
-      "[MAIN] Parse Success!\n"
-      "[MAIN] Total Captured Expressions: %zu\n",
-      parent.value().children.size()
-    );
-    state.display_logs();
-    state.display_captured_exprs();
-
-    TreePrinter printer;
-    SymResolver resolver;
-
-    parent->add_visitor(resolver);
-    parent->add_visitor(printer);
-    parent->apply_visitors();
+    return 0;
   }
+
+  std::printf(
+    "[MAIN] Parse Success!\n"
+    "[MAIN] Total Captured Expressions: %zu\n",
+    parent.value().children.size()
+  );
+
+  state.display_logs();
+  state.display_captured_exprs();
+
+  TreePrinter printer;
+  SymResolver resolver;
+
+  parent->add_visitor(resolver);
+  parent->add_visitor(printer);
+  parent->apply_visitors();
 
   return 0;
 }
