@@ -1,6 +1,8 @@
 #include "parsers.hpp"
+#include "parser_types.hpp"
 #include "../../tables/utils.hpp"
 #include "parser_types.hpp"
+#include <cstdio>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -24,22 +26,27 @@ Parser<NDPtr> parse_expression() {
 
     if (auto scoped_expr = parse_scoped_expression()(state)) {
       state.log_captured_expr("`ScopedExpression`");
-      return std::make_unique<NDScopeExpr>(std::move(*scoped_expr));
+      return std::make_unique<NDScopeExpr>(std::move(scoped_expr.value()));
     }
 
     if (auto import_directive = parse_import_stmt()(state)) {
       state.log_captured_expr("`ImportDirective`");
-      return std::make_unique<NDImportDirective>(*import_directive);
+      return std::make_unique<NDImportDirective>(import_directive.value());
     }
 
     if (auto let_expr = parse_let_expression()(state)) {
       state.log_captured_expr("`LetExpression`");
-      return std::make_unique<NDLetBindExpr>(std::move(*let_expr));
+      return std::make_unique<NDLetBindExpr>(std::move(let_expr.value()));
     }
 
     if (auto const_expr = parse_const_expression()(state)) {
       state.log_captured_expr("`ConstExpression`");
-      return std::make_unique<NDConstExpr>(std::move(*const_expr));
+      return std::make_unique<NDConstExpr>(std::move(const_expr.value()));
+    }
+
+    if (auto bin_artihmetic_op = parse_binary_arithmetic_expression()(state)) {
+      state.log_captured_expr("`BinaryArithmeticExpression`");
+      return bin_artihmetic_op;
     }
 
     if (auto func_call_exprs = parse_call_exprs()(state)) {
@@ -49,22 +56,44 @@ Parser<NDPtr> parse_expression() {
 
     if (auto func_decl = parse_function_declaration()(state)) {
       state.log_captured_expr("`FuncDeclExpression`");
-      return std::make_unique<NDFuncDeclExpr>(std::move(*func_decl));
+      return std::make_unique<NDFuncDeclExpr>(std::move(func_decl.value()));
     }
 
     if (auto case_expr = parse_case_expression()(state)) {
       state.log_captured_expr("`CaseExpression`");
-      return std::make_unique<NDCaseExpr>(std::move(*case_expr));
+      return std::make_unique<NDCaseExpr>(std::move(case_expr.value()));
     }
 
     if (auto literal = parse_literal()(state)) {
       state.log_captured_expr("`LiteralExpression`");
-      return std::make_unique<NDLiteral>(std::move(*literal));
+      return std::make_unique<NDLiteral>(std::move(literal.value()));
     }
 
     if (auto ident = parse_identifier()(state)) {
       state.log_captured_expr("`IdentifierExpr`");
-      return std::make_unique<NDIdentifier>(std::move(*ident));
+      return std::make_unique<NDIdentifier>(std::move(ident.value()));
+    }
+
+    return std::nullopt;
+  };
+}
+
+Parser<NDPtr> parse_primary_expression() {
+  return [=](ParserState& state) -> PResult<NDPtr> {
+    if (auto scoped_expr = parse_scoped_expression()(state)) {
+      return std::make_unique<NDScopeExpr>(std::move(scoped_expr.value()));
+    }
+
+    if (auto literal = parse_literal()(state)) {
+      return std::make_unique<NDLiteral>(std::move(literal.value()));
+    }
+
+    if (auto ident = parse_identifier()(state)) {
+      return std::make_unique<NDIdentifier>(std::move(ident.value()));
+    }
+
+    if (auto func_call = parse_call_expression()(state)) {
+      return std::make_unique<NDCallExpr>(std::move(func_call.value()));
     }
 
     return std::nullopt;
@@ -91,6 +120,102 @@ Parser<NDImportDirective> parse_import_stmt() {
   };
 }
 
+Parser<NDPtr> parse_unary_expression() {
+  return [=](ParserState& state) -> PResult<NDPtr> {
+    ParseCheckpoint checkpoint(state);
+    auto op = optional(match(TokenType::MinusOp), state);
+
+    auto expression = parse_primary_expression()(state);
+    if (!expression) return std::nullopt;
+
+    NDUnaryExpr expr;
+    expr.op = op;
+    expr.rhs = std::move(expression.value());
+
+    checkpoint.commit();
+    return std::make_unique<NDUnaryExpr>(std::move(expr));
+  };
+}
+
+Parser<NDPtr> m_parse_chain_left(Parser<NDPtr> term, Parser<Token> op) {
+  return [&, term, op](ParserState& state) -> PResult<NDPtr> {
+    ParseCheckpoint checkpoint(state);
+
+    auto left_res = term(state);
+
+    if (!left_res) return std::nullopt;
+
+    NDPtr left = std::move(left_res.value());
+
+    bool found_op = false;
+
+    while(!state.is_at_end()) {
+      size_t start = state.pos;
+      auto op_res = op(state);
+      if (!op_res) break;
+
+      found_op = true;
+
+      auto right_res = term(state);
+
+      // Not sure whether to break here, or just
+      // absolutely nuke this parse since holding onto
+      // the inclomplete infix exression is not valid
+      // behaviour
+      if (!right_res) {
+        state.reset_pos(start);
+        break;
+      }
+
+      auto bin = std::make_unique<NDBinaryExpr>();
+
+      bin->lhs = std::move(left);
+      bin->op  = std::move(op_res.value());
+      bin->rhs = std::move(right_res.value());
+
+      left = std::move(bin);
+    }
+
+    if (!found_op) return std::nullopt;
+
+    checkpoint.commit();
+    return left;
+  };
+}
+
+Parser<NDPtr> m_parse_multiplicative_op() {
+  return m_parse_chain_left(
+    parse_unary_expression(),
+    choice<Token>({
+      match(TokenType::MultiplyOp),
+      match(TokenType::DivideOp)
+    })
+  );
+}
+
+Parser<NDPtr> m_parse_additive_op() {
+  return m_parse_chain_left(
+    m_parse_multiplicative_op(),
+    choice<Token>({
+      match(TokenType::PlusOp), 
+      match(TokenType::MinusOp)
+    })
+  );
+}
+
+Parser<NDPtr> parse_binary_arithmetic_expression() {
+  return [=](ParserState& state) -> PResult<NDPtr> {
+    ParseCheckpoint checkpoint(state);
+    auto expr_res = m_parse_additive_op()(state);
+
+    if (!expr_res) return std::nullopt;
+    state.log_success("Sucessfully parsed `BinaryArithmeticExpression`");
+
+    checkpoint.commit();
+    return expr_res;
+  };
+}
+
 Parser<NDCallExpr> parse_call_expression() {
   return [=](ParserState& state) -> PResult<NDCallExpr> {
     ParseCheckpoint checkpoint(state);
@@ -107,10 +232,10 @@ Parser<NDCallExpr> parse_call_expression() {
         break;
       }
 
-      auto expr = parse_expression()(state);
+      auto expr = parse_primary_expression()(state);
       if (!expr) return std::nullopt;
 
-      args.push_back(std::move(*expr));
+      args.push_back(std::move(expr.value()));
 
       // Consume comma if present, otherwise expect CloseParen next iteration
       if (!match(TokenType::Delim)(state)) {
@@ -121,7 +246,7 @@ Parser<NDCallExpr> parse_call_expression() {
     }
 
     NDCallExpr call;
-    call.identifier = std::make_unique<NDIdentifier>(*ident);
+    call.identifier = std::make_unique<NDIdentifier>(ident.value());
     call.args = std::move(args);
 
     state.log_success("Sucessfully parsed `FunctionCall`");
@@ -219,7 +344,7 @@ Parser<NDFuncDeclExpr> parse_function_declaration() {
         state.skip_until(TokenType::EndStmt);
         break;
       };
-      body.push_back(std::move(*expr));
+      body.push_back(std::move(expr.value()));
     }
 
     NDFuncDeclExpr func;
@@ -247,7 +372,7 @@ Parser<NDCaseExpr> parse_case_expression() {
     auto main_expr = parse_expression()(state);
     if (!main_expr) return std::nullopt;
 
-    conditions.push_back(std::move(*main_expr));
+    conditions.push_back(std::move(main_expr.value()));
 
     auto col = match(TokenType::Colon)(state);
     if(!col) return std::nullopt;
@@ -264,11 +389,11 @@ Parser<NDCaseExpr> parse_case_expression() {
       if (!result) return std::nullopt;
 
       auto branch = std::vector<NDPtr>();
-      branch.push_back(std::move(*pattern));
+      branch.push_back(std::move(pattern.value()));
 
       branches.push_back(NDCaseExpr::Branch{
         .pattern = std::move(branch),
-        .result = std::move(*result)
+        .result = std::move(result.value())
       });
     }
 
@@ -326,14 +451,14 @@ Parser<NDLetBindExpr> parse_let_expression() {
     auto eq = match(TokenType::Eq)(state);
     if (!eq) return std::nullopt;
 
-    auto value = parse_expression()(state);
+    auto value = parse_primary_expression()(state);
     if (!value) return std::nullopt;
 
     NDLetBindExpr expr;
-    expr.identifier = std::make_unique<NDIdentifier>(*ident);
+    expr.identifier = std::make_unique<NDIdentifier>(ident.value());
     expr.identifier->type = let_type;
     expr.type = let_type;
-    expr.bound_value = std::move(*value);
+    expr.bound_value = std::move(value.value());
     state.log_success("Sucessfully parsed `LetExpression`");
 
     checkpoint.commit();
@@ -360,7 +485,7 @@ Parser<NDConstExpr> parse_const_expression() {
     if (!literal) return std::nullopt;
 
     NDConstExpr expr;
-    expr.identifier = std::make_unique<NDIdentifier>(*ident);
+    expr.identifier = std::make_unique<NDIdentifier>(ident.value());
     expr.identifier->type = const_type;
     expr.type = const_type;
     expr.literal = std::move(literal.value());
@@ -374,13 +499,11 @@ Parser<NDConstExpr> parse_const_expression() {
 
 Parser<NDIdentifier> parse_identifier() {
   return [=](ParserState& state) -> PResult<NDIdentifier> {
-    auto token = state.peek();
+    auto token = match(TokenType::Identifier)(state);
     if (!token) return std::nullopt;
-    if (token->token_type != TokenType::Identifier) return std::nullopt;
 
     NDIdentifier id;
     id.identifier = token.value();
-    state.advance();
     return id;
   };
 }

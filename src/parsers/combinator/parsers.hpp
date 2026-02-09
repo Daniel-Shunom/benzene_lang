@@ -24,6 +24,18 @@ Parser<NDCaseExpr> parse_case_expression();
 
 Parser<NDPtr> parse_expression();
 
+Parser<NDPtr> parse_primary_expression();
+
+Parser<NDPtr> m_parse_chain_left(Parser<NDPtr>, Parser<Token>);
+
+Parser<NDPtr> parse_unary_expression();
+
+Parser<NDPtr> m_parse_additive_op();
+
+Parser<NDPtr> m_parse_multiplicative_op();
+
+Parser<NDPtr> parse_binary_arithmetic_expression();
+
 Parser<Token> match(TokenType);
 
 Parser<Token> parse_type_annotation();

@@ -95,8 +95,13 @@ using PResult = std::optional<T>;
 template<typename T>
 using Parser = std::function<PResult<T>(ParserState&)>;
 
-template<typename A, typename B>
-Parser<B> map(Parser<A> p, std::function<B(A)> f) {
+
+template<typename A, typename F>
+auto map(Parser<A> p, F f)
+  -> Parser<std::invoke_result_t<F, A>>
+{
+  using B = std::invoke_result_t<F, A>;
+
   return [=](ParserState& state) -> PResult<B> {
     size_t start = state.pos;
 
@@ -109,6 +114,7 @@ Parser<B> map(Parser<A> p, std::function<B(A)> f) {
     return f(std::move(*r));
   };
 }
+
 
 template<typename T>
 Parser<std::vector<T>> seq(std::vector<Parser<T>> parsers) {
@@ -126,6 +132,22 @@ Parser<std::vector<T>> seq(std::vector<Parser<T>> parsers) {
     }
 
     return out;
+  };
+}
+
+template<typename T>
+Parser<T> choice(std::vector<Parser<T>> parsers) {
+  return [=](ParserState& state) -> PResult<T> {
+    size_t start = state.pos;
+
+    for (auto& p: parsers) {
+      auto r = p(state);
+      if(r) return r;
+      state.reset_pos(start);
+      continue;
+    }
+
+    return std::nullopt;
   };
 }
 
