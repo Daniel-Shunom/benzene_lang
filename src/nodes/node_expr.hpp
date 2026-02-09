@@ -98,4 +98,17 @@ struct NDCaseExpr: Node {
 
 struct Parent {
   std::vector<NDPtr> children;
+  std::vector<Visitor*> visitors;
+
+  void add_visitor(Visitor& v) {
+    this->visitors.push_back(&v);
+  }
+
+  void apply_visitors() {
+    for (auto& node: children) {
+      for (auto& visitor: visitors) {
+        node->accept(*visitor);
+      }
+    }
+  }
 };
