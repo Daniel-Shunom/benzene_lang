@@ -9,7 +9,7 @@
 class Visitor;
 struct Node {
   std::optional<Token> type;
-  bool is_poisoned;
+  bool is_poisoned = false;
   virtual ~Node() = default;
   virtual void accept(Visitor&) = 0;
 };
