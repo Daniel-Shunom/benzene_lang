@@ -26,7 +26,7 @@ struct NDLiteral: Node {
 };
 
 struct NDUnaryExpr: Node {
-  Token op;
+  std::optional<Token> op;
   NDPtr rhs;
   void accept(Visitor &) override;
 };
