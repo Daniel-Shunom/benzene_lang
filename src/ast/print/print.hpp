@@ -27,11 +27,13 @@ public:
 private:
   std::ostream& out;
   size_t indent = 0;
-
+// In print.hpp
   void push();
   void pop();
   void line(const std::string& text);
 
   void print_token(const Token&);
+  std::string escape_json_string(const std::string& s);
+  std::string poison_mark(bool is_poisoned);
 };
 
