@@ -2,6 +2,7 @@
 #include "scopes.hpp"
 #include "symbol_types.hpp"
 #include <memory>
+#include <optional>
 
 Symbol* SymbolTable::declare(const Token& token, SymbolKind kind) {
   std::string name = token.token_value;
@@ -19,6 +20,11 @@ Symbol* SymbolTable::declare(const Token& token, SymbolKind kind) {
   Symbol* ptr = sym.get();
   this->scopes.back().scope_sym_table[name] = std::move(sym);
   return ptr;
+}
+
+std::optional<ScopeType> SymbolTable::get_current_scope_type() const {
+  if (this->scopes.empty()) return std::nullopt;
+  return this->scopes.back().scope_type;
 }
 
 Symbol* SymbolTable::lookup(const std::string& name) {

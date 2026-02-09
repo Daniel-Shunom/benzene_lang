@@ -1,4 +1,5 @@
 #pragma once
+#include <optional>
 #include "../tokens/token_types.hpp"
 #include "scopes.hpp"
 #include "symbol_types.hpp"
@@ -12,7 +13,7 @@ public:
   }
   Symbol* declare(const Token&, SymbolKind);
   Symbol* lookup(const std::string&);
-
+  std::optional<ScopeType> get_current_scope_type() const ;
   void new_scope(ScopeType);
   void pop_scope();
 
@@ -22,7 +23,7 @@ private:
 
 struct ScopeGuard {
   SymbolTable& table;
-  ScopeGuard(SymbolTable& t, ScopeType s = ScopeType::Expression): table(t) {
+  ScopeGuard(SymbolTable& t, ScopeType s = ScopeType::Module): table(t) {
     table.new_scope(s);
   }
 
