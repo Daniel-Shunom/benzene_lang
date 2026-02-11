@@ -185,10 +185,6 @@ Parser<NDPtr> m_parse_chain_left(Parser<NDPtr> term, Parser<Token> op) {
 
       auto right_res = term(state);
 
-      // Not sure whether to break here, or just
-      // absolutely nuke this parse since holding onto
-      // the inclomplete infix exression is not valid
-      // behaviour
       if (!right_res) {
         state.reset_pos(start);
         break;
