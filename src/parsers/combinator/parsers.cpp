@@ -18,17 +18,59 @@ PResult<Parent> run_parser(ParserState& state) {
   return parent;
 }
 
-Parser<NDPtr> parse_expression() {
-  // TODO -> * Convert this into a jump table
-  //         * Add support for binary expressions
-  //           and arithmetic expressions
+// Okay so I am trying not to run mad here so the parsing flow is as follows :) :
+//
+// We parse the TOP level constructs (so think parts of the grammar with non-terminals)
+// and then once we have parsed those, we then parse the lower level constructs
+// 
+// Since each non terminal resolves to a terminal at the end of the day,
+// we are able to separate the parsing of the terminal and non-terminals
+// grammars into separate function. This therefore makes the parsing easier
+// and more intuitive.
+//
+//
+// So it's gonna be N-a (look at the notation from the textbook man idk). Just read the 
+// shit if you ever get confused again.
+Parser<NDPtr> parse_value_expression() {
   return [=](ParserState& state) -> PResult<NDPtr> {
-
+    // Try scoped expressions first (they can contain statements inside)
     if (auto scoped_expr = parse_scoped_expression()(state)) {
-      state.log_captured_expr("`ScopedExpression`");
       return std::make_unique<NDScopeExpr>(std::move(scoped_expr.value()));
     }
 
+    // Try case expressions
+    if (auto case_expr = parse_case_expression()(state)) {
+      return std::make_unique<NDCaseExpr>(std::move(case_expr.value()));
+    }
+
+    // Try function calls (before binary ops, since they're more specific)
+    if (auto func_call_exprs = parse_call_exprs()(state)) {
+      return func_call_exprs;
+    }
+
+    // Try binary arithmetic expressions
+    if (auto bin_artihmetic_op = parse_binary_arithmetic_expression()(state)) {
+      return bin_artihmetic_op;
+    }
+
+    // Finally, try simple literals and identifiers
+    if (auto literal = parse_literal()(state)) {
+      return std::make_unique<NDLiteral>(std::move(literal.value()));
+    }
+
+    if (auto ident = parse_identifier()(state)) {
+      return std::make_unique<NDIdentifier>(std::move(ident.value()));
+    }
+
+    return std::nullopt;
+  };
+}
+
+// Top-level parser: handles STATEMENTS and top-level constructs
+Parser<NDPtr> parse_expression() {
+  return [=](ParserState& state) -> PResult<NDPtr> {
+
+    // Statements (let, const, func, import) - these can ONLY appear at top level
     if (auto import_directive = parse_import_stmt()(state)) {
       state.log_captured_expr("`ImportDirective`");
       return std::make_unique<NDImportDirective>(import_directive.value());
@@ -44,34 +86,14 @@ Parser<NDPtr> parse_expression() {
       return std::make_unique<NDConstExpr>(std::move(const_expr.value()));
     }
 
-    if (auto bin_artihmetic_op = parse_binary_arithmetic_expression()(state)) {
-      state.log_captured_expr("`BinaryArithmeticExpression`");
-      return bin_artihmetic_op;
-    }
-
-    if (auto func_call_exprs = parse_call_exprs()(state)) {
-      state.log_captured_expr("`FuncCallExpression`");
-      return func_call_exprs;
-    }
-
     if (auto func_decl = parse_function_declaration()(state)) {
       state.log_captured_expr("`FuncDeclExpression`");
       return std::make_unique<NDFuncDeclExpr>(std::move(func_decl.value()));
     }
 
-    if (auto case_expr = parse_case_expression()(state)) {
-      state.log_captured_expr("`CaseExpression`");
-      return std::make_unique<NDCaseExpr>(std::move(case_expr.value()));
-    }
-
-    if (auto literal = parse_literal()(state)) {
-      state.log_captured_expr("`LiteralExpression`");
-      return std::make_unique<NDLiteral>(std::move(literal.value()));
-    }
-
-    if (auto ident = parse_identifier()(state)) {
-      state.log_captured_expr("`IdentifierExpr`");
-      return std::make_unique<NDIdentifier>(std::move(ident.value()));
+    // For everything else, delegate to value expression parser
+    if (auto value_expr = parse_value_expression()(state)) {
+      return value_expr;
     }
 
     return std::nullopt;
@@ -80,6 +102,11 @@ Parser<NDPtr> parse_expression() {
 
 Parser<NDPtr> parse_primary_expression() {
   return [=](ParserState& state) -> PResult<NDPtr> {
+
+    if (auto func_call = parse_call_expression()(state)) {
+      return std::make_unique<NDCallExpr>(std::move(func_call.value()));
+    }
+
     if (auto scoped_expr = parse_scoped_expression()(state)) {
       return std::make_unique<NDScopeExpr>(std::move(scoped_expr.value()));
     }
@@ -90,10 +117,6 @@ Parser<NDPtr> parse_primary_expression() {
 
     if (auto ident = parse_identifier()(state)) {
       return std::make_unique<NDIdentifier>(std::move(ident.value()));
-    }
-
-    if (auto func_call = parse_call_expression()(state)) {
-      return std::make_unique<NDCallExpr>(std::move(func_call.value()));
     }
 
     return std::nullopt;
@@ -128,12 +151,18 @@ Parser<NDPtr> parse_unary_expression() {
     auto expression = parse_primary_expression()(state);
     if (!expression) return std::nullopt;
 
-    NDUnaryExpr expr;
-    expr.op = op;
-    expr.rhs = std::move(expression.value());
+    // Only wrap in UnaryExpr if we actually found an operator
+    if (op) {
+      NDUnaryExpr expr;
+      expr.op = op;
+      expr.rhs = std::move(expression.value());
+      checkpoint.commit();
+      return std::make_unique<NDUnaryExpr>(std::move(expr));
+    }
 
+    // Otherwise, just return the primary expression as-is
     checkpoint.commit();
-    return std::make_unique<NDUnaryExpr>(std::move(expr));
+    return expression;
   };
 }
 
@@ -147,14 +176,11 @@ Parser<NDPtr> m_parse_chain_left(Parser<NDPtr> term, Parser<Token> op) {
 
     NDPtr left = std::move(left_res.value());
 
-    bool found_op = false;
-
     while(!state.is_at_end()) {
       size_t start = state.pos;
+
       auto op_res = op(state);
       if (!op_res) break;
-
-      found_op = true;
 
       auto right_res = term(state);
 
@@ -175,8 +201,6 @@ Parser<NDPtr> m_parse_chain_left(Parser<NDPtr> term, Parser<Token> op) {
 
       left = std::move(bin);
     }
-
-    if (!found_op) return std::nullopt;
 
     checkpoint.commit();
     return left;
@@ -369,7 +393,7 @@ Parser<NDCaseExpr> parse_case_expression() {
 
     // The main condition to evaluate
     std::vector<NDPtr> conditions;
-    auto main_expr = parse_expression()(state);
+    auto main_expr = parse_value_expression()(state);
     if (!main_expr) return std::nullopt;
 
     conditions.push_back(std::move(main_expr.value()));
@@ -379,13 +403,13 @@ Parser<NDCaseExpr> parse_case_expression() {
 
     std::vector<NDCaseExpr::Branch> branches;
     while (!match(TokenType::EndStmt)(state)) {
-      auto pattern = parse_expression()(state);
+      auto pattern = parse_value_expression()(state);
 
       if (!pattern) return std::nullopt;
 
       if (!match(TokenType::RtnTypeOp)(state)) return std::nullopt;
 
-      auto result = parse_expression()(state);
+      auto result = parse_value_expression()(state);
       if (!result) return std::nullopt;
 
       auto branch = std::vector<NDPtr>();
@@ -451,7 +475,7 @@ Parser<NDLetBindExpr> parse_let_expression() {
     auto eq = match(TokenType::Eq)(state);
     if (!eq) return std::nullopt;
 
-    auto value = parse_primary_expression()(state);
+    auto value = parse_value_expression()(state);
     if (!value) return std::nullopt;
 
     NDLetBindExpr expr;

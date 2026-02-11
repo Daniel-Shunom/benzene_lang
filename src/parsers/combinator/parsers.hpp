@@ -26,6 +26,8 @@ Parser<NDPtr> parse_expression();
 
 Parser<NDPtr> parse_primary_expression();
 
+Parser<NDPtr> parse_value_expression();
+
 Parser<NDPtr> m_parse_chain_left(Parser<NDPtr>, Parser<Token>);
 
 Parser<NDPtr> parse_unary_expression();
