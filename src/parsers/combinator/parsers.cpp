@@ -58,6 +58,7 @@ Parser<NDPtr> parse_value_expression() {
       return std::make_unique<NDLiteral>(std::move(literal.value()));
     }
 
+    // And of course, definitely try the identifiers.
     if (auto ident = parse_identifier()(state)) {
       return std::make_unique<NDIdentifier>(std::move(ident.value()));
     }
