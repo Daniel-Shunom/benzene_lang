@@ -261,7 +261,7 @@ Parser<NDPtr> m_parse_equality() {
 Parser<NDPtr> m_parse_logical_and() {
   return m_parse_chain_left(
     m_parse_equality(), 
-    match(TokenType::OrOp)
+    match(TokenType::AndOp)
   );
 }
 
