@@ -1,3 +1,12 @@
+/*
+ *
+ * So this parser is obviously not as efficient as I would like, but it works,
+ * and having something that works, in my opinion, is a much better place to 
+ * be in than having a non-functional parser.
+ *
+ * TODO -> Optimize ts.
+ *
+*/
 #include "parsers.hpp"
 #include "parser_types.hpp"
 #include "../../tables/utils.hpp"
@@ -33,7 +42,12 @@ PResult<Parent> run_parser(ParserState& state) {
 // shit if you ever get confused again.
 Parser<NDPtr> parse_value_expression() {
   return [=](ParserState& state) -> PResult<NDPtr> {
-    // Try scoped expressions first (they can contain statements inside)
+    // Try binary arithmetic expressions first
+    if (auto bin_expr = parse_binary_expression()(state)) {
+      return bin_expr;
+    }
+
+    // Try scoped expressions
     if (auto scoped_expr = parse_scoped_expression()(state)) {
       return std::make_unique<NDScopeExpr>(std::move(scoped_expr.value()));
     }
@@ -46,11 +60,6 @@ Parser<NDPtr> parse_value_expression() {
     // Try function calls (before binary ops, since they're more specific)
     if (auto func_call_exprs = parse_call_exprs()(state)) {
       return func_call_exprs;
-    }
-
-    // Try binary arithmetic expressions
-    if (auto bin_expr = parse_binary_expression()(state)) {
-      return bin_expr;
     }
 
     // Finally, try simple literals and identifiers
