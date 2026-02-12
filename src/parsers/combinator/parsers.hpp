@@ -30,13 +30,19 @@ Parser<NDPtr> parse_value_expression();
 
 Parser<NDPtr> m_parse_chain_left(Parser<NDPtr>, Parser<Token>);
 
-Parser<NDPtr> parse_unary_expression();
+Parser<NDPtr> m_parse_unary_expression();
 
 Parser<NDPtr> m_parse_additive_op();
 
 Parser<NDPtr> m_parse_multiplicative_op();
 
-Parser<NDPtr> parse_binary_arithmetic_expression();
+Parser<NDPtr> m_parse_comparision_op();
+
+Parser<NDPtr> m_parser_equality_op();
+
+Parser<NDPtr> m_parse_logical_and();
+
+Parser<NDPtr> parse_binary_expression();
 
 Parser<Token> match(TokenType);
 

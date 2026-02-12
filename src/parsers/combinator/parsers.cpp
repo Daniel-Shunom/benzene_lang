@@ -49,8 +49,8 @@ Parser<NDPtr> parse_value_expression() {
     }
 
     // Try binary arithmetic expressions
-    if (auto bin_artihmetic_op = parse_binary_arithmetic_expression()(state)) {
-      return bin_artihmetic_op;
+    if (auto bin_expr = parse_binary_expression()(state)) {
+      return bin_expr;
     }
 
     // Finally, try simple literals and identifiers
@@ -144,10 +144,13 @@ Parser<NDImportDirective> parse_import_stmt() {
   };
 }
 
-Parser<NDPtr> parse_unary_expression() {
+Parser<NDPtr> m_parse_unary_expression() {
   return [=](ParserState& state) -> PResult<NDPtr> {
     ParseCheckpoint checkpoint(state);
-    auto op = optional(match(TokenType::MinusOp), state);
+    auto op = optional(choice<Token>({
+      match(TokenType::MinusOp),
+      match(TokenType::NotOp)
+    }), state);
 
     auto expression = parse_primary_expression()(state);
     if (!expression) return std::nullopt;
@@ -206,7 +209,7 @@ Parser<NDPtr> m_parse_chain_left(Parser<NDPtr> term, Parser<Token> op) {
 
 Parser<NDPtr> m_parse_multiplicative_op() {
   return m_parse_chain_left(
-    parse_unary_expression(),
+    m_parse_unary_expression(),
     choice<Token>({
       match(TokenType::MultiplyOp),
       match(TokenType::DivideOp)
@@ -224,16 +227,52 @@ Parser<NDPtr> m_parse_additive_op() {
   );
 }
 
-Parser<NDPtr> parse_binary_arithmetic_expression() {
+Parser<NDPtr> m_parse_comparision_op() {
+  return m_parse_chain_left(
+    m_parse_additive_op(),
+    choice<Token>({
+      match(TokenType::Lt),
+      match(TokenType::Le),
+      match(TokenType::Gt),
+      match(TokenType::Ge)
+    })
+  );
+}
+
+Parser<NDPtr> m_parse_equality() {
+  return m_parse_chain_left(
+    m_parse_comparision_op(),
+    choice<Token>({
+      match(TokenType::EqEq),
+      match(TokenType::NtEq)
+    })
+  );
+}
+
+Parser<NDPtr> m_parse_logical_and() {
+  return m_parse_chain_left(
+    m_parse_equality(), 
+    match(TokenType::OrOp)
+  );
+}
+
+Parser<NDPtr> m_parse_logical_or() {
+  return m_parse_chain_left(
+    m_parse_logical_and(), 
+    match(TokenType::OrOp)
+  );
+}
+
+Parser<NDPtr> parse_binary_expression() {
   return [=](ParserState& state) -> PResult<NDPtr> {
     ParseCheckpoint checkpoint(state);
-    auto expr_res = m_parse_additive_op()(state);
+    auto bin_expr = m_parse_logical_or()(state);
 
-    if (!expr_res) return std::nullopt;
+    if (!bin_expr) return std::nullopt;
     state.log_success("Sucessfully parsed `BinaryArithmeticExpression`");
 
     checkpoint.commit();
-    return expr_res;
+    return bin_expr;
   };
 }
 
