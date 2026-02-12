@@ -9,6 +9,8 @@ static const std::vector<std::pair<std::string, TokenType>> OperatorList = {
 
   {"<=", TokenType::Le},
 
+  {"~=", TokenType::NtEq},
+
   {"==", TokenType::EqEq},
 
   {"&&", TokenType::AndOp},

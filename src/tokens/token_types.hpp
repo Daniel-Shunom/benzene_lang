@@ -33,6 +33,7 @@ enum class TokenType {
   Lt,
   Le,
   Eq,
+  NtEq,
   EqEq,
 
   FuncStart,
@@ -96,6 +97,7 @@ inline static std::string typeToStr(TokenType type) {
     case t::Lt: return "Lt";
     case t::Le: return "Le";
     case t::Eq: return "Eq";
+    case t::NtEq: return "NtEq";
     case t::EqEq: return "EqEq";
     case t::FuncStart: return "FuncStart";
     case t::EndStmt: return "EndStmt";
