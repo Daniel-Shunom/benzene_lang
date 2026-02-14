@@ -1,7 +1,6 @@
 #pragma once
 #include "../tokens/token_types.hpp"
 #include "../symbols/symbol_types.hpp"
-#include "../typing/types.hpp"
 #include <optional>
 #include <memory>
 #include <vector>
