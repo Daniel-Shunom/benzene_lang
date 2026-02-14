@@ -1,6 +1,6 @@
 #pragma once
 #include "parser_types.hpp"
-#include "../../nodes/node_expr.hpp"
+#include "../nodes/node_expr.hpp"
 
 Parser<NDLiteral> parse_literal();
 

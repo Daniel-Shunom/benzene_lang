@@ -3,7 +3,7 @@
 #include <cstdio>
 #include <functional>
 #include <string>
-#include "../../tokens/token_types.hpp"
+#include "../tokens/token_types.hpp"
 
 struct ParserState {
   std::vector<Token> tokens;

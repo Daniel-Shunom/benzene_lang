@@ -4,12 +4,22 @@
  * and having something that works, in my opinion, is a much better place to 
  * be in than having a non-functional parser.
  *
+ * Though in hindsight, I do not see how this parser can be as efficient as LL(1).
+ * I have been imagining them to be given that they are by order-driven by design
+ * which puts off the use of jump tables and forces us to use if statements. Cause
+ * if you think about it, once a production rule fails, we rewind and have to start
+ * the next one, and there is no way we can predetermine which will fail or succeed
+ * we use this design, so there is a lot of ordering we have to do. This means that
+ * for some statements, we will have the parser descend the hierarchy ladder 
+ * somewhat meaninglessly, just to use the lowliest of production rules. Literally 
+ * classism in action lmao :).
+ *
  * TODO -> Optimize ts.
  *
 */
 #include "parsers.hpp"
 #include "parser_types.hpp"
-#include "../../tables/utils.hpp"
+#include "../tables/utils.hpp"
 #include "parser_types.hpp"
 #include <cstdio>
 #include <memory>
