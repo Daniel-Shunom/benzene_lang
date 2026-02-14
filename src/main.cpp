@@ -3,8 +3,8 @@
 #include "ast/sym_res/sym_res.hpp"
 #include "cmd/cmd.hpp"
 #include "lexer/lexer.hpp"
-#include "parsers/combinator/parser_types.hpp"
-#include "parsers/combinator/parsers.hpp"
+#include "parser/parser_types.hpp"
+#include "parser/parsers.hpp"
 #include <cstdio>
 #include <string_view>
 
