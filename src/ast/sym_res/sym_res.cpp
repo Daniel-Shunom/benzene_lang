@@ -17,6 +17,16 @@ void SymResolver::visit(NDLiteral& expr) {
     && cscope_type != ScopeType::FunctionExpression
     && cscope_type != ScopeType::Module
   ) {
+    auto err = make_error(
+      SymErrType::InvalidScope,
+      expr.literal,
+      std::format(
+        "Literal value `{}` not in allowed scope",
+        expr.literal.token_value
+      )
+    );
+
+    this->errors.push_back(err);
     expr.is_poisoned = true;
     return;
   }
@@ -32,6 +42,18 @@ void SymResolver::visit(NDIdentifier& expr) {
   ) {
     // Cause I mean, if it's not here then where else would it be lol
     expr.is_poisoned = true;
+    auto err = make_error(
+      SymErrType::InvalidScope, 
+      expr.identifier,
+      std::format(
+        "Identifier `{}` not in allowed scope",
+        expr.identifier.token_value
+      )
+    );
+
+    this->errors.push_back(err);
+    expr.is_poisoned = true;
+
     return; }
 }
 
@@ -45,12 +67,35 @@ void SymResolver::visit(NDLetBindExpr& expr) {
     // We mark this node as poisoned because let expressions are not
     // allowed outside of function expressions or scoped expressions.
     expr.is_poisoned = true;
+    auto err = make_error(
+      SymErrType::InvalidScope,
+      expr.identifier->identifier,
+      "`Let` expression is not in valid scope"
+    );
+
+    this->errors.push_back(err);
+
     return;
   }
 
   auto expr_sym = this->sym_table.declare(expr.identifier->identifier, SymbolKind::Binding);
   if (!expr_sym) {
     expr.is_poisoned = true;
+    auto ident_sym = this->sym_table.lookup(expr.identifier->identifier.token_value);
+    if (!ident_sym) return;
+
+    auto dup_msg = std::format(
+      "Duplicate declaration of `{}` (see Ln {}, Col {} for previous declaration)",
+      expr.identifier->identifier.token_value,
+      ident_sym->symbol_token.line_number,
+      ident_sym->symbol_token.column_number
+    );
+    auto err = this->make_error(
+      SymErrType::InvalidDeclaration,
+      expr.identifier->identifier,
+      dup_msg
+    );
+    this->errors.push_back(err);
     return;
   }
 
@@ -73,12 +118,34 @@ void SymResolver::visit(NDConstExpr& expr) {
     && cscope_type != ScopeType::Application
   ) {
     expr.is_poisoned = true;
+    auto err = make_error(
+      SymErrType::InvalidScope,
+      expr.identifier->identifier,
+      "`Let` expression is not in valid scope"
+    );
+
+    this->errors.push_back(err);
     return;
   }
 
   auto const_sym = this->sym_table.declare(expr.identifier->identifier, SymbolKind::Constant);
   if (!const_sym) {
     expr.is_poisoned = true;
+    auto ident_sym = this->sym_table.lookup(expr.identifier->identifier.token_value);
+    if (!ident_sym) return;
+
+    auto dup_msg = std::format(
+      "Duplicate declaration of `{}` (see Ln {}, Col {} for previous declaration)",
+      expr.identifier->identifier.token_value,
+      ident_sym->symbol_token.line_number,
+      ident_sym->symbol_token.column_number
+    );
+    auto err = this->make_error(
+      SymErrType::InvalidDeclaration,
+      expr.identifier->identifier,
+      dup_msg
+    );
+    this->errors.push_back(err);
     return;
   }
 
@@ -93,6 +160,15 @@ void SymResolver::visit(NDCallExpr& expr) {
 
   if (!sym) {
     expr.is_poisoned = true;
+    auto err = this->make_error(
+      SymErrType::InvalidFuncCall, 
+      expr.identifier->identifier, 
+      std::format(
+        "Function `{}` is not defined",
+        expr.identifier->identifier.token_value
+      )
+    );
+    this->errors.push_back(err);
     return;
   }
 
@@ -104,6 +180,13 @@ void SymResolver::visit(NDCallExpr& expr) {
     && cscope_type != ScopeType::FunctionExpression
   ) {
     expr.is_poisoned = true;
+    auto err = make_error(
+      SymErrType::InvalidScope,
+      expr.identifier->identifier,
+      "Function call not in valid scope"
+    );
+
+    this->errors.push_back(err);
     return;
   }
 
@@ -138,6 +221,15 @@ void SymResolver::visit(NDFuncDeclExpr& expr) {
     && cscope_type != ScopeType::Module
   ) {
     expr.is_poisoned = true;
+    expr.is_poisoned = true;
+    auto err = make_error(
+      SymErrType::InvalidScope,
+      expr.func_identifier,
+      "Function declaration not in valid scope"
+    );
+
+    this->errors.push_back(err);
+
     return;
   }
 
@@ -145,6 +237,23 @@ void SymResolver::visit(NDFuncDeclExpr& expr) {
   if (!func_sym) {
     // Means this is a redeclaration of another function.
     expr.is_poisoned = true;
+    expr.is_poisoned = true;
+    auto ident_sym = this->sym_table.lookup(expr.func_identifier.token_value);
+    if (!ident_sym) return;
+
+    auto dup_msg = std::format(
+      "Duplicate declaration of `{}` (see Ln {}, Col {} for previous declaration)",
+      expr.func_identifier.token_value,
+      ident_sym->symbol_token.line_number,
+      ident_sym->symbol_token.column_number
+    );
+    auto err = this->make_error(
+      SymErrType::InvalidDeclaration,
+      expr.func_identifier,
+      dup_msg
+    );
+    this->errors.push_back(err);
+
     return;
   }
 
