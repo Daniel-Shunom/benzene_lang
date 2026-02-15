@@ -15,25 +15,25 @@ int main(int argc, char* argv[]) {
   std::string_view contents{src_code};
   Lexer lexer(contents);
 
-  std::printf( "\nLexing current file\n" "File path: %s\n", args.file_path.data());
+  std::printf("\nLexing current file\n" "File path: %s\n", args.file_path.data());
 
   if (args.is_logs_enabled()) std::printf("[LOGS ENABLED]\n");
 
   lexer.scan_tokens();
 
+  if (args.is_logs_enabled()) lexer.print_tokens();
+
   auto tokens = lexer.get_tokens();
-  auto state = ParserState();
+  auto state  = ParserState();
   state.set_state(tokens);
 
-  if (args.is_logs_enabled()) state.activivate_logs();
+  if (args.is_logs_enabled()) state.activate_logs();
   std::printf("Beginning AST Parsing\n");
 
   PResult<Parent> parent = run_parser(state);
 
   if(!parent) {
-    std::printf("Parsing failed, Displaying Parse Logs\n");
-    state.display_logs();
-    std::printf("Ended AST Parsing\n");
+    std::printf("Parsing failed\n");
     return 0;
   }
 
@@ -43,15 +43,17 @@ int main(int argc, char* argv[]) {
     parent.value().children.size()
   );
 
-  state.display_logs();
-  state.display_captured_exprs();
-
   TreePrinter printer;
   SymResolver resolver;
 
   parent->add_visitor(resolver);
   parent->add_visitor(printer);
   parent->apply_visitors();
+
+  if (args.is_logs_enabled()) {
+    state.log_errors();
+    resolver.log_errors();
+  }
 
   return 0;
 }
