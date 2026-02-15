@@ -76,15 +76,13 @@ void Lexer::scan_keyword_or_identifier() {
   if (it == KeywordTable.end()) {
     this->make_token(TokenType::Identifier, id);
   } else {
-    this->make_token(it->second, id);
     switch (it->second) {
       case TokenType::CommentKeyword: return this->scan_comment();
       case TokenType::ImportKeyword: return this->scan_import_module();
-      default: return;
+      default: this->make_token(it->second, id);
     }
   }
 }
-
 
 void Lexer::scan_comment() {
   this->set_token_start();
