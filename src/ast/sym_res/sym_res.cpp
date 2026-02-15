@@ -5,6 +5,11 @@ void SymResolver::visit(NDImportDirective& expr) {
   if ( cscope_type && (cscope_type != ScopeType::Module)) {
     // Cause I mean, if it's not here then where else would it be lol
     expr.is_poisoned = true;
+    auto err = make_error(
+      SymErrType::InvalidScope, 
+      "Import statements are only allowed in the top Module scope"
+    );
+    this->errors.push_back(err);
     return;
   }
 }
@@ -52,9 +57,8 @@ void SymResolver::visit(NDIdentifier& expr) {
     );
 
     this->errors.push_back(err);
-    expr.is_poisoned = true;
-
-    return; }
+    return; 
+  }
 }
 
 void SymResolver::visit(NDLetBindExpr& expr) {
@@ -121,7 +125,7 @@ void SymResolver::visit(NDConstExpr& expr) {
     auto err = make_error(
       SymErrType::InvalidScope,
       expr.identifier->identifier,
-      "`Let` expression is not in valid scope"
+      "`Const` expression is not in valid scope"
     );
 
     this->errors.push_back(err);
@@ -206,6 +210,11 @@ void SymResolver::visit(NDCallChain& expr) {
     && cscope_type != ScopeType::CaseExpression
   ) {
     expr.is_poisoned = true;
+    auto err = this->make_error(
+      SymErrType::InvalidScope,
+      "Call chain not in allowed in current scope"
+    );
+    this->errors.push_back(err);
     return;
   }
 
@@ -221,7 +230,6 @@ void SymResolver::visit(NDFuncDeclExpr& expr) {
     && cscope_type != ScopeType::Module
   ) {
     expr.is_poisoned = true;
-    expr.is_poisoned = true;
     auto err = make_error(
       SymErrType::InvalidScope,
       expr.func_identifier,
@@ -236,7 +244,6 @@ void SymResolver::visit(NDFuncDeclExpr& expr) {
   auto func_sym = this->sym_table.declare(expr.func_identifier, SymbolKind::Function);
   if (!func_sym) {
     // Means this is a redeclaration of another function.
-    expr.is_poisoned = true;
     expr.is_poisoned = true;
     auto ident_sym = this->sym_table.lookup(expr.func_identifier.token_value);
     if (!ident_sym) return;
@@ -286,6 +293,11 @@ void SymResolver::visit(NDScopeExpr& expr) {
     // I think scoped expressions should only appear in other scoped expressions 
     // or function expressions.
     expr.is_poisoned = true;
+    auto err = this->make_error(
+      SymErrType::InvalidScope, 
+      "Scoped expression not allowed in current scope"
+    );
+    this->errors.push_back(err);
     return;
   }
 
@@ -301,6 +313,10 @@ void SymResolver::visit(NDCaseExpr& expr) {
     && cscope_type != ScopeType::ScopedExpression
   ) {
     expr.is_poisoned = true;
+    auto err = this->make_error(
+      SymErrType::InvalidScope, 
+      "Case expression not allowed in current scope"
+    );
     return;
   }
   ScopeGuard guard(this->sym_table, ScopeType::CaseExpression);

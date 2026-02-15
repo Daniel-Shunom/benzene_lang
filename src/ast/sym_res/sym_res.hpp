@@ -72,4 +72,27 @@ private:
       msg
     );
   };
+
+  std::string make_error(
+    SymErrType err_type,
+    const std::string& msg
+  ) {
+    constexpr auto RESET  = "\033[0m";
+    constexpr auto RED    = "\033[31m";
+    constexpr auto YELLOW = "\033[33m";
+    constexpr auto CYAN   = "\033[36m";
+    constexpr auto BOLD   = "\033[1m";
+
+    auto header = std::format(
+      "{}{}Scope Error:{} {}{}{}",
+      BOLD, RED, RESET,
+      CYAN, sym_err_to_str(err_type), RESET
+    );
+    
+    return std::format(
+      "{}\n {}{}{}\n\n",
+      header,
+      YELLOW, msg, RESET
+    );
+  }
 };
