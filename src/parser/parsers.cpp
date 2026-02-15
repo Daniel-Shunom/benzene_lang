@@ -1,23 +1,5 @@
-/*
- *
- * So this parser is obviously not as efficient as I would like, but it works,
- * and having something that works, in my opinion, is a much better place to 
- * be in than having a non-functional parser.
- *
- * Though in hindsight, I do not see how this parser can be as efficient as LL(1).
- * I have been imagining them to be given that they are by order-driven by design
- * which puts off the use of jump tables and forces us to use if statements. Cause
- * if you think about it, once a production rule fails, we rewind and have to start
- * the next one, and there is no way we can predetermine which will fail or succeed
- * we use this design, so there is a lot of ordering we have to do. This means that
- * for some statements, we will have the parser descend the hierarchy ladder 
- * somewhat meaninglessly, just to use the lowliest of production rules. Literally 
- * classism in action lmao :).
- *
- * TODO -> Optimize ts.
- *
-*/
 #include "parsers.hpp"
+#include "parser_err.hpp"
 #include "parser_types.hpp"
 #include "../tables/utils.hpp"
 #include "parser_types.hpp"
@@ -37,83 +19,57 @@ PResult<Parent> run_parser(ParserState& state) {
   return parent;
 }
 
-// Okay so I am trying not to run mad here so the parsing flow is as follows :) :
-//
-// We parse the TOP level constructs (so think parts of the grammar with non-terminals)
-// and then once we have parsed those, we then parse the lower level constructs
-// 
-// Since each non terminal resolves to a terminal at the end of the day,
-// we are able to separate the parsing of the terminal and non-terminals
-// grammars into separate function. This therefore makes the parsing easier
-// and more intuitive.
-//
-//
-// So it's gonna be N-a (look at the notation from the textbook man idk). Just read the 
-// shit if you ever get confused again.
-Parser<NDPtr> parse_value_expression() {
+Parser<NDPtr> parse_expression() {
   return [=](ParserState& state) -> PResult<NDPtr> {
-    // Try binary arithmetic expressions first
-    if (auto bin_expr = parse_binary_expression()(state)) {
-      return bin_expr;
+
+    if (auto import_directive = parse_import_stmt()(state)) {
+      return std::make_unique<NDImportDirective>(import_directive.value());
     }
 
-    // Try scoped expressions
-    if (auto scoped_expr = parse_scoped_expression()(state)) {
-      return std::make_unique<NDScopeExpr>(std::move(scoped_expr.value()));
+    if (auto let_expr = parse_let_expression()(state)) {
+      return std::make_unique<NDLetBindExpr>(std::move(let_expr.value()));
     }
 
-    // Try case expressions
-    if (auto case_expr = parse_case_expression()(state)) {
-      return std::make_unique<NDCaseExpr>(std::move(case_expr.value()));
+    if (auto const_expr = parse_const_expression()(state)) {
+      return std::make_unique<NDConstExpr>(std::move(const_expr.value()));
     }
 
-    // Try function calls (before binary ops, since they're more specific)
-    if (auto func_call_exprs = parse_call_exprs()(state)) {
-      return func_call_exprs;
+    if (auto func_decl = parse_function_declaration()(state)) {
+      return std::make_unique<NDFuncDeclExpr>(std::move(func_decl.value()));
     }
 
-    // Finally, try simple literals and identifiers
-    if (auto literal = parse_literal()(state)) {
-      return std::make_unique<NDLiteral>(std::move(literal.value()));
-    }
-
-    // And of course, definitely try the identifiers.
-    if (auto ident = parse_identifier()(state)) {
-      return std::make_unique<NDIdentifier>(std::move(ident.value()));
+    if (auto value_expr = parse_value_expression()(state)) {
+      return value_expr;
     }
 
     return std::nullopt;
   };
 }
 
-// Top-level parser: handles STATEMENTS and top-level constructs
-Parser<NDPtr> parse_expression() {
+Parser<NDPtr> parse_value_expression() {
   return [=](ParserState& state) -> PResult<NDPtr> {
-
-    // Statements (let, const, func, import) - these can ONLY appear at top level
-    if (auto import_directive = parse_import_stmt()(state)) {
-      state.log_captured_expr("`ImportDirective`");
-      return std::make_unique<NDImportDirective>(import_directive.value());
+    if (auto bin_expr = parse_binary_expression()(state)) {
+      return bin_expr;
     }
 
-    if (auto let_expr = parse_let_expression()(state)) {
-      state.log_captured_expr("`LetExpression`");
-      return std::make_unique<NDLetBindExpr>(std::move(let_expr.value()));
+    if (auto scoped_expr = parse_scoped_expression()(state)) {
+      return std::make_unique<NDScopeExpr>(std::move(scoped_expr.value()));
     }
 
-    if (auto const_expr = parse_const_expression()(state)) {
-      state.log_captured_expr("`ConstExpression`");
-      return std::make_unique<NDConstExpr>(std::move(const_expr.value()));
+    if (auto case_expr = parse_case_expression()(state)) {
+      return std::make_unique<NDCaseExpr>(std::move(case_expr.value()));
     }
 
-    if (auto func_decl = parse_function_declaration()(state)) {
-      state.log_captured_expr("`FuncDeclExpression`");
-      return std::make_unique<NDFuncDeclExpr>(std::move(func_decl.value()));
+    if (auto func_call_exprs = parse_call_exprs()(state)) {
+      return func_call_exprs;
     }
 
-    // For everything else, delegate to value expression parser
-    if (auto value_expr = parse_value_expression()(state)) {
-      return value_expr;
+    if (auto literal = parse_literal()(state)) {
+      return std::make_unique<NDLiteral>(std::move(literal.value()));
+    }
+
+    if (auto ident = parse_identifier()(state)) {
+      return std::make_unique<NDIdentifier>(std::move(ident.value()));
     }
 
     return std::nullopt;
@@ -150,13 +106,18 @@ Parser<NDImportDirective> parse_import_stmt() {
     auto import_kwd = match(TokenType::ImportKeyword)(state);
     if (!import_kwd) return std::nullopt;
 
-    auto import_module = match(TokenType::ImportModule)(state);
+    auto import_module = expect(
+      state,
+      TokenType::ImportModule,
+      ParseErrorType::InvalidImportExpr,
+      "Expected a valid module name after import directive"
+    );
+
     if (!import_module) return std::nullopt;
 
     auto import = NDImportDirective();
     import.import_directive = import_module.value();
 
-    state.log_success("Sucessfully parsed `ImportDirective`");
 
     checkpoint.commit();
     return import;
@@ -174,7 +135,6 @@ Parser<NDPtr> m_parse_unary_expression() {
     auto expression = parse_primary_expression()(state);
     if (!expression) return std::nullopt;
 
-    // Only wrap in UnaryExpr if we actually found an operator
     if (op) {
       NDUnaryExpr expr;
       expr.op = op;
@@ -183,7 +143,6 @@ Parser<NDPtr> m_parse_unary_expression() {
       return std::make_unique<NDUnaryExpr>(std::move(expr));
     }
 
-    // Otherwise, just return the primary expression as-is
     checkpoint.commit();
     return expression;
   };
@@ -288,7 +247,6 @@ Parser<NDPtr> parse_binary_expression() {
     auto bin_expr = m_parse_logical_or()(state);
 
     if (!bin_expr) return std::nullopt;
-    state.log_success("Sucessfully parsed `BinaryArithmeticExpression`");
 
     checkpoint.commit();
     return bin_expr;
@@ -311,14 +269,25 @@ Parser<NDCallExpr> parse_call_expression() {
         break;
       }
 
-      auto expr = parse_primary_expression()(state);
+      auto expr = expect_wp(
+        state, 
+        parse_primary_expression(),
+        ParseErrorType::InvalidFuncCallExpr, 
+        "Function args require valid primary expression"
+      );
+
       if (!expr) return std::nullopt;
 
       args.push_back(std::move(expr.value()));
 
-      // Consume comma if present, otherwise expect CloseParen next iteration
       if (!match(TokenType::Delim)(state)) {
-        auto close_paren = match(TokenType::RParen)(state);
+        auto close_paren = expect(
+          state,
+          TokenType::RParen,
+          ParseErrorType::InvalidFuncCallExpr,
+          "missing closing parenthsis `)`"
+        );
+
         if (!close_paren) return std::nullopt;
         break;
       }
@@ -327,8 +296,6 @@ Parser<NDCallExpr> parse_call_expression() {
     NDCallExpr call;
     call.identifier = std::make_unique<NDIdentifier>(ident.value());
     call.args = std::move(args);
-
-    state.log_success("Sucessfully parsed `FunctionCall`");
 
     checkpoint.commit();
     return call;
@@ -366,8 +333,6 @@ Parser<NDPtr> parse_call_exprs() {
     }
 
     auto pipe_chain_ptr = std::make_unique<NDCallChain>(std::move(pipe_chain));
-    state.log_success("Sucessfully parsed `ChainExpression`");
-    state.log_captured_expr("`CallChain`");
 
     checkpoint.commit();
     return pipe_chain_ptr;
@@ -380,16 +345,35 @@ Parser<NDFuncDeclExpr> parse_function_declaration() {
 
     if (!match(TokenType::FuncStart)(state)) return std::nullopt;
 
-    auto ident = parse_identifier()(state);
+    auto ident = expect_wp(
+      state,
+      parse_identifier(),
+      ParseErrorType::InvalidFuncDeclExpr,
+      "Identifier required after function declaration start"
+    );
+
     if (!ident) return std::nullopt;
 
-    if (!match(TokenType::LParen)(state)) return std::nullopt;
+    auto left_paren = expect(
+      state,
+      TokenType::LParen,
+      ParseErrorType::InvalidFuncDeclExpr,
+      "`Missng open parenthesis `(`"
+    );
+
+    if (!left_paren) return std::nullopt;
     std::vector<FuncParam> params;
 
     while (true) {
       if (match(TokenType::RParen)(state)) break;
 
-      auto param_token = parse_identifier()(state);
+      auto param_token = expect_wp(
+        state,
+        parse_identifier(),
+        ParseErrorType::InvalidFuncDeclExpr,
+        "Function args require valid identifiers"
+      );
+
       if (!param_token) return std::nullopt;
 
       auto param_type = optional(parse_type_annotation(), state);
@@ -399,20 +383,25 @@ Parser<NDFuncDeclExpr> parse_function_declaration() {
       params.push_back(std::move(param));
 
       if (!match(TokenType::Delim)(state)) {
-        if (!match(TokenType::RParen)(state)) {
-          return std::nullopt;
-        }
+        auto right_paren = expect(
+          state,
+          TokenType::RParen,
+          ParseErrorType::InvalidFuncDeclExpr,
+          "Missing closing parenthesis `)`"
+        );
+        if (!right_paren) return std::nullopt;
         break;
       }
     }
 
     std::optional<Token> func_rtn_type;
     if (auto a = match(TokenType::RtnTypeOp)(state)) {
-      if (auto type = match(TokenType::Identifier)(state)) {
-        func_rtn_type = type.value();
-      } else {
-        return std::nullopt;
-      }
+      func_rtn_type = expect(
+        state,
+        TokenType::Identifier,
+        ParseErrorType::InvalidFuncDeclExpr,
+        "Function is missing the indicated return type"
+      );
     }
 
     // Parse function body (at least one expression)
@@ -433,8 +422,6 @@ Parser<NDFuncDeclExpr> parse_function_declaration() {
     func.func_params = std::move(params);
     func.func_body = std::move(body);
 
-    state.log_success("Sucessfully parsed `FunctionDeclaration`");
-
     checkpoint.commit();
     return func;
   };
@@ -448,23 +435,48 @@ Parser<NDCaseExpr> parse_case_expression() {
 
     // The main condition to evaluate
     std::vector<NDPtr> conditions;
-    auto main_expr = parse_value_expression()(state);
-    if (!main_expr) return std::nullopt;
+    auto main_expr = expect_wp(
+      state,
+      parse_value_expression(),
+      ParseErrorType::InvalidCaseExpr,
+      "Expected a value expression here"
+    );
 
+    if (!main_expr) return std::nullopt;
     conditions.push_back(std::move(main_expr.value()));
 
-    auto col = match(TokenType::Colon)(state);
-    if(!col) return std::nullopt;
+    auto colon = expect(
+      state,
+      TokenType::Colon,
+      ParseErrorType::InvalidCaseExpr,
+      "Expected `:` after case precondition"
+    );
+
+    if(!colon) return std::nullopt;
 
     std::vector<NDCaseExpr::Branch> branches;
     while (!match(TokenType::EndStmt)(state)) {
       auto pattern = parse_value_expression()(state);
 
+      // This will change later.
       if (!pattern) return std::nullopt;
 
-      if (!match(TokenType::RtnTypeOp)(state)) return std::nullopt;
+      auto rtn_op = expect(
+        state,
+        TokenType::RtnTypeOp,
+        ParseErrorType::InvalidCaseExpr,
+        "Expected `:>` after case condition"
+      );
 
-      auto result = parse_value_expression()(state);
+      if (!rtn_op) return std::nullopt;
+
+      auto result = expect_wp(
+        state,
+        parse_value_expression(),
+        ParseErrorType::InvalidCaseExpr,
+        "Expected a valid value expression"
+      );
+
       if (!result) return std::nullopt;
 
       auto branch = std::vector<NDPtr>();
@@ -479,8 +491,6 @@ Parser<NDCaseExpr> parse_case_expression() {
     NDCaseExpr expr;
     expr.conditions = std::move(conditions);
     expr.branches = std::move(branches);
-
-    state.log_success("Sucessfully parsed `CaseExpression`");
 
     checkpoint.commit();
     return expr;
@@ -508,7 +518,6 @@ Parser<NDScopeExpr> parse_scoped_expression() {
     NDScopeExpr scope_expr;
     scope_expr.expressions = std::move(exprs);
 
-    state.log_success("Sucessfully parsed `ScopedExpression`");
 
     checkpoint.commit();
     return scope_expr;
@@ -522,15 +531,32 @@ Parser<NDLetBindExpr> parse_let_expression() {
     auto let_tok = match(TokenType::LetKeyword)(state);
     if (!let_tok) return std::nullopt;
 
-    auto ident = parse_identifier()(state);
-    if (!ident) return std::nullopt;
+    auto ident = expect_wp(
+      state,
+      parse_identifier(),
+      ParseErrorType::InvalidLetExpr,
+      "Expected an identifier here"
+    );
 
+    if (!ident) return std::nullopt;
     auto let_type = optional(parse_type_annotation(), state);
 
-    auto eq = match(TokenType::Eq)(state);
+    auto eq = expect(
+      state,
+      TokenType::Eq,
+      ParseErrorType::InvalidLetExpr,
+      "Expected `=` after identifier"
+    );
+
     if (!eq) return std::nullopt;
 
-    auto value = parse_value_expression()(state);
+    auto value = expect_wp(
+      state,
+      parse_value_expression(),
+      ParseErrorType::InvalidLetExpr,
+      "Expected a valid expression"
+    );
+
     if (!value) return std::nullopt;
 
     NDLetBindExpr expr;
@@ -538,7 +564,6 @@ Parser<NDLetBindExpr> parse_let_expression() {
     expr.identifier->type = let_type;
     expr.type = let_type;
     expr.bound_value = std::move(value.value());
-    state.log_success("Sucessfully parsed `LetExpression`");
 
     checkpoint.commit();
     return expr;
@@ -552,15 +577,33 @@ Parser<NDConstExpr> parse_const_expression() {
     auto let_tok = match(TokenType::ConstantKeyword)(state);
     if (!let_tok) return std::nullopt;
 
-    auto ident = parse_identifier()(state);
+    auto ident = expect_wp(
+      state,
+      parse_identifier(),
+      ParseErrorType::InvalidConstExpr,
+      "Expected a valid const identifier"
+    );
+
     if (!ident) return std::nullopt;
 
     auto const_type = optional(parse_type_annotation(), state);
 
-    auto eq = match(TokenType::Eq)(state);
+    auto eq = expect(
+      state,
+      TokenType::Eq,
+      ParseErrorType::InvalidLetExpr,
+      "Expected `=` after identifier"
+    );
+
     if (!eq) return std::nullopt;
 
-    auto literal = parse_literal()(state);
+    auto literal = expect_wp(
+      state,
+      parse_literal(),
+      ParseErrorType::InvalidConstExpr,
+      "Const values can only hold `literal` types"
+    );
+
     if (!literal) return std::nullopt;
 
     NDConstExpr expr;
@@ -569,7 +612,6 @@ Parser<NDConstExpr> parse_const_expression() {
     expr.type = const_type;
     expr.literal = std::move(literal.value());
 
-    state.log_success("Sucessfully parsed `ConstExpression`");
 
     checkpoint.commit();
     return expr;
@@ -618,7 +660,12 @@ Parser<Token> parse_type_annotation() {
     size_t start = state.pos;
     auto c = match(TokenType::Colon)(state);
     if (!c) return std::nullopt;
-    auto type = match(TokenType::Identifier)(state);
+    auto type = expect(
+      state,
+      TokenType::Identifier,
+      ParseErrorType::InvalidTypeAnnotation,
+      "Missing indicated type"
+    );
     if (!type) {
       state.reset_pos(start);
       return std::nullopt;

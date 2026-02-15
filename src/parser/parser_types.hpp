@@ -1,18 +1,27 @@
 #pragma once
+#include "parser_err.hpp"
 #include <optional>
+#include <iostream>
 #include <cstdio>
 #include <functional>
 #include <string>
+#include "../nodes/node_expr.hpp"
 #include "../tokens/token_types.hpp"
 
 struct ParserState {
   std::vector<Token> tokens;
-  size_t pos{};
 
-
-  std::vector<std::string> logs;
+  std::vector<std::string> errors;
 
   std::vector<std::string> expr_captures;
+
+  size_t pos{};
+
+  bool logs_on = false;
+
+  void activate_logs() {
+    this->logs_on = true;
+  }
 
   void reset_pos(size_t at) {
     if (at < tokens.size()) pos = at;
@@ -22,45 +31,15 @@ struct ParserState {
     return pos >= tokens.size();
   }
 
-  bool logs_enabled = false;
-
-  void activivate_logs() {
-    logs_enabled = true;
-  }
-
-  void log(std::string log) {
-    if(not logs_enabled) return;
-    auto l = std::string("[PARSER LOG DEBUG]\t"+log);
-    logs.push_back(l);
-  }
-
-  void log_err(std::string log) {
-    this->log("[Err]\t"+log);
-  }
-
-  void log_success(std::string log) {
-    this->log("[Ok ]\t"+log);
-  }
-
-  void display_logs() {
-    for (auto& log: logs) {
-      std::printf("%s\n", log.data());
-    }
-  }
-
-  void log_captured_expr(std::string expr) {
-    if (not logs_enabled) return;
-    expr_captures.push_back("[Expr Capture]\t"+expr);
-  }
-
-  void display_captured_exprs() {
-    for (const auto& expr: this->expr_captures) {
-      std::printf("%s\n", expr.data());
-    }
-  }
-
   void set_state(std::vector<Token> tokens) {
     this->tokens = tokens;
+  }
+
+  void log_errors() {
+    if (!this->logs_on) return;
+    for (const auto& err: this->errors) {
+      std::cout << err << std::endl;
+    }
   }
 
   std::optional<Token> peek() { 
@@ -205,4 +184,44 @@ std::optional<T> optional(Parser<T> p, ParserState& state) {
     return r;
   }
   return std::nullopt;
+}
+
+std::optional<Token> inline expect(
+  ParserState& state,
+  TokenType type,
+  ParseErrorType err_type,
+  const std::string& message
+) {
+  auto tok = state.peek();
+  if (!tok) return std::nullopt;
+
+  if (tok->token_type == type) {
+    state.advance();
+      return tok;
+  }
+
+  state.errors.push_back(
+    make_parser_error(err_type, tok.value(), message)
+  );
+
+  return std::nullopt;
+}
+
+template<typename T>
+PResult<T> inline expect_wp(
+  ParserState& state,
+  Parser<T> parser,
+  ParseErrorType err_type,
+  const std::string& message
+) {
+  auto res = parser(state);
+  if (!res) {
+    if (!state.peek()) return std::nullopt;
+    auto tok = state.peek();
+    state.errors.push_back(
+      make_parser_error(err_type, tok.value(), message)
+    );
+    return std::nullopt;
+  }
+  return res;
 }
