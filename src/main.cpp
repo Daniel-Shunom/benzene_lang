@@ -1,7 +1,8 @@
 #include "../lib/files.hpp"
 #include "ast/print/print.hpp"
 #include "ast/sym_res/sym_res.hpp"
-#include "cmd/cmd.hpp"
+#include "command_line/cmd.hpp"
+#include "diagnostics/diagnostic_eng.hpp"
 #include "lexer/lexer.hpp"
 #include "parser/parser_types.hpp"
 #include "parser/parsers.hpp"
@@ -11,9 +12,12 @@
 int main(int argc, char* argv[]) {
 
   Args args = GetArgs(argc, argv);
+  DiagnosticEngine diag_eng;
+
   std::string src_code = FileToString(args.file_path);
   std::string_view contents{src_code};
-  Lexer lexer(contents);
+
+  Lexer lexer(contents, diag_eng);
 
   std::printf("\nLexing current file\n" "File path: %s\n", args.file_path.data());
 
@@ -24,7 +28,7 @@ int main(int argc, char* argv[]) {
   if (args.is_logs_enabled()) lexer.print_tokens();
 
   auto tokens = lexer.get_tokens();
-  auto state  = ParserState();
+  auto state  = ParserState(diag_eng);
   state.set_state(tokens);
 
   if (args.is_logs_enabled()) state.activate_logs();
@@ -44,15 +48,14 @@ int main(int argc, char* argv[]) {
   );
 
   TreePrinter printer;
-  SymResolver resolver;
+  SymResolver resolver(diag_eng);
 
   parent->add_visitor(resolver);
   parent->add_visitor(printer);
   parent->apply_visitors();
 
   if (args.is_logs_enabled()) {
-    state.log_errors();
-    resolver.log_errors();
+    diag_eng.print_all();
   }
 
   return 0;
