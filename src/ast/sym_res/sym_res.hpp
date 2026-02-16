@@ -1,4 +1,5 @@
 #pragma once
+#include "../../diagnostics/diagnostic_eng.hpp"
 #include "../../nodes/node_visitor.hpp"
 #include "../../symbols/symbol_types.hpp"
 #include "../../nodes/node_expr.hpp"
@@ -25,6 +26,9 @@ inline std::string sym_err_to_str(SymErrType err) {
 
 class SymResolver: public Visitor {
 public:
+  SymResolver(DiagnosticEngine& eng)
+  : diag_eng(eng) {}
+
   void visit(NDLiteral&) override;
   void visit(NDImportDirective&) override;
   void visit(NDIdentifier&) override;
@@ -38,61 +42,7 @@ public:
   void visit(NDUnaryExpr&) override;
   void visit(NDScopeExpr&) override;
 
-  void log_errors() {
-    for (const auto& err: this->errors) {
-      printf("%s\n", err.data());
-    }
-  }
-
 private:
-  std::vector<std::string> errors;
   SymbolTable sym_table{};
-
-  std::string make_error(
-    SymErrType err_type,
-    Token& tok, 
-    const std::string msg
-  ) {
-    constexpr auto RESET  = "\033[0m";
-    constexpr auto RED    = "\033[31m";
-    constexpr auto YELLOW = "\033[33m";
-    constexpr auto CYAN   = "\033[36m";
-    constexpr auto BOLD   = "\033[1m";
-
-    auto header = std::format(
-      "{}{}Symbol Error:{} {}{}{} ({}Ln {}, Col {}{})",
-      BOLD, RED, RESET,
-      CYAN, sym_err_to_str(err_type), RESET,
-      YELLOW, tok.line_number, tok.column_number, RESET
-    );
-
-    return std::format(
-      "{}\n {}\n\n",
-      header,
-      msg
-    );
-  };
-
-  std::string make_error(
-    SymErrType err_type,
-    const std::string& msg
-  ) {
-    constexpr auto RESET  = "\033[0m";
-    constexpr auto RED    = "\033[31m";
-    constexpr auto YELLOW = "\033[33m";
-    constexpr auto CYAN   = "\033[36m";
-    constexpr auto BOLD   = "\033[1m";
-
-    auto header = std::format(
-      "{}{}Scope Error:{} {}{}{}",
-      BOLD, RED, RESET,
-      CYAN, sym_err_to_str(err_type), RESET
-    );
-    
-    return std::format(
-      "{}\n {}{}{}\n\n",
-      header,
-      YELLOW, msg, RESET
-    );
-  }
+  DiagnosticEngine& diag_eng;
 };
