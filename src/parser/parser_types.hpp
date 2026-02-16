@@ -7,11 +7,13 @@
 #include <string>
 #include "../nodes/node_expr.hpp"
 #include "../tokens/token_types.hpp"
+#include "../diagnostics/diagnostic_eng.hpp"
 
 struct ParserState {
-  std::vector<Token> tokens;
+  ParserState(DiagnosticEngine& eng)
+  : diag_eng(eng) {};
 
-  std::vector<std::string> errors;
+  std::vector<Token> tokens;
 
   std::vector<std::string> expr_captures;
 
@@ -33,13 +35,6 @@ struct ParserState {
 
   void set_state(std::vector<Token> tokens) {
     this->tokens = tokens;
-  }
-
-  void log_errors() {
-    if (!this->logs_on) return;
-    for (const auto& err: this->errors) {
-      std::cout << err << std::endl;
-    }
   }
 
   std::optional<Token> peek() { 
@@ -66,6 +61,8 @@ struct ParserState {
       this->advance();
     }
   }
+
+  DiagnosticEngine& diag_eng;
 };
 
 template<typename T>
@@ -200,10 +197,14 @@ std::optional<Token> inline expect(
       return tok;
   }
 
-  state.errors.push_back(
-    make_parser_error(err_type, tok.value(), message)
-  );
+  auto diag = Diagnostic();
+  diag.location.line = tok->line_number;
+  diag.location.column = tok->column_number;
+  diag.phase = DiagnosticPhase::Parser;
+  diag.level = DiagnosticLevel::Fail;
+  diag.message = message;
 
+  state.diag_eng.report(diag);
   return std::nullopt;
 }
 
@@ -218,10 +219,17 @@ PResult<T> inline expect_wp(
   if (!res) {
     if (!state.peek()) return std::nullopt;
     auto tok = state.peek();
-    state.errors.push_back(
-      make_parser_error(err_type, tok.value(), message)
-    );
+
+    auto diag = Diagnostic();
+    diag.location.line = tok->line_number;
+    diag.location.column = tok->column_number;
+    diag.phase = DiagnosticPhase::Parser;
+    diag.level = DiagnosticLevel::Fail;
+    diag.message = message;
+
+    state.diag_eng.report(diag);
     return std::nullopt;
   }
+
   return res;
 }

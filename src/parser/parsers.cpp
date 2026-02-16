@@ -367,20 +367,20 @@ Parser<NDFuncDeclExpr> parse_function_declaration() {
     while (true) {
       if (match(TokenType::RParen)(state)) break;
 
-      auto param_token = expect_wp(
+      auto param_token = expect(
         state,
-        parse_identifier(),
+        TokenType::Identifier,
         ParseErrorType::InvalidFuncDeclExpr,
         "Function args require valid identifiers"
       );
 
       if (!param_token) return std::nullopt;
 
-      auto param_type = optional(parse_type_annotation(), state);
       FuncParam param;
-      param.param_name = param_token->identifier.token_value;
+      auto param_type = optional(parse_type_annotation(), state);
+      param.param_token = param_token.value();
       param.param_type = param_type;
-      params.push_back(std::move(param));
+      params.push_back(param);
 
       if (!match(TokenType::Delim)(state)) {
         auto right_paren = expect(
