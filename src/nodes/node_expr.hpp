@@ -16,7 +16,7 @@ struct Node {
 using NDPtr = std::unique_ptr<Node>;
 
 struct FuncParam {
-  std::string param_name;
+  Token param_token;
   std::optional<Token> param_type;
 };
 
