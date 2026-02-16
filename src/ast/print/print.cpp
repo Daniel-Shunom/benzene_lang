@@ -136,7 +136,7 @@ void TreePrinter::visit(NDFuncDeclExpr& n) {
   line("params:");
   push();
   for (auto& p : n.func_params) {
-    line(p.param_name + (p.param_type ? " : " + p.param_type->token_value : ""));
+    line(p.param_token.token_value + (p.param_type ? " : " + p.param_type->token_value : ""));
   }
   pop();
   line("body:");
