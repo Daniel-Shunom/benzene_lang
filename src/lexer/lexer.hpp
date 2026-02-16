@@ -4,10 +4,12 @@
 #include <string_view>
 #include <vector>
 #include "../tokens/token_types.hpp"
+#include "lexer_diag.hpp"
 
 class Lexer {
 public:
-  Lexer(std::string_view input) {
+  Lexer(std::string_view input, DiagnosticEngine& eng)
+  : lex_diag(eng) {
     this->input = input;
     this->line_number = 1;
     this->column_number = 1;
@@ -21,6 +23,8 @@ public:
   std::vector<Token> get_tokens();
 
 private: 
+  LexerDiagnostics lex_diag;
+
   size_t position{};
 
   size_t line_number{};
@@ -77,7 +81,7 @@ private:
 
   void set_token_start();
 
-  void make_token(TokenType, std::string);
+  Token make_token(TokenType, std::string);
 
   std::string_view input{};
 

@@ -53,7 +53,8 @@ void Lexer::scan_tokens() {
       continue;
     }
 
-    this->make_token(TokenType::Unknown, {c});
+    auto tok = this->make_token(TokenType::Unknown, {c});
+    this->lex_diag.unknown_character(tok);
     continue;
   }
 
@@ -249,7 +250,8 @@ bool Lexer::scan_other_symbol() {
 
     default:
       this->advance();
-      this->make_token(TokenType::Unknown, std::string(1, c));
+      auto tok = this->make_token(TokenType::Unknown, std::string(1, c));
+      this->lex_diag.unknown_character(tok);
       return true;
   }
 }
@@ -367,13 +369,14 @@ bool Lexer::is_newline(const char& c) {
   return c == '\n';
 }
 
-void Lexer::make_token(TokenType type, std::string value) {
-  this->tokens.emplace_back(Token({
-    .token_type = type,
-    .token_value = value,
-    .line_number = this->token_start_line,
-    .column_number = this->token_start_column,
-  }));
+Token Lexer::make_token(TokenType type, std::string value) {
+  auto tok = Token();
+  tok.token_type = type;
+  tok.token_value = value;
+  tok.line_number = this->token_start_line;
+  tok.column_number = this->column_number;
+  this->tokens.push_back(tok);
+  return tok;
 }
 
 std::vector<Token> Lexer::get_tokens() {
