@@ -1,13 +1,13 @@
 #pragma once
-#include "parser_err.hpp"
+#include <ether/parser/parser_err.hpp>
 #include <optional>
 #include <iostream>
 #include <cstdio>
 #include <functional>
 #include <string>
-#include "../nodes/node_expr.hpp"
-#include "../tokens/token_types.hpp"
-#include "../diagnostics/diagnostic_eng.hpp"
+#include <ether/nodes/node_expr.hpp>
+#include <ether/tokens/token_types.hpp>
+#include <ether/diagnostics/diagnostic_eng.hpp>
 
 struct ParserState {
   ParserState(DiagnosticEngine& eng)

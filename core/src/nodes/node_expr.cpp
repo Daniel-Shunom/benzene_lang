@@ -1,5 +1,5 @@
-#include "node_expr.hpp"
-#include "node_visitor.hpp"
+#include <ether/nodes/node_expr.hpp>
+#include <ether/nodes/node_visitor.hpp>
 
 void NDLiteral::accept(Visitor& v) { v.visit(*this); }
 

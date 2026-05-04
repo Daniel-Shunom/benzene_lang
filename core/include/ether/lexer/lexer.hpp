@@ -3,8 +3,8 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include "../tokens/token_types.hpp"
-#include "lexer_diag.hpp"
+#include <ether/tokens/token_types.hpp>
+#include <ether/lexer/lexer_diag.hpp>
 
 class Lexer {
 public:

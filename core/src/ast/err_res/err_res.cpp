@@ -1,4 +1,4 @@
-#include "err_res.hpp"
+#include <ether/ast/err_res/err_res.hpp>
 
 void ErrorRes::visit(NDLiteral& expr) {
   if (!expr.is_poisoned) return;

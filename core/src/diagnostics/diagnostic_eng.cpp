@@ -1,5 +1,5 @@
-#include "diagnostic_eng.hpp"
-#include "diagnostic.hpp"
+#include <ether/diagnostics/diagnostic_eng.hpp>
+#include <ether/diagnostics/diagnostic.hpp>
 #include <iostream>
 #include <algorithm>
 #include <format>

@@ -1,6 +1,6 @@
 #pragma once
-#include "../../nodes/node_visitor.hpp"
-#include "../../nodes/node_expr.hpp"
+#include <ether/nodes/node_visitor.hpp>
+#include <ether/nodes/node_expr.hpp>
 #include <cstdio>
 #include <string>
 

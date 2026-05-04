@@ -1,5 +1,5 @@
 #pragma once
-#include "diagnostic.hpp"
+#include <ether/diagnostics/diagnostic.hpp>
 #include <string>
 #include <vector>
 

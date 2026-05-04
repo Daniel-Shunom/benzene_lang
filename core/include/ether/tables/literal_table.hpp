@@ -1,6 +1,6 @@
 #pragma once
 #include <unordered_set>
-#include "../tokens/token_types.hpp"
+#include <ether/tokens/token_types.hpp>
 
 static const std::unordered_set<TokenType> LiteralTable = {
   TokenType::NilLiteral,

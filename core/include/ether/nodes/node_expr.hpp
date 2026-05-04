@@ -1,6 +1,6 @@
 #pragma once
-#include "../symbols/symbol_types.hpp"
-#include "../tokens/token_types.hpp"
+#include <ether/symbols/symbol_types.hpp>
+#include <ether/tokens/token_types.hpp>
 #include <memory>
 #include <optional>
 #include <vector>

@@ -1,6 +1,6 @@
 #include <vector>
 #include <string>
-#include "../tokens/token_types.hpp"
+#include <ether/tokens/token_types.hpp>
 
 static const std::vector<std::pair<std::string, TokenType>> OperatorList = {
   {"|=> ", TokenType::PipeOp},

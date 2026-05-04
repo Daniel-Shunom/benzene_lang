@@ -1,5 +1,5 @@
 #pragma once
-#include "../tokens/token_types.hpp"
+#include <ether/tokens/token_types.hpp>
 
 typedef struct {
 

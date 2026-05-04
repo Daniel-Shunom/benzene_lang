@@ -1,7 +1,7 @@
 #pragma once
-#include "keyword_table.hpp"
-#include "literal_table.hpp"
-#include "operator_table.hpp"
+#include <ether/tables/keyword_table.hpp>
+#include <ether/tables/literal_table.hpp>
+#include <ether/tables/operator_table.hpp>
 
 static inline bool is_keyword(Token& type) {
   return KeywordTable.contains(type.token_value);

@@ -1,8 +1,11 @@
-#include "../lib/files.hpp"
-#include "ast/print/print.hpp"
-#include "ast/sym_res/sym_res.hpp"
-#include "command_line/cmd.hpp"
-#include "module/module.hpp"
+#include "cmd.hpp"
+#include "files.hpp"
+#include <ether/ast/print/print.hpp>
+#include <ether/ast/sym_res/sym_res.hpp>
+#include <ether/module/module.hpp>
+
+#include <cstdio>
+#include <cstdlib>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -10,15 +13,22 @@
 
 int main(int argc, char* argv[]) {
 #ifdef _WIN32
-  // The AST printer and diagnostic engine emit UTF-8 box-drawing characters.
-  // cmd.exe's default OEM code page would render those as garbage. Switching
-  // to UTF-8 (CP 65001) lets modern Windows consoles render them correctly.
+  // Tree connectors and diagnostic glyphs are emitted as UTF-8. cmd.exe's
+  // default OEM code page would render them as garbage; switching to CP
+  // 65001 makes modern Windows consoles render them correctly.
   SetConsoleOutputCP(CP_UTF8);
 #endif
 
   Args args = GetArgs(argc, argv);
 
-  Module main(args.file_path);
+  std::string source = FileToString(args.file_path);
+  if (source.empty()) {
+    std::fprintf(stderr, "ether: could not read source file `%s`\n",
+                 args.file_path.c_str());
+    return 1;
+  }
+
+  Module main(args.file_path, std::move(source));
   main.generate_ast();
 
   TreePrinter printer;

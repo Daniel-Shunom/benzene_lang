@@ -1,7 +1,7 @@
 #pragma once
 #include <format>
 #include <string>
-#include "../tokens/token_types.hpp"
+#include <ether/tokens/token_types.hpp>
 
 enum class ParseErrorType {
   InvalidImportExpr,

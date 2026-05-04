@@ -1,6 +1,6 @@
-#include "symtable.hpp"
-#include "scopes.hpp"
-#include "symbol_types.hpp"
+#include <ether/symbols/symtable.hpp>
+#include <ether/symbols/scopes.hpp>
+#include <ether/symbols/symbol_types.hpp>
 #include <optional>
 
 SymbolAttr* SymbolTable::declare(const Token& token, SymbolKind kind) {

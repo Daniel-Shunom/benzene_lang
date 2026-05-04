@@ -1,7 +1,7 @@
 #pragma once
-#include "../../tokens/token_types.hpp"
-#include "../../nodes/node_visitor.hpp"
-#include "../../nodes/node_expr.hpp"
+#include <ether/tokens/token_types.hpp>
+#include <ether/nodes/node_visitor.hpp>
+#include <ether/nodes/node_expr.hpp>
 #include <iostream>
 #include <string>
 #include <vector>

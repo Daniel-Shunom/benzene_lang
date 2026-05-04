@@ -1,7 +1,7 @@
 #pragma once
 #include <unordered_map>
 #include <string>
-#include "../tokens/token_types.hpp"
+#include <ether/tokens/token_types.hpp>
 
 static const std::unordered_map<std::string, TokenType> KeywordTable({
   {"Load", TokenType::ImportKeyword},

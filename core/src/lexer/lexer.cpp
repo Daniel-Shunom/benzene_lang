@@ -2,10 +2,10 @@
 #include <format>
 #include <iostream>
 #include <string>
-#include "lexer.hpp"
-#include "../tokens/token_types.hpp"
-#include "../tables/keyword_table.hpp"
-#include "../tables/operator_table.hpp"
+#include <ether/lexer/lexer.hpp>
+#include <ether/tokens/token_types.hpp>
+#include <ether/tables/keyword_table.hpp>
+#include <ether/tables/operator_table.hpp>
 
 
 void Lexer::scan_tokens() {

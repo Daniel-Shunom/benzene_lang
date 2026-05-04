@@ -1,4 +1,4 @@
-#include "sym_res.hpp"
+#include <ether/ast/sym_res/sym_res.hpp>
 
 void SymResolver::visit(NDImportDirective& expr) {
   auto cscope_type = this->sym_table.get_current_scope_type();

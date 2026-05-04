@@ -1,9 +1,9 @@
 #pragma once
-#include "../../diagnostics/diagnostic_eng.hpp"
-#include "../../nodes/node_visitor.hpp"
-#include "../../symbols/symbol_types.hpp"
-#include "../../nodes/node_expr.hpp"
-#include "../../symbols/symtable.hpp"
+#include <ether/diagnostics/diagnostic_eng.hpp>
+#include <ether/nodes/node_visitor.hpp>
+#include <ether/symbols/symbol_types.hpp>
+#include <ether/nodes/node_expr.hpp>
+#include <ether/symbols/symtable.hpp>
 #include <string>
 #include <format>
 #include <unordered_map>

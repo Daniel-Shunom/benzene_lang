@@ -1,8 +1,8 @@
 #pragma once
 #include <optional>
-#include "../tokens/token_types.hpp"
-#include "scopes.hpp"
-#include "symbol_types.hpp"
+#include <ether/tokens/token_types.hpp>
+#include <ether/symbols/scopes.hpp>
+#include <ether/symbols/symbol_types.hpp>
 #include <string>
 #include <vector>
 

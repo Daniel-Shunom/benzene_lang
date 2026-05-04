@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
-#include "../tokens/token_types.hpp"
+#include <ether/tokens/token_types.hpp>
 
 enum class SymbolKind {
   UnResolved,

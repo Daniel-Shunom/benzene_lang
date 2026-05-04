@@ -1,8 +1,8 @@
-#include "parsers.hpp"
-#include "parser_err.hpp"
-#include "parser_types.hpp"
-#include "../tables/utils.hpp"
-#include "parser_types.hpp"
+#include <ether/parser/parsers.hpp>
+#include <ether/parser/parser_err.hpp>
+#include <ether/parser/parser_types.hpp>
+#include <ether/tables/utils.hpp>
+#include <ether/parser/parser_types.hpp>
 #include <cstdio>
 #include <memory>
 #include <optional>

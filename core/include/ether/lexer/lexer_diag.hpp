@@ -1,6 +1,6 @@
 #pragma once
-#include "../diagnostics/diagnostic_eng.hpp"
-#include "../tokens/token_types.hpp"
+#include <ether/diagnostics/diagnostic_eng.hpp>
+#include <ether/tokens/token_types.hpp>
 
 class LexerDiagnostics {
 public:

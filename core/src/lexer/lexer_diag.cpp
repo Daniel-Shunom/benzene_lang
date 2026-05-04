@@ -1,4 +1,4 @@
-#include "lexer_diag.hpp"
+#include <ether/lexer/lexer_diag.hpp>
 #include <format>
 
 void LexerDiagnostics::unknown_character(Token& tok) {

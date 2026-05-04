@@ -1,5 +1,5 @@
 #pragma once
-#include "symbol_types.hpp"
+#include <ether/symbols/symbol_types.hpp>
 
 enum class ScopeType {
   Application,
