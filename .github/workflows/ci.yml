@@ -20,4 +20,4 @@ jobs:
         env:
           CXX: g++-14
           CC: gcc-14
-        run: ./test.sh
+        run: bash ./test.sh
