@@ -153,6 +153,16 @@ PResult<T> run(Parser<T> t, ParserState& state) {
   return t(state);
 }
 
+// Defers resolving `factory` until first invocation. Use at recursion points
+// where memoized parsers reference each other to avoid static-init cycles.
+template<typename T>
+Parser<T> lazy(Parser<T> (*factory)()) {
+  return [factory](ParserState& state) -> PResult<T> {
+    static const Parser<T> cached = factory();
+    return cached(state);
+  };
+}
+
 struct ParseCheckpoint {
   ParserState& state;
   size_t start;

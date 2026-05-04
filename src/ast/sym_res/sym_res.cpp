@@ -2,6 +2,7 @@
 
 void SymResolver::visit(NDImportDirective& expr) {
   auto cscope_type = this->sym_table.get_current_scope_type();
+  // todo: source files from include
   if ( cscope_type && (cscope_type != ScopeType::Module)) {
     expr.is_poisoned = true;
 
@@ -20,7 +21,7 @@ void SymResolver::visit(NDImportDirective& expr) {
 void SymResolver::visit(NDLiteral& expr) {
   auto cscope_type = this->sym_table.get_current_scope_type();
   if (
-    cscope_type 
+    cscope_type
     && cscope_type != ScopeType::ScopedExpression
     && cscope_type != ScopeType::FunctionExpression
     && cscope_type != ScopeType::Module
@@ -45,7 +46,7 @@ void SymResolver::visit(NDLiteral& expr) {
 void SymResolver::visit(NDIdentifier& expr) {
   auto cscope_type = this->sym_table.get_current_scope_type();
   if (
-    cscope_type 
+    cscope_type
     && cscope_type != ScopeType::ScopedExpression
     && cscope_type != ScopeType::FunctionExpression
     && cscope_type != ScopeType::Module
@@ -63,15 +64,19 @@ void SymResolver::visit(NDIdentifier& expr) {
     );
 
     this->diag_eng.report(diag);
-    return; 
+    return;
   }
+
+  auto ident_sym = this->sym_table.lookup(expr.identifier.token_value);
+  if (!ident_sym) return;
+  expr.identifier_symbol = ident_sym;
 }
 
 void SymResolver::visit(NDLetBindExpr& expr) {
   auto cscope_type = this->sym_table.get_current_scope_type();
   if (
-    cscope_type 
-    && cscope_type != ScopeType::FunctionExpression 
+    cscope_type
+    && cscope_type != ScopeType::FunctionExpression
     && cscope_type != ScopeType::ScopedExpression
   ) {
     expr.is_poisoned = true;
@@ -102,13 +107,16 @@ void SymResolver::visit(NDLetBindExpr& expr) {
     auto diag = Diagnostic();
     diag.level = DiagnosticLevel::Fail;
     diag.phase = DiagnosticPhase::Resolver;
-    diag.location.column = ident_sym->symbol_token.column_number;
-    diag.location.line = ident_sym->symbol_token.line_number;
+    diag.location.column = expr.identifier->identifier.column_number;
+    diag.location.line = expr.identifier->identifier.line_number;
     diag.message = dup_msg;
 
     this->diag_eng.report(diag);
     return;
   }
+
+  expr_sym->symbol_kind = SymbolKind::Binding;
+  expr.identifier->identifier_symbol = expr_sym;
 
   BindingData binding_data;
 
@@ -124,8 +132,8 @@ void SymResolver::visit(NDConstExpr& expr) {
   auto cscope_type = this->sym_table.get_current_scope_type();
 
   if (
-    cscope_type 
-    && cscope_type != ScopeType::Module 
+    cscope_type
+    && cscope_type != ScopeType::Module
     && cscope_type != ScopeType::Application
   ) {
     expr.is_poisoned = true;
@@ -135,7 +143,7 @@ void SymResolver::visit(NDConstExpr& expr) {
     diag.phase = DiagnosticPhase::Resolver;
     diag.location.column = expr.identifier->identifier.column_number;
     diag.location.line = expr.identifier->identifier.line_number;
-    diag.message = "`Let` expression is not in valid scope";
+    diag.message = "`Const` expression is not in valid scope";
 
     this->diag_eng.report(diag);
     return;
@@ -148,7 +156,7 @@ void SymResolver::visit(NDConstExpr& expr) {
     if (!ident_sym) return;
 
     auto dup_msg = std::format(
-      "Duplicate declaration of `{}` (see Ln {}, Col {} for previous declaration)",
+      "Duplicate `const` declaration of `{}` (see Ln {}, Col {} for previous declaration)",
       expr.identifier->identifier.token_value,
       ident_sym->symbol_token.line_number,
       ident_sym->symbol_token.column_number
@@ -157,12 +165,18 @@ void SymResolver::visit(NDConstExpr& expr) {
     auto diag = Diagnostic();
     diag.level = DiagnosticLevel::Fail;
     diag.phase = DiagnosticPhase::Resolver;
-    diag.location.column = ident_sym->symbol_token.column_number;
-    diag.location.line = ident_sym->symbol_token.line_number;
+    diag.location.column = expr.identifier->identifier.column_number;
+    diag.location.line = expr.identifier->identifier.line_number;
     diag.message = dup_msg;
 
     this->diag_eng.report(diag);
     return;
+  }
+  const_sym->symbol_kind = SymbolKind::Constant;
+  expr.identifier->identifier_symbol = const_sym;
+
+  if (cscope_type == ScopeType::Module) {
+    this->exports.emplace(const_sym->name, const_sym);
   }
 
   expr.literal.accept(*this);
@@ -182,7 +196,7 @@ void SymResolver::visit(NDCallExpr& expr) {
     diag.phase = DiagnosticPhase::Resolver;
     diag.location.column = expr.identifier->identifier.column_number;
     diag.location.line = expr.identifier->identifier.line_number;
-    diag.message = "`Let` expression is not in valid scope";
+    diag.message = "`Call` expression is not in valid scope";
 
     this->diag_eng.report(diag);
     return;
@@ -190,9 +204,9 @@ void SymResolver::visit(NDCallExpr& expr) {
 
   auto cscope_type = this->sym_table.get_current_scope_type();
   if (
-    cscope_type 
-    && cscope_type != ScopeType::CaseExpression 
-    && cscope_type != ScopeType::ScopedExpression 
+    cscope_type
+    && cscope_type != ScopeType::CaseExpression
+    && cscope_type != ScopeType::ScopedExpression
     && cscope_type != ScopeType::FunctionExpression
   ) {
     expr.is_poisoned = true;
@@ -208,6 +222,8 @@ void SymResolver::visit(NDCallExpr& expr) {
     return;
   }
 
+  expr.identifier->identifier_symbol = sym;
+
   for (auto& arg: expr.args) {
     arg->accept(*this);
   }
@@ -218,7 +234,7 @@ void SymResolver::visit(NDCallExpr& expr) {
 void SymResolver::visit(NDCallChain& expr) {
   auto cscope_type = this->sym_table.get_current_scope_type();
   if (
-    cscope_type 
+    cscope_type
     && cscope_type != ScopeType::ScopedExpression
     && cscope_type != ScopeType::FunctionExpression
     && cscope_type != ScopeType::CaseExpression
@@ -228,7 +244,9 @@ void SymResolver::visit(NDCallChain& expr) {
     auto diag = Diagnostic();
     diag.level = DiagnosticLevel::Fail;
     diag.phase = DiagnosticPhase::Resolver;
-    diag.message = "Call chain not in allowed in current scope";
+    diag.location.line = expr.start_token.line_number;
+    diag.location.column = expr.start_token.column_number;
+    diag.message = "Call chain not in valid scope";
 
     this->diag_eng.report(diag);
     return;
@@ -240,7 +258,7 @@ void SymResolver::visit(NDCallChain& expr) {
 void SymResolver::visit(NDFuncDeclExpr& expr) {
   auto cscope_type = this->sym_table.get_current_scope_type();
   if (
-    cscope_type 
+    cscope_type
     && cscope_type != ScopeType::ScopedExpression
     && cscope_type != ScopeType::FunctionExpression
     && cscope_type != ScopeType::Module
@@ -266,7 +284,7 @@ void SymResolver::visit(NDFuncDeclExpr& expr) {
     if (!ident_sym) return;
 
     auto dup_msg = std::format(
-      "Duplicate declaration of `{}` (see Ln {}, Col {} for previous declaration)",
+      "Duplicate function declaration of `{}` (see Ln {}, Col {} for previous declaration)",
       expr.func_identifier.token_value,
       ident_sym->symbol_token.line_number,
       ident_sym->symbol_token.column_number
@@ -277,9 +295,14 @@ void SymResolver::visit(NDFuncDeclExpr& expr) {
     diag.phase = DiagnosticPhase::Resolver;
     diag.location.column = expr.func_identifier.column_number;
     diag.location.line = expr.func_identifier.line_number;
+    diag.message = dup_msg;
 
     this->diag_eng.report(diag);
     return;
+  }
+
+  if (cscope_type == ScopeType::Module) {
+    this->exports.emplace(func_sym->name, func_sym);
   }
 
   ScopeGuard guard(this->sym_table, ScopeType::FunctionExpression);
@@ -305,6 +328,8 @@ void SymResolver::visit(NDFuncDeclExpr& expr) {
 
       this->diag_eng.report(diag);
     };
+
+    if (!arg.param_sym) arg.param_sym = ptr;
   }
 
   for (auto& body_expr: expr.func_body) body_expr->accept(*this);
@@ -316,6 +341,7 @@ void SymResolver::visit(NDFuncDeclExpr& expr) {
   }
 
   func_sym->symbol_data = func_data;
+  expr.func_sym = func_sym;
   return;
 }
 
@@ -323,7 +349,7 @@ void SymResolver::visit(NDScopeExpr& expr) {
   auto cscope_type = this->sym_table.get_current_scope_type();
   if (
     cscope_type
-    && cscope_type != ScopeType::FunctionExpression 
+    && cscope_type != ScopeType::FunctionExpression
     && cscope_type != ScopeType::ScopedExpression
   ) {
     expr.is_poisoned = true;
@@ -331,7 +357,9 @@ void SymResolver::visit(NDScopeExpr& expr) {
     auto diag = Diagnostic();
     diag.level = DiagnosticLevel::Fail;
     diag.phase = DiagnosticPhase::Resolver;
-    diag.message = "Scoped expressions is not allowed in current scope";
+    diag.location.line = expr.open_brace.line_number;
+    diag.location.column = expr.open_brace.column_number;
+    diag.message = "Scoped expression is not allowed in current scope";
 
     this->diag_eng.report(diag);
     return;
@@ -353,6 +381,8 @@ void SymResolver::visit(NDCaseExpr& expr) {
     auto diag = Diagnostic();
     diag.level = DiagnosticLevel::Fail;
     diag.phase = DiagnosticPhase::Resolver;
+    diag.location.line = expr.case_keyword.line_number;
+    diag.location.column = expr.case_keyword.column_number;
     diag.message = "Case expression not allowed in current scope";
 
     this->diag_eng.report(diag);
@@ -375,3 +405,4 @@ void SymResolver::visit(NDBinaryExpr& expr) {
 void SymResolver::visit(NDUnaryExpr& expr) {
   expr.rhs->accept(*this);
 }
+

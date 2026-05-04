@@ -19,7 +19,7 @@ enum class SymbolKind {
 /* Symbol Data structs. Used in storing information about certain symbols*/
 struct TypeData {
   // We should store other information here. For instance,
-  // user defined types should be referenced in definitions 
+  // user defined types should be referenced in definitions
   // somewhere. Perhaps we will keep a table that refrences,
   // user generated types.
   std::string type_name;
@@ -67,7 +67,7 @@ struct SymbolError {
   std::vector<Token> offending_tokens;
 };
 
-struct Symbol {
+struct SymbolAttr {
   std::string name;
   SymbolKind symbol_kind;
   TypeInfo type_info{};
@@ -76,6 +76,29 @@ struct Symbol {
   std::vector<SymbolError> symbol_errors{};
 };
 
-using SymTable = std::unordered_map<std::string, std::unique_ptr<Symbol>>;
+// Scope visibility maps name -> non-owning pointer into the module's
+// SymbolStorage arena. Popping a scope drops the visibility entry but does
+// NOT destroy the SymbolAttr — that lives for the whole module so node
+// decorations (e.g. NDIdentifier::identifier_symbol) remain valid through
+// later passes (HM, codegen).
+using SymTable = std::unordered_map<std::string, SymbolAttr*>;
+
+// Owning storage for SymbolAttr objects. One arena per Module; symbols are
+// allocated here and pointers handed out remain valid for the module's
+// lifetime.
+class SymbolStorage {
+public:
+  SymbolAttr* allocate(SymbolAttr&& attr) {
+    auto owned = std::make_unique<SymbolAttr>(std::move(attr));
+    SymbolAttr* raw = owned.get();
+    storage.push_back(std::move(owned));
+    return raw;
+  }
+
+  size_t size() const { return storage.size(); }
+
+private:
+  std::vector<std::unique_ptr<SymbolAttr>> storage;
+};
 
 

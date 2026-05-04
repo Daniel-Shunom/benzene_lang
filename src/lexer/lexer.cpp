@@ -19,12 +19,14 @@ void Lexer::scan_tokens() {
     }
 
     if (this->is_delim(c)) {
+      this->set_token_start();
       this->make_token(TokenType::Delim, {','});
       this->advance();
       continue;
     }
 
     if (this->is_dot(c)) {
+      this->set_token_start();
       this->make_token(TokenType::Dot, {'.'});
       this->advance();
       continue;
@@ -374,7 +376,7 @@ Token Lexer::make_token(TokenType type, std::string value) {
   tok.token_type = type;
   tok.token_value = value;
   tok.line_number = this->token_start_line;
-  tok.column_number = this->column_number;
+  tok.column_number = this->token_start_column;
   this->tokens.push_back(tok);
   return tok;
 }

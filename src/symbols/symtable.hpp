@@ -8,16 +8,17 @@
 
 class SymbolTable {
 public:
-  SymbolTable() {
+  explicit SymbolTable(SymbolStorage& arena) : arena(arena) {
     new_scope(ScopeType::Module);
   }
-  Symbol* declare(const Token&, SymbolKind);
-  Symbol* lookup(const std::string&);
+  SymbolAttr* declare(const Token&, SymbolKind);
+  SymbolAttr* lookup(const std::string&);
   std::optional<ScopeType> get_current_scope_type() const ;
   void new_scope(ScopeType);
   void pop_scope();
 
 private:
+  SymbolStorage& arena;
   std::vector<Scope> scopes;
 };
 

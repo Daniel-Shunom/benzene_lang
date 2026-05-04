@@ -6,7 +6,7 @@
 #include "../../symbols/symtable.hpp"
 #include <string>
 #include <format>
-#include <vector>
+#include <unordered_map>
 
 enum class SymErrType {
   InvalidDeclaration,
@@ -26,8 +26,8 @@ inline std::string sym_err_to_str(SymErrType err) {
 
 class SymResolver: public Visitor {
 public:
-  SymResolver(DiagnosticEngine& eng)
-  : diag_eng(eng) {}
+  SymResolver(SymbolStorage& arena, DiagnosticEngine& diag)
+  : diag_eng(diag), sym_table(arena) {}
 
   void visit(NDLiteral&) override;
   void visit(NDImportDirective&) override;
@@ -42,7 +42,12 @@ public:
   void visit(NDUnaryExpr&) override;
   void visit(NDScopeExpr&) override;
 
+  std::unordered_map<std::string, SymbolAttr*> take_exports() {
+    return std::move(exports);
+  }
+
 private:
-  SymbolTable sym_table{};
   DiagnosticEngine& diag_eng;
+  SymbolTable sym_table;
+  std::unordered_map<std::string, SymbolAttr*> exports;
 };

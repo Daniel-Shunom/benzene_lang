@@ -1,24 +1,23 @@
 #include "symtable.hpp"
 #include "scopes.hpp"
 #include "symbol_types.hpp"
-#include <memory>
 #include <optional>
 
-Symbol* SymbolTable::declare(const Token& token, SymbolKind kind) {
-  std::string name = token.token_value;
-  auto sym = std::make_unique<Symbol>(Symbol{
-    .name = token.token_value,
-    .symbol_kind = kind,
-    .type_info = TypeInfo(),
-    .symbol_token = token,
-  });
+SymbolAttr* SymbolTable::declare(const Token& token, SymbolKind kind) {
+  const std::string& name = token.token_value;
 
   if (this->scopes.back().scope_sym_table.contains(name)) {
     return nullptr;
   }
 
-  Symbol* ptr = sym.get();
-  this->scopes.back().scope_sym_table[name] = std::move(sym);
+  SymbolAttr* ptr = this->arena.allocate(SymbolAttr{
+    .name = name,
+    .symbol_kind = kind,
+    .type_info = TypeInfo(),
+    .symbol_token = token,
+  });
+
+  this->scopes.back().scope_sym_table[name] = ptr;
   return ptr;
 }
 
@@ -27,11 +26,10 @@ std::optional<ScopeType> SymbolTable::get_current_scope_type() const {
   return this->scopes.back().scope_type;
 }
 
-Symbol* SymbolTable::lookup(const std::string& name) {
+SymbolAttr* SymbolTable::lookup(const std::string& name) {
   for (auto it = this->scopes.rbegin(); it != scopes.rend(); ++it) {
-    if (it->scope_sym_table.contains(name)) {
-      Symbol* ptr = it->scope_sym_table[name].get();
-      return ptr;
+    if (auto found = it->scope_sym_table.find(name); found != it->scope_sym_table.end()) {
+      return found->second;
     }
   }
   return nullptr;

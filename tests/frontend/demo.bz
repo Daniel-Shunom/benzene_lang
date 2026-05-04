@@ -1,0 +1,191 @@
+
+Load benzene.extended.cpu
+Load benzene.list
+Load benzene.set
+Load benzene.threading
+
+Cmt docs are okay
+const bar = "functos():"
+
+const invalid_bool = True
+
+let test = 8 && 9
+
+let testing_bool = ~{"dumy"} + 5  -  - -2
+
+let boolean_exprs = {~{1 + 2 < 6} || 3 >= 5 }
+
+let new_foo = "10" - "5" * 9 / 2 + 0 + 1 + 1 + 1 + 1
+
+let variable: Int = 10
+let binary_expression: Int ={ 12 * 10}
+
+func func_w_bin_expr()
+  let foo = 10 * 12 + 3 - 1 / 2
+  let bar = 10 + 12 / 3 * 4
+  let foo_scoped: Int = { 10 * 12 + 3 - 1 / 2}
+  let bar_scoped: Int = { 10 - 12 / 3 * 4 - 1 + bar - foo / scoped * unscoped - {
+     let a = 10 - foo_scoped * 3 - 12 * 23 - 4 + foo
+     a || {2 > 3 || 5 ~= 2 && 5 < 6 - 2 && 4 >= 2 - 3 <= 8}
+  }}
+  let foobar = foo / bar
+  foobar
+end
+
+Cmt {
+  Language semantic violations will be trapped at the AST level for proper,
+  error handling via some external process (ideally the Language Server).
+  
+  Code containing semantic violations will not compile.
+}
+
+
+
+Cmt {
+  When declaring a constant, we keep constants at the top level scope of 
+  the module.
+}
+
+const bar =  10 Cmt this is ok
+
+let a = "10"
+
+const bar = "not allowed" 
+
+
+
+Cmt {
+  Declaring constants elsewhere will be flagged by the compiler and result in, 
+  a compile time error. 
+}
+
+func const_in_function() :> Nothing 
+  let foo = "10"
+  const x = 10            Cmt this will not compile
+end
+
+
+
+Cmt {
+  Let bindings are only allowed in Functions scopes. Writing let bindings
+  outside of a function scope will be flagged in the AST as `poisoned` and
+  will not compile.
+}
+
+let doodoo = "dada"        Cmt This will error!
+let a = b()                Cmt This will error!
+
+
+
+Cmt {
+  Same thing with Scoped Expressions. Scoped expressions must stem from a top
+  level function scope. Scoped expressions that do not originate from a function
+  scope will be flagged in the AST as `poisoned` and will result in a compile time
+  error.
+}
+
+{                          Cmt Illegal top-level function scope. 
+  let x = 10
+  let y = 11
+}
+
+Cmt simple syntax sample for the language.
+
+
+Cmt {
+  Functions are defined with the `func` keyword, fowllowed by the name of the function
+  and optional paramters, an optional return type using the `:>` `Type` syntax, and closed
+  with the `end` keyword.
+}
+
+func print(item: Type) :> SomeType
+  item
+end
+
+func benzene()
+  printer("Hi Benzene!")
+  print("Hello World!")
+end
+
+
+
+
+func parse_json(json_object: Dragons, house, option: Cars)
+  "json parsed"
+end
+
+func darling()
+  let a = "12"
+end
+
+Cmt {
+  Sample Module documentation for benzene programming language.
+
+  Multiline comments will benefit from some possible preprocessor
+  macro capabilities.
+}
+
+
+
+Cmt single line comment
+const apo = True
+Cmt {}
+
+Cmt {bindings outside of functions aren't allowed.}
+
+    bar()
+    |=> darling()
+    |=> parse_json(bar)
+    |=> bar()
+    |=> parse_json_vars()
+
+const bar = "unterminated string"
+
+const xm = "Int"
+
+const x: Int = 10
+const y: Float = 3.5
+const name: String = "Dr. Lex"
+const valid: Bool = True
+
+func compute(bar: String, price: Float) :> Bread
+  let x = param
+  let var = param
+  const path = "C:\\bin\\compute.exe"
+  const msg = "value"
+  let a_: String = "default" "" "" ""
+  let bartender: Int = 235
+  1 * 5
+  "30"
+end
+
+
+case "dogs" :
+   "cats" :> cars
+   "variables" :> values
+   
+end
+
+
+const car = 10
+
+let bar: Dog = 3 * 5
+
+func bars(param: Nothing) :> LiterallyNothing 
+  12 * 5 * 9
+end
+
+let a = 12 * {5} * 9
+
+let foo: Int = 2 + 3 - 5
+
+let test_false = False
+
+let dummy_false = ~True
+
+let invalid = -{5 + {4 * 3} - 2}
+
+
+func bart(name, name) :> Foo
+  
+end
