@@ -1,0 +1,10 @@
+const greeting: String = "hello"
+
+func identity(x: Int) :> Int
+  x
+end
+
+func use_identity()
+  let result = identity(42)
+  result
+end

@@ -1,0 +1,15 @@
+func a()
+  1
+end
+
+func b()
+  2
+end
+
+func c()
+  3
+end
+
+func chain()
+  a() |=> b() |=> c()
+end

@@ -7,3 +7,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
 add_subdirectory(core)
 add_subdirectory(cli)
+
+option(ETHER_BUILD_TESTS "Build the ether test suite" ON)
+if (ETHER_BUILD_TESTS)
+  enable_testing()
+  add_subdirectory(tests)
+endif()
