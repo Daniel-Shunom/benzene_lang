@@ -1,24 +1,26 @@
 #pragma once
-#include <stdexcept>
 #include <string>
+#include <variant>
 
-struct Args {
-  std::string file_path;
-  std::string logs_enabled;
-
-  bool is_logs_enabled() {
-    return logs_enabled == "--wlogs";
-  }
+struct ArgCreate { std::string project_name; };
+struct ArgInit   {};
+struct ArgBuild  {};
+struct ArgRun    {};
+struct ArgCheck  {
+  std::string path;
+  bool show_ast = false;
 };
+struct ArgHelp   {};
 
-inline Args GetArgs(int argc, char* argv[]) {
-  if (argc < 2) {
-    throw std::invalid_argument("insufficient argument. must provide file path");
-  }
+using Args = std::variant<
+  ArgInit,
+  ArgBuild,
+  ArgRun,
+  ArgCheck,
+  ArgCreate,
+  ArgHelp
+>;
 
-  return (Args) {
-    .file_path = argv[1],
-    .logs_enabled = argv[2] ? argv[2] : std::string{}
-  };
-}
+Args GetArgs(int argc, char* argv[]);
 
+int HandleArgs(const Args&);
