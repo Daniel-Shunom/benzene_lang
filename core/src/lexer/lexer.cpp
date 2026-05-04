@@ -1,6 +1,6 @@
 #include <cctype>
 #include <format>
-#include <iostream>
+#include <ostream>
 #include <string>
 #include <ether/lexer/lexer.hpp>
 #include <ether/tokens/token_types.hpp>
@@ -78,12 +78,17 @@ void Lexer::scan_keyword_or_identifier() {
   auto it = KeywordTable.find(id);
   if (it == KeywordTable.end()) {
     this->make_token(TokenType::Identifier, id);
-  } else {
-    switch (it->second) {
-      case TokenType::CommentKeyword: return this->scan_comment();
-      case TokenType::ImportKeyword: return this->scan_import_module();
-      default: this->make_token(it->second, id);
-    }
+    return;
+  }
+
+  switch (it->second) {
+    case TokenType::CommentKeyword:
+      return this->scan_comment();
+    case TokenType::ImportKeyword:
+      this->make_token(it->second, id);
+      return this->scan_import_module();
+    default:
+      this->make_token(it->second, id);
   }
 }
 
@@ -385,11 +390,11 @@ std::vector<Token> Lexer::get_tokens() {
   return this->tokens;
 }
 
-void Lexer::print_tokens() {
+void Lexer::print_tokens(std::ostream& out) const {
   for (const auto& token : this->tokens) {
-    std::cout << std::format(
+    out << std::format(
       "[TOKEN]  {:<20} | {:<25} | Ln {:>4}, Cn {:>4}\n",
-      typeToStr(token.token_type),
+      token_type_to_str(token.token_type),
       token.token_value,
       token.line_number,
       token.column_number

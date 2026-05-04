@@ -1,9 +1,10 @@
+#pragma once
 #include <vector>
 #include <string>
 #include <ether/tokens/token_types.hpp>
 
-static const std::vector<std::pair<std::string, TokenType>> OperatorList = {
-  {"|=> ", TokenType::PipeOp},
+inline const std::vector<std::pair<std::string, TokenType>> OperatorList = {
+  {"|=>", TokenType::PipeOp},
 
   {">=", TokenType::Ge},
 

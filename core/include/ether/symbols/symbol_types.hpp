@@ -33,7 +33,7 @@ struct FuncParamData {
 
 struct FunctionData {
   std::vector<FuncParamData> function_params;
-  TypeData funtion_return_type;
+  TypeData function_return_type;
 };
 
 struct BindingData {

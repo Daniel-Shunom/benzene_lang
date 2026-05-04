@@ -2,7 +2,7 @@
 
 #include "fixtures.hpp"
 
-#include <ether/ast/sym_res/sym_res.hpp>
+#include <ether/ast/symbol_resolver/symbol_resolver.hpp>
 #include <ether/diagnostics/diagnostic_eng.hpp>
 #include <ether/module/module.hpp>
 #include <ether/nodes/node_expr.hpp>
@@ -15,7 +15,7 @@ namespace {
 
 struct ResolvedModule {
   std::unique_ptr<Module> module;
-  std::unique_ptr<SymResolver> resolver;
+  std::unique_ptr<SymbolResolver> resolver;
   std::unordered_map<std::string, SymbolAttr*> exports;
 
   bool has_errors() const { return module->get_diag_engine().has_errors(); }
@@ -25,7 +25,7 @@ ResolvedModule resolve(const std::string& src) {
   ResolvedModule rm;
   rm.module = std::make_unique<Module>("<test>", src);
   rm.module->generate_ast();
-  rm.resolver = std::make_unique<SymResolver>(
+  rm.resolver = std::make_unique<SymbolResolver>(
     rm.module->get_symbol_storage(),
     rm.module->get_diag_engine()
   );

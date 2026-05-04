@@ -273,6 +273,19 @@ TEST_SUITE("parser / case expressions") {
   }
 }
 
+TEST_SUITE("parser / imports") {
+  TEST_CASE("Load directive parses into NDImportDirective") {
+    DiagnosticEngine diag;
+    auto p = parse_source("Load benzene.list", diag);
+    REQUIRE(p.has_value());
+    REQUIRE(p->children.size() == 1);
+    auto* imp = dynamic_cast<NDImportDirective*>(p->children[0].get());
+    REQUIRE(imp);
+    CHECK(imp->import_directive.token_value == "benzene.list");
+    CHECK_FALSE(diag.has_errors());
+  }
+}
+
 TEST_SUITE("parser / recovery") {
   TEST_CASE("a stray top-level token does not abort the rest of the program") {
     DiagnosticEngine diag;

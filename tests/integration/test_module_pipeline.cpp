@@ -2,7 +2,7 @@
 
 #include "fixtures.hpp"
 
-#include <ether/ast/sym_res/sym_res.hpp>
+#include <ether/ast/symbol_resolver/symbol_resolver.hpp>
 #include <ether/module/module.hpp>
 
 #include <fstream>
@@ -24,14 +24,14 @@ std::string read_sample(const std::string& name) {
 
 struct Pipeline {
   std::unique_ptr<Module> module;
-  std::unique_ptr<SymResolver> resolver;
+  std::unique_ptr<SymbolResolver> resolver;
 };
 
 Pipeline run_full(const std::string& source, const std::string& path) {
   Pipeline pl;
   pl.module = std::make_unique<Module>(path, source);
   pl.module->generate_ast();
-  pl.resolver = std::make_unique<SymResolver>(
+  pl.resolver = std::make_unique<SymbolResolver>(
     pl.module->get_symbol_storage(),
     pl.module->get_diag_engine()
   );

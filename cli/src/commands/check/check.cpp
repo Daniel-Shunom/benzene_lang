@@ -2,7 +2,7 @@
 #include "files.hpp"
 
 #include <ether/ast/print/print.hpp>
-#include <ether/ast/sym_res/sym_res.hpp>
+#include <ether/ast/symbol_resolver/symbol_resolver.hpp>
 #include <ether/module/module.hpp>
 
 #include <cstdio>
@@ -20,7 +20,7 @@ int HandleCheck(const ArgCheck& a) {
   mod.generate_ast();
 
   TreePrinter printer;
-  SymResolver resolver(mod.get_symbol_storage(), mod.get_diag_engine());
+  SymbolResolver resolver(mod.get_symbol_storage(), mod.get_diag_engine());
 
   if (a.show_ast) mod.attach_visitor(printer);
   mod.attach_visitor(resolver);

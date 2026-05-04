@@ -2,6 +2,8 @@
 #include <ether/diagnostics/diagnostic_eng.hpp>
 #include <ether/nodes/node_expr.hpp>
 #include <ether/symbols/symbol_types.hpp>
+#include <iosfwd>
+#include <iostream>
 #include <string>
 #include <unordered_map>
 
@@ -18,7 +20,7 @@ public:
   void attach_visitor(Visitor&);
   void generate_ast();
   void apply_visitors();
-  void print_errors();
+  void print_errors(std::ostream& out = std::cout);
   Parent get_ast();
 
   SymbolStorage& get_symbol_storage() { return arena; }

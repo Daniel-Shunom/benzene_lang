@@ -1,5 +1,7 @@
 #pragma once
 #include <cstddef>
+#include <iosfwd>
+#include <iostream>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -18,7 +20,7 @@ public:
 
   void scan_tokens();
 
-  void print_tokens();
+  void print_tokens(std::ostream& out = std::cout) const;
 
   std::vector<Token> get_tokens();
 

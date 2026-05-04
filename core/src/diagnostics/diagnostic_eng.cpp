@@ -1,9 +1,20 @@
 #include <ether/diagnostics/diagnostic_eng.hpp>
 #include <ether/diagnostics/diagnostic.hpp>
-#include <iostream>
 #include <algorithm>
 #include <format>
+#include <ostream>
 #include <sstream>
+
+namespace {
+  constexpr auto RESET   = "\033[0m";
+  constexpr auto BOLD    = "\033[1m";
+  constexpr auto DIM     = "\033[2m";
+  constexpr auto RED     = "\033[31m";
+  constexpr auto YELLOW  = "\033[33m";
+  constexpr auto CYAN    = "\033[36m";
+  constexpr auto MAGENTA = "\033[35m";
+  constexpr auto BLUE    = "\033[34m";
+}
 
 void DiagnosticEngine::report(Diagnostic diag) {
   this->diagnostics.push_back(diag);
@@ -63,8 +74,7 @@ static std::string gutter(size_t width, const std::string& content = "") {
   return std::format("{}{}{} |{} ", pad, BLUE, content, RESET);
 }
 
-void DiagnosticEngine::print_all() {
-  // Sort by line/column for readability.
+void DiagnosticEngine::print_all(std::ostream& out) {
   std::sort(diagnostics.begin(), diagnostics.end(),
     [](const Diagnostic& a, const Diagnostic& b) {
       if (a.location.line != b.location.line)
@@ -80,56 +90,51 @@ void DiagnosticEngine::print_all() {
       && !source_lines.empty()
       && d.location.line <= source_lines.size();
 
-    // Header: "error: <message>"
-    std::cout
+    out
       << BOLD << color << level_to_string(d.level) << RESET
       << BOLD << ": " << d.message << RESET << "\n";
 
-    // Location arrow: "  --> path:line:col  [phase]"
     if (has_location) {
-      std::cout
+      out
         << "  " << BLUE << "-->" << RESET << " "
         << (source_path.empty() ? "<source>" : source_path)
         << ":" << d.location.line << ":" << d.location.column
         << DIM << "  [" << MAGENTA << phase_to_string(d.phase)
         << RESET << DIM << "]" << RESET << "\n";
     } else {
-      std::cout
+      out
         << "  " << BLUE << "-->" << RESET << " "
         << DIM << "(no source location)  [" << MAGENTA
         << phase_to_string(d.phase) << RESET << DIM << "]" << RESET << "\n";
     }
 
-    // Source excerpt + caret.
     if (can_show_source) {
       std::string line_str = std::to_string(d.location.line);
       size_t gutter_w = line_str.size();
 
-      std::cout << gutter(gutter_w) << "\n";
-      std::cout
+      out << gutter(gutter_w) << "\n";
+      out
         << gutter(gutter_w, line_str)
         << source_lines[d.location.line - 1] << "\n";
 
-      // Caret line: pad to column, then '^'.
       std::string caret_pad;
       if (d.location.column > 0) caret_pad.assign(d.location.column - 1, ' ');
-      std::cout
+      out
         << gutter(gutter_w)
         << caret_pad << color << "^" << RESET << "\n";
     }
 
-    // Related notes (currently used for cross-references).
     for (const auto& note : d.related) {
-      std::cout
+      out
         << "  " << CYAN << "= note:" << RESET << " " << note.message;
       if (note.location.line > 0) {
-        std::cout
+        out
           << DIM << " (" << note.location.line
           << ":" << note.location.column << ")" << RESET;
       }
-      std::cout << "\n";
+      out << "\n";
     }
 
-    std::cout << "\n";
+    out << "\n";
   }
 }

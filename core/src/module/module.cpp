@@ -36,8 +36,8 @@ void Module::apply_visitors() {
   this->module_root.apply_visitors();
 }
 
-void Module::print_errors() {
-  this->diag.print_all();
+void Module::print_errors(std::ostream& out) {
+  this->diag.print_all(out);
 }
 
 Parent Module::get_ast() {

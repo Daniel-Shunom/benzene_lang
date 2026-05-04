@@ -1,6 +1,6 @@
-#include <ether/ast/sym_res/sym_res.hpp>
+#include <ether/ast/symbol_resolver/symbol_resolver.hpp>
 
-void SymResolver::visit(NDImportDirective& expr) {
+void SymbolResolver::visit(NDImportDirective& expr) {
   auto cscope_type = this->sym_table.get_current_scope_type();
   // todo: source files from include
   if ( cscope_type && (cscope_type != ScopeType::Module)) {
@@ -18,7 +18,7 @@ void SymResolver::visit(NDImportDirective& expr) {
   }
 }
 
-void SymResolver::visit(NDLiteral& expr) {
+void SymbolResolver::visit(NDLiteral& expr) {
   auto cscope_type = this->sym_table.get_current_scope_type();
   if (
     cscope_type
@@ -43,7 +43,7 @@ void SymResolver::visit(NDLiteral& expr) {
   }
 }
 
-void SymResolver::visit(NDIdentifier& expr) {
+void SymbolResolver::visit(NDIdentifier& expr) {
   auto cscope_type = this->sym_table.get_current_scope_type();
   if (
     cscope_type
@@ -72,7 +72,7 @@ void SymResolver::visit(NDIdentifier& expr) {
   expr.identifier_symbol = ident_sym;
 }
 
-void SymResolver::visit(NDLetBindExpr& expr) {
+void SymbolResolver::visit(NDLetBindExpr& expr) {
   auto cscope_type = this->sym_table.get_current_scope_type();
   if (
     cscope_type
@@ -128,7 +128,7 @@ void SymResolver::visit(NDLetBindExpr& expr) {
   return;
 }
 
-void SymResolver::visit(NDConstExpr& expr) {
+void SymbolResolver::visit(NDConstExpr& expr) {
   auto cscope_type = this->sym_table.get_current_scope_type();
 
   if (
@@ -184,7 +184,7 @@ void SymResolver::visit(NDConstExpr& expr) {
 }
 
 
-void SymResolver::visit(NDCallExpr& expr) {
+void SymbolResolver::visit(NDCallExpr& expr) {
   auto ident  = expr.identifier->identifier.token_value;
   auto sym = this->sym_table.lookup(ident);
 
@@ -231,7 +231,7 @@ void SymResolver::visit(NDCallExpr& expr) {
   return;
 }
 
-void SymResolver::visit(NDCallChain& expr) {
+void SymbolResolver::visit(NDCallChain& expr) {
   auto cscope_type = this->sym_table.get_current_scope_type();
   if (
     cscope_type
@@ -255,7 +255,7 @@ void SymResolver::visit(NDCallChain& expr) {
   for (auto& call: expr.calls) call->accept(*this);
 }
 
-void SymResolver::visit(NDFuncDeclExpr& expr) {
+void SymbolResolver::visit(NDFuncDeclExpr& expr) {
   auto cscope_type = this->sym_table.get_current_scope_type();
   if (
     cscope_type
@@ -337,7 +337,7 @@ void SymResolver::visit(NDFuncDeclExpr& expr) {
   FunctionData func_data;
 
   if (expr.return_type) {
-    func_data.funtion_return_type.type_name = expr.return_type->token_value;
+    func_data.function_return_type.type_name = expr.return_type->token_value;
   }
 
   func_sym->symbol_data = func_data;
@@ -345,7 +345,7 @@ void SymResolver::visit(NDFuncDeclExpr& expr) {
   return;
 }
 
-void SymResolver::visit(NDScopeExpr& expr) {
+void SymbolResolver::visit(NDScopeExpr& expr) {
   auto cscope_type = this->sym_table.get_current_scope_type();
   if (
     cscope_type
@@ -369,7 +369,7 @@ void SymResolver::visit(NDScopeExpr& expr) {
   for (auto& scope_expr: expr.expressions) scope_expr->accept(*this);
 }
 
-void SymResolver::visit(NDCaseExpr& expr) {
+void SymbolResolver::visit(NDCaseExpr& expr) {
   auto cscope_type = this->sym_table.get_current_scope_type();
   if (
     cscope_type
@@ -397,12 +397,12 @@ void SymResolver::visit(NDCaseExpr& expr) {
   }
 }
 
-void SymResolver::visit(NDBinaryExpr& expr) {
+void SymbolResolver::visit(NDBinaryExpr& expr) {
   expr.lhs->accept(*this);
   expr.rhs->accept(*this);
 }
 
-void SymResolver::visit(NDUnaryExpr& expr) {
+void SymbolResolver::visit(NDUnaryExpr& expr) {
   expr.rhs->accept(*this);
 }
 

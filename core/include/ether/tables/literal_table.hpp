@@ -2,7 +2,7 @@
 #include <unordered_set>
 #include <ether/tokens/token_types.hpp>
 
-static const std::unordered_set<TokenType> LiteralTable = {
+inline const std::unordered_set<TokenType> LiteralTable = {
   TokenType::NilLiteral,
   TokenType::TrueLiteral,
   TokenType::FalseLiteral,

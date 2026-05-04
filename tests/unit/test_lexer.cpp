@@ -162,14 +162,18 @@ TEST_SUITE("lexer / operators and punctuation") {
   }
 
   TEST_CASE("return-type and pipe operators") {
-    // Note: the pipe operator literal includes a trailing space — without it
-    // the operator does not match.
     auto toks = lex_no_eof(":> a |=> b");
     REQUIRE(toks.size() == 4);
     CHECK(toks[0].token_type == TokenType::RtnTypeOp);
     CHECK(toks[1].token_type == TokenType::Identifier);
     CHECK(toks[2].token_type == TokenType::PipeOp);
     CHECK(toks[3].token_type == TokenType::Identifier);
+  }
+
+  TEST_CASE("pipe operator does not require surrounding whitespace") {
+    auto toks = lex_no_eof("a()|=>b()");
+    REQUIRE(toks.size() == 7);
+    CHECK(toks[3].token_type == TokenType::PipeOp);
   }
 
   TEST_CASE("brackets, braces, parens, colon, comma, dot") {
@@ -212,12 +216,14 @@ TEST_SUITE("lexer / comments") {
 }
 
 TEST_SUITE("lexer / imports") {
-  TEST_CASE("Load directive emits ImportModule with module path") {
+  TEST_CASE("Load directive emits ImportKeyword followed by ImportModule") {
     auto toks = lex_no_eof("Load benzene.list\nlet x = 1");
-    REQUIRE(toks.size() == 5);
-    CHECK(toks[0].token_type == TokenType::ImportModule);
-    CHECK(toks[0].token_value == "benzene.list");
-    CHECK(toks[1].token_type == TokenType::LetKeyword);
+    REQUIRE(toks.size() == 6);
+    CHECK(toks[0].token_type == TokenType::ImportKeyword);
+    CHECK(toks[0].token_value == "Load");
+    CHECK(toks[1].token_type == TokenType::ImportModule);
+    CHECK(toks[1].token_value == "benzene.list");
+    CHECK(toks[2].token_type == TokenType::LetKeyword);
   }
 }
 
