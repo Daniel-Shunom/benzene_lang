@@ -45,6 +45,18 @@ struct NDScopeExpr : Node {
   void accept(Visitor &) override;
 };
 
+struct NDListExpr : Node {
+  Token open_brac;
+  std::vector<NDPtr> values;
+  void accept(Visitor &) override;
+};
+
+struct NDTupleExpr : Node {
+  Token at_sym;
+  std::vector<NDPtr> values;
+  void accept(Visitor &) override;
+};
+
 struct NDImportDirective : Node {
   Token import_directive;
   void accept(Visitor &) override;
@@ -64,7 +76,7 @@ struct NDLetBindExpr : Node {
 
 struct NDConstExpr : Node {
   std::unique_ptr<NDIdentifier> identifier;
-  NDLiteral literal;
+  NDPtr bound_value;
   void accept(Visitor &) override;
 };
 

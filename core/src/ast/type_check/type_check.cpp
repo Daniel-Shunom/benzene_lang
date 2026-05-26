@@ -12,3 +12,5 @@ void TypeChecker::visit(NDCaseExpr&) {}
 void TypeChecker::visit(NDBinaryExpr&) {}
 void TypeChecker::visit(NDUnaryExpr&) {}
 void TypeChecker::visit(NDScopeExpr&) {}
+void TypeChecker::visit(NDTupleExpr&) {}
+void TypeChecker::visit(NDListExpr&) {}

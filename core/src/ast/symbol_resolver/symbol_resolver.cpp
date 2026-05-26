@@ -179,7 +179,7 @@ void SymbolResolver::visit(NDConstExpr& expr) {
     this->exports.emplace(const_sym->name, const_sym);
   }
 
-  expr.literal.accept(*this);
+  expr.bound_value->accept(*this);
   return;
 }
 
@@ -367,6 +367,14 @@ void SymbolResolver::visit(NDScopeExpr& expr) {
 
   ScopeGuard guard(this->sym_table, ScopeType::ScopedExpression);
   for (auto& scope_expr: expr.expressions) scope_expr->accept(*this);
+}
+
+void SymbolResolver::visit(NDListExpr& expr) {
+  for (auto& value: expr.values) value->accept(*this);
+}
+
+void SymbolResolver::visit(NDTupleExpr& expr) {
+  for (auto& value: expr.values) value->accept(*this);
 }
 
 void SymbolResolver::visit(NDCaseExpr& expr) {

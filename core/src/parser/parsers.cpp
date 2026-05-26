@@ -1,3 +1,5 @@
+#include "ether/nodes/node_expr.hpp"
+#include "ether/tokens/token_types.hpp"
 #include <ether/parser/parsers.hpp>
 #include <ether/parser/parser_err.hpp>
 #include <ether/parser/parser_types.hpp>
@@ -99,6 +101,14 @@ Parser<NDPtr> parse_primary_expression() {
 
     if (auto scoped_expr = parse_scoped_expression()(state)) {
       return std::make_unique<NDScopeExpr>(std::move(scoped_expr.value()));
+    }
+
+    if (auto list_expr = parse_list_expression()(state)) {
+      return std::make_unique<NDListExpr>(std::move(list_expr.value()));
+    }
+
+    if (auto tuple_expr = parse_tuple_expression()(state)) {
+      return std::make_unique<NDTupleExpr>(std::move(tuple_expr.value()));
     }
 
     if (auto literal = parse_literal()(state)) {
@@ -295,9 +305,9 @@ Parser<NDCallExpr> parse_call_expression() {
       }
 
       auto expr = expect_wp(
-        state, 
+        state,
         parse_primary_expression(),
-        ParseErrorType::InvalidFuncCallExpr, 
+        ParseErrorType::InvalidFuncCallExpr,
         "Function args require valid primary expression"
       );
 
@@ -437,7 +447,7 @@ Parser<NDFuncDeclExpr> parse_function_declaration() {
     std::vector<NDPtr> body{};
     while (!match(TokenType::EndStmt)(state)) {
       auto expr = parse_expression()(state);
-      if (!expr) { 
+      if (!expr) {
         state.skip_until(TokenType::EndStmt);
         break;
       };
@@ -558,6 +568,73 @@ Parser<NDScopeExpr> parse_scoped_expression() {
   return p;
 }
 
+Parser<NDListExpr> parse_list_expression() {
+  static Parser<NDListExpr> p = [](ParserState& state) -> PResult<NDListExpr> {
+    ParseCheckpoint checkpoint(state);
+
+    auto open_brac = match(TokenType::LBrac)(state);
+    if (!open_brac) return std::nullopt;
+
+    std::vector<NDPtr> exprs;
+
+    if (!match(TokenType::RBrac)(state)) {
+      while (true) {
+        auto expr = parse_expression()(state);
+        if (!expr) return std::nullopt;
+
+        exprs.push_back(std::move(expr.value()));
+
+        if (match(TokenType::RBrac)(state)) break;
+
+        if (!match(TokenType::Delim)(state)) return std::nullopt;
+      }
+    }
+
+    NDListExpr list_expr;
+    list_expr.open_brac = open_brac.value();
+    list_expr.values = std::move(exprs);
+
+    checkpoint.commit();
+    return list_expr;
+  };
+  return p;
+}
+
+Parser<NDTupleExpr> parse_tuple_expression() {
+  static Parser<NDTupleExpr> p = [](ParserState& state) -> PResult<NDTupleExpr> {
+    ParseCheckpoint checkpoint(state);
+
+    auto tuple_start = match(TokenType::TupleStart)(state);
+    if (!tuple_start) return std::nullopt;
+
+    auto open_brace = match(TokenType::LBrace)(state);
+    if (!open_brace) return std::nullopt;
+
+    std::vector<NDPtr> exprs;
+
+    if (!match(TokenType::RBrace)(state)) {
+      while (true) {
+        auto expr = parse_expression()(state);
+        if (!expr) return std::nullopt;
+
+        exprs.push_back(std::move(expr.value()));
+
+        if (match(TokenType::RBrace)(state)) break;
+
+        if (!match(TokenType::Delim)(state)) return std::nullopt;
+      }
+    }
+
+    NDTupleExpr tuple_expr;
+    tuple_expr.at_sym = tuple_start.value();
+    tuple_expr.values = std::move(exprs);
+
+    checkpoint.commit();
+    return tuple_expr;
+  };
+  return p;
+}
+
 Parser<NDLetBindExpr> parse_let_expression() {
   static Parser<NDLetBindExpr> p = [](ParserState& state) -> PResult<NDLetBindExpr> {
     ParseCheckpoint checkpoint(state);
@@ -634,9 +711,19 @@ Parser<NDConstExpr> parse_const_expression() {
 
     auto literal = expect_wp(
       state,
-      parse_literal(),
+      choice<NDPtr>({
+        map(parse_literal(), [](NDLiteral x) -> NDPtr {
+          return std::make_unique<NDLiteral>(std::move(x));
+        }),
+        map(parse_list_expression(), [](NDListExpr x) -> NDPtr {
+          return std::make_unique<NDListExpr>(std::move(x));
+        }),
+        map(parse_tuple_expression(), [](NDTupleExpr x) -> NDPtr {
+          return std::make_unique<NDTupleExpr>(std::move(x));
+        })
+      }),
       ParseErrorType::InvalidConstExpr,
-      "Const values can only hold `literal` types"
+      "Const values can only hold primitive data and user-generated types"
     );
 
     if (!literal) return std::nullopt;
@@ -645,7 +732,7 @@ Parser<NDConstExpr> parse_const_expression() {
     expr.identifier = std::make_unique<NDIdentifier>(ident.value());
     expr.identifier->type = const_type;
     expr.type = const_type;
-    expr.literal = std::move(literal.value());
+    expr.bound_value = std::move(literal.value());
 
 
     checkpoint.commit();

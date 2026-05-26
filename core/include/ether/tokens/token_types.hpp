@@ -47,6 +47,8 @@ enum class TokenType {
   Case,
   Default,
 
+  TupleStart,
+
   LParen,
   RParen,
   LBrac,
@@ -118,6 +120,7 @@ inline std::string token_type_to_str(TokenType type) {
     case t::Delim: return "Delimitter";
     case t::Dot: return "Dot";
     case t::CommentKeyword: return "CommentKeyword";
+    case t::TupleStart: return "TupleStart";
     case t::SLComment: return "Single-Line Comment";
     case t::MLComment: return "Multi-Line Comment";
     case t::UTComment: return "UT Comment";

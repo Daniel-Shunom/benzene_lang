@@ -68,7 +68,7 @@ void Lexer::scan_keyword_or_identifier() {
   std::string id{};
 
   while(
-    !this->is_file_end() 
+    !this->is_file_end()
     && this->is_identifier_char(this->peek())
   ) {
     id.push_back(this->peek());
@@ -255,6 +255,11 @@ bool Lexer::scan_other_symbol() {
       this->make_token(TokenType::Colon, ":");
       return true;
 
+    case '@':
+      this->advance();
+      this->make_token(TokenType::TupleStart, "@");
+      return true;
+
     default:
       this->advance();
       auto tok = this->make_token(TokenType::Unknown, std::string(1, c));
@@ -304,7 +309,6 @@ void Lexer::scan_string() {
   // Skip closing apostrophe
   this->advance();
 }
-
 
 bool Lexer::match(const std::string& expected) {
   for (char c: expected) {

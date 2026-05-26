@@ -12,6 +12,8 @@ struct NDCaseExpr;
 struct NDBinaryExpr;
 struct NDUnaryExpr;
 struct NDScopeExpr;
+struct NDListExpr;
+struct NDTupleExpr;
 
 class Visitor {
 public:
@@ -28,5 +30,7 @@ public:
   virtual void visit(NDCaseExpr&) = 0;
   virtual void visit(NDBinaryExpr&) = 0;
   virtual void visit(NDUnaryExpr&) = 0;
+  virtual void visit(NDListExpr&) = 0;
   virtual void visit(NDScopeExpr&) = 0;
+  virtual void visit(NDTupleExpr&) = 0;
 };

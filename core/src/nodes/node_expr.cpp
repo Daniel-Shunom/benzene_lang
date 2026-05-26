@@ -24,3 +24,7 @@ void NDBinaryExpr::accept(Visitor& v) { v.visit(*this); }
 void NDUnaryExpr::accept(Visitor& v) { v.visit(*this); }
 
 void NDScopeExpr::accept(Visitor& v) { v.visit(*this); }
+
+void NDListExpr::accept(Visitor& v) { v.visit(*this); }
+
+void NDTupleExpr::accept(Visitor& v) { v.visit(*this); }

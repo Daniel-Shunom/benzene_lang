@@ -12,6 +12,10 @@ Parser<NDLetBindExpr> parse_let_expression();
 
 Parser<NDScopeExpr> parse_scoped_expression();
 
+Parser<NDListExpr> parse_list_expression();
+
+Parser<NDTupleExpr> parse_tuple_expression();
+
 Parser<NDImportDirective> parse_import_stmt();
 
 Parser<NDFuncDeclExpr> parse_function_declaration();

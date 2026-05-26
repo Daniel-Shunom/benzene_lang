@@ -99,6 +99,26 @@ void TreePrinter::visit(NDScopeExpr& n) {
   }
 }
 
+void TreePrinter::visit(NDListExpr& n) {
+  emit_line(type_header("ListExpr", n.is_poisoned));
+  for (size_t i = 0; i < n.values.size(); i++) {
+    bool last = (i + 1 == n.values.size());
+    enter_child(last);
+    n.values[i]->accept(*this);
+    leave_child();
+  }
+}
+
+void TreePrinter::visit(NDTupleExpr& n) {
+  emit_line(type_header("TupleExpr", n.is_poisoned));
+  for (size_t i = 0; i < n.values.size(); i++) {
+    bool last = (i + 1 == n.values.size());
+    enter_child(last);
+    n.values[i]->accept(*this);
+    leave_child();
+  }
+}
+
 void TreePrinter::visit(NDLetBindExpr& n) {
   emit_line(type_header("LetBindExpr", n.is_poisoned));
   child_field("identifier", *n.identifier, false);
@@ -108,7 +128,7 @@ void TreePrinter::visit(NDLetBindExpr& n) {
 void TreePrinter::visit(NDConstExpr& n) {
   emit_line(type_header("ConstExpr", n.is_poisoned));
   child_field("identifier", *n.identifier, false);
-  child_field("literal", n.literal, true);
+  child_field("value", *n.bound_value, true);
 }
 
 void TreePrinter::visit(NDCallExpr& n) {
