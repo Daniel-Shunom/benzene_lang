@@ -1,4 +1,4 @@
-#include <ether/ast/print/print.hpp>
+#include <ether/ast_passes/print/print.hpp>
 
 namespace {
   constexpr auto RESET   = "\033[0m";
