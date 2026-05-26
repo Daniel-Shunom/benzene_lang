@@ -13,6 +13,7 @@ enum class TokenType {
 
   ConstantKeyword,
   LetKeyword,
+  TypeKeyword,
 
   IntegerLiteral,
   FloatLiteral,
@@ -82,6 +83,7 @@ inline std::string token_type_to_str(TokenType type) {
     case t::Identifier: return "Identifier";
     case t::LetKeyword: return "LetKeyword";
     case t::ConstantKeyword: return "ConstantKeyword";
+    case t::TypeKeyword: return "TypeKeyword";
     case t::IntegerLiteral: return "IntegerLiteral";
     case t::FloatLiteral: return "FloatLiteral";
     case t::StringLiteral: return "StringLiteral";

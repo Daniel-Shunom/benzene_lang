@@ -8,6 +8,8 @@ inline const std::unordered_map<std::string, TokenType> KeywordTable({
 
   {"Cmt", TokenType::CommentKeyword},
 
+  {"type", TokenType::TypeKeyword},
+
   {"const", TokenType::ConstantKeyword},
 
   {"let", TokenType::LetKeyword},
