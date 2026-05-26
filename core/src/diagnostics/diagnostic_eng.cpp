@@ -56,6 +56,7 @@ static const char* phase_to_string(DiagnosticPhase phase) {
     case DiagnosticPhase::Resolver:    return "resolver";
     case DiagnosticPhase::TypeChecker: return "type-checker";
     case DiagnosticPhase::CodeGen:     return "codegen";
+    case DiagnosticPhase::ScopeResolution: return "scope resolution";
   }
   return "unknown";
 }

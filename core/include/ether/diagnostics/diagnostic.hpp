@@ -13,6 +13,7 @@ enum class DiagnosticPhase {
   Lexer,
   Parser,
   Resolver,
+  ScopeResolution,
   TypeChecker,
   CodeGen,
 };
