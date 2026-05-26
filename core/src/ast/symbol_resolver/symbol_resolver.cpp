@@ -1,4 +1,4 @@
-#include <ether/ast/symbol_resolver/symbol_resolver.hpp>
+#include <ether/ast_passes/symbol_resolver/symbol_resolver.hpp>
 
 void SymbolResolver::visit(NDImportDirective& expr) {
   auto cscope_type = this->sym_table.get_current_scope_type();
@@ -11,7 +11,7 @@ void SymbolResolver::visit(NDImportDirective& expr) {
     diag.phase = DiagnosticPhase::Resolver;
     diag.location.column = expr.import_directive.column_number;
     diag.location.line = expr.import_directive.line_number;
-    diag.message = "Import statements are only allowed in the top Module scope";
+    diag.message = "Import statements are only allowed at the top of modules";
 
     this->diag_eng.report(diag);
     return;
