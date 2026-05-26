@@ -1,4 +1,4 @@
-#include <ether/ast/type_check/type_check.hpp>
+#include <ether/ast_passes/type_check/type_check.hpp>
 
 void TypeChecker::visit(NDLiteral&) {}
 void TypeChecker::visit(NDImportDirective&) {}
