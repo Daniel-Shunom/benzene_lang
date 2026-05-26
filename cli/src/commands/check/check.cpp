@@ -1,8 +1,9 @@
 #include "check.hpp"
+#include "ether/ast_passes/scope_resolution/scope_res.hpp"
 #include "files.hpp"
 
-#include <ether/ast/print/print.hpp>
-#include <ether/ast/symbol_resolver/symbol_resolver.hpp>
+#include <ether/ast_passes/print/print.hpp>
+#include <ether/ast_passes/symbol_resolver/symbol_resolver.hpp>
 #include <ether/module/module.hpp>
 
 #include <cstdio>
@@ -20,10 +21,12 @@ int HandleCheck(const ArgCheck& a) {
   mod.generate_ast();
 
   TreePrinter printer;
+  ScopeRes scope_resolver(mod.get_symbol_storage(), mod.get_diag_engine());
   SymbolResolver resolver(mod.get_symbol_storage(), mod.get_diag_engine());
 
   if (a.show_ast) mod.attach_visitor(printer);
-  mod.attach_visitor(resolver);
+  // mod.attach_visitor(resolver);
+  mod.attach_visitor(scope_resolver);
   mod.apply_visitors();
 
   mod.set_exports(resolver.take_exports());
