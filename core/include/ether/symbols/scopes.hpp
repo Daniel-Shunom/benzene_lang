@@ -6,6 +6,7 @@ enum class ScopeType {
   Module,
   CaseExpression,
   FunctionExpression,
+  LambdaExpression,
   ScopedExpression,
 };
 
@@ -16,6 +17,7 @@ inline std::string scope_type_to_str(ScopeType& type) {
     case ScopeType::FunctionExpression: return "FunctionExpression";
     case ScopeType::ScopedExpression: return "ScopedExpression";
     case ScopeType::CaseExpression: return "CaseExpression";
+    case ScopeType::LambdaExpression: return "LambdaExpression";
   }
 }
 

@@ -345,6 +345,57 @@ void SymbolResolver::visit(NDFuncDeclExpr& expr) {
   return;
 }
 
+void SymbolResolver::visit(NDLambdaExpr& lambda) {
+  auto cscope_type = this->sym_table.get_current_scope_type();
+  if (
+    cscope_type
+    && cscope_type != ScopeType::ScopedExpression
+    && cscope_type != ScopeType::FunctionExpression
+  ) {
+    lambda.is_poisoned = true;
+
+    auto diag = Diagnostic();
+    diag.level = DiagnosticLevel::Fail;
+    diag.phase = DiagnosticPhase::Resolver;
+    diag.location.column = lambda.lambda_start.column_number;
+    diag.location.line = lambda.lambda_start.line_number;
+    diag.message = "Function declaration not in valid scope";
+
+    this->diag_eng.report(diag);
+    return;
+  }
+
+  ScopeGuard guard(this->sym_table, ScopeType::FunctionExpression);
+
+  for (auto& arg: lambda.func_params) {
+    auto ptr = sym_table.declare(arg.param_token, SymbolKind::FuncParam);
+    if (!ptr) {
+      auto lkp = sym_table.lookup(arg.param_token.token_value);
+      if (!lkp) continue;
+      auto dup_msg = std::format(
+        "Duplicate function parameter name `{}` (see Ln {}, Col {} for previous declaration)",
+        arg.param_token.token_value,
+        lkp->symbol_token.line_number,
+        lkp->symbol_token.column_number
+      );
+
+      auto diag = Diagnostic();
+      diag.level = DiagnosticLevel::Fail;
+      diag.phase = DiagnosticPhase::Resolver;
+      diag.location.column = arg.param_token.column_number;
+      diag.location.line = arg.param_token.line_number;
+      diag.message = dup_msg;
+
+      this->diag_eng.report(diag);
+    };
+
+    if (!arg.param_sym) arg.param_sym = ptr;
+  }
+
+  for (auto& body_expr: lambda.func_body) body_expr->accept(*this);
+  return;
+}
+
 void SymbolResolver::visit(NDScopeExpr& expr) {
   auto cscope_type = this->sym_table.get_current_scope_type();
   if (

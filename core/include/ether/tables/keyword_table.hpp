@@ -22,6 +22,8 @@ inline const std::unordered_map<std::string, TokenType> KeywordTable({
 
   {"func", TokenType::FuncStart},
 
+  {"fn", TokenType::LambdaKeyword},
+
   {"end", TokenType::EndStmt},
 
   {"case", TokenType::Case},

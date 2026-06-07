@@ -37,6 +37,7 @@ enum class TokenType {
   NtEq,
   EqEq,
 
+  LambdaKeyword,
   FuncStart,
   EndStmt,
   RtnTypeOp,
@@ -104,6 +105,7 @@ inline std::string token_type_to_str(TokenType type) {
     case t::NtEq: return "NtEq";
     case t::EqEq: return "EqEq";
     case t::FuncStart: return "FuncStart";
+    case t::LambdaKeyword: return "Lambda Expression";
     case t::EndStmt: return "EndStmt";
     case t::RtnTypeOp: return "RtnTypeOp";
     case t::AndOp: return "And";

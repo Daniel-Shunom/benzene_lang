@@ -25,6 +25,7 @@ public:
   void visit(NDScopeExpr&)         override;
   void visit(NDListExpr&)          override;
   void visit(NDTupleExpr&)         override;
+  void visit(NDLambdaExpr&)        override;
 
 private:
   std::ostream& out;

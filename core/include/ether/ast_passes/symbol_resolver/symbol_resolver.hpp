@@ -41,6 +41,7 @@ public:
   void visit(NDScopeExpr&)       override;
   void visit(NDTupleExpr&)       override;
   void visit(NDListExpr&)        override;
+  void visit(NDLambdaExpr&)      override;
 
   std::unordered_map<std::string, SymbolAttr*> take_exports() {
     return std::move(exports);

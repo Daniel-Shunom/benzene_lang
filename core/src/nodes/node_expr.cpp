@@ -28,3 +28,6 @@ void NDScopeExpr::accept(Visitor& v) { v.visit(*this); }
 void NDListExpr::accept(Visitor& v) { v.visit(*this); }
 
 void NDTupleExpr::accept(Visitor& v) { v.visit(*this); }
+
+void NDLambdaExpr::accept(Visitor& v) { v.visit(*this); }
+

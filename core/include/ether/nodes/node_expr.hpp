@@ -101,6 +101,15 @@ struct NDFuncDeclExpr : Node {
   void accept(Visitor &) override;
 };
 
+struct NDLambdaExpr : Node {
+  SymbolAttr *func_sym;
+  Token lambda_start;
+  std::optional<Token> return_type;
+  std::vector<FuncParam> func_params;
+  std::vector<NDPtr> func_body;
+  void accept(Visitor &) override;
+};
+
 struct NDCaseExpr : Node {
   struct Branch {
     std::vector<NDPtr> pattern;

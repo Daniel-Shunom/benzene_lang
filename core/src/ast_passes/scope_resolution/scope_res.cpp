@@ -29,6 +29,7 @@ void ScopeRes::visit(NDLetBindExpr& let_bind) {
   if (
     scope
     && scope != ScopeType::FunctionExpression
+    && scope != ScopeType::LambdaExpression
     && scope != ScopeType::ScopedExpression
   ) {
     let_bind.is_poisoned = true;
@@ -75,6 +76,7 @@ void ScopeRes::visit(NDCallExpr& func_call) {
     scope
     && scope != ScopeType::FunctionExpression
     && scope != ScopeType::ScopedExpression
+    && scope != ScopeType::LambdaExpression
     && scope != ScopeType::CaseExpression
   ) {
     func_call.is_poisoned = true;
@@ -102,6 +104,7 @@ void ScopeRes::visit(NDCallChain& call_chain) {
     scope
     && scope != ScopeType::FunctionExpression
     && scope != ScopeType::ScopedExpression
+    && scope != ScopeType::LambdaExpression
     && scope != ScopeType::CaseExpression
   ) {
     call_chain.is_poisoned = true;
@@ -125,9 +128,6 @@ void ScopeRes::visit(NDFuncDeclExpr& func_decl) {
   if (
     scope
     && scope != ScopeType::Module
-    && scope != ScopeType::FunctionExpression
-    && scope != ScopeType::ScopedExpression
-    && scope != ScopeType::CaseExpression
   ) {
     func_decl.is_poisoned = true;
 
@@ -147,12 +147,40 @@ void ScopeRes::visit(NDFuncDeclExpr& func_decl) {
   return;
 }
 
+void ScopeRes::visit(NDLambdaExpr& lambda) {
+  auto scope = this->sym_table.get_current_scope_type();
+  if (
+    scope
+    && scope != ScopeType::FunctionExpression
+    && scope != ScopeType::LambdaExpression
+    && scope != ScopeType::ScopedExpression
+    && scope != ScopeType::CaseExpression
+  ) {
+    lambda.is_poisoned = true;
+
+    auto diag = Diagnostic();
+    diag.level = DiagnosticLevel::Fail;
+    diag.phase = DiagnosticPhase::ScopeResolution;
+    diag.location.column = lambda.lambda_start.column_number;
+    diag.location.line = lambda.lambda_start.line_number;
+    diag.message = "Lambda declaration not in valid scope";
+
+    this->diag_eng.report(diag);
+    return;
+  }
+
+  ScopeGuard guard(this->sym_table, ScopeType::LambdaExpression);
+  for (auto& expr: lambda.func_body) expr->accept(*this);
+  return;
+}
+
 void ScopeRes::visit(NDCaseExpr& case_expr) {
   auto scope = this->sym_table.get_current_scope_type();
   if (
     scope
     && scope != ScopeType::FunctionExpression
     && scope != ScopeType::ScopedExpression
+    && scope != ScopeType::LambdaExpression
     && scope != ScopeType::CaseExpression
   ) {
     case_expr.is_poisoned = true;
@@ -191,6 +219,7 @@ void ScopeRes::visit(NDScopeExpr& scope_expr) {
   if (
     scope
     && scope != ScopeType::FunctionExpression
+    && scope != ScopeType::LambdaExpression
     && scope != ScopeType::ScopedExpression
     && scope != ScopeType::CaseExpression
   ) {

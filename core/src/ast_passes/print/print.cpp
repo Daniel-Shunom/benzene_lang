@@ -1,3 +1,4 @@
+#include "ether/nodes/node_expr.hpp"
 #include <ether/ast_passes/print/print.hpp>
 
 namespace {
@@ -201,6 +202,48 @@ void TreePrinter::visit(NDFuncDeclExpr& n) {
   }
 }
 
+void TreePrinter::visit(NDLambdaExpr& n) {
+  emit_line(type_header("LambdaExpr", n.is_poisoned));
+  bool has_return = n.return_type.has_value();
+  bool has_params = !n.func_params.empty();
+  bool has_body = !n.func_body.empty();
+
+  if (has_return) {
+    leaf_field("return_type", n.return_type->token_value, !has_params && !has_body);
+  }
+
+  if (has_params) {
+    enter_child(!has_body);
+    emit_line(std::string(DIM) + "params" + RESET);
+    for (size_t i = 0; i < n.func_params.size(); ++i) {
+      const auto& p = n.func_params[i];
+      bool last = (i + 1 == n.func_params.size());
+      std::string text =
+        std::string(GREEN) + p.param_token.token_value + RESET;
+      if (p.param_type) {
+        text += std::string(DIM) + " : " + RESET +
+                std::string(YELLOW) + p.param_type->token_value + RESET;
+      }
+      enter_child(last);
+      emit_line(text);
+      leave_child();
+    }
+    leave_child();
+  }
+
+  if (has_body) {
+    enter_child(true);
+    emit_line(std::string(DIM) + "body" + RESET);
+    for (size_t i = 0; i < n.func_body.size(); ++i) {
+      bool last = (i + 1 == n.func_body.size());
+      enter_child(last);
+      n.func_body[i]->accept(*this);
+      leave_child();
+    }
+    leave_child();
+  }
+}
+
 void TreePrinter::visit(NDCaseExpr& n) {
   emit_line(type_header("CaseExpr", n.is_poisoned));
   bool has_branches = !n.branches.empty();
@@ -238,3 +281,4 @@ void TreePrinter::visit(NDCaseExpr& n) {
     leave_child();
   }
 }
+

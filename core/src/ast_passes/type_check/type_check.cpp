@@ -1,3 +1,4 @@
+#include "ether/nodes/node_expr.hpp"
 #include <ether/ast_passes/type_check/type_check.hpp>
 
 void TypeChecker::visit(NDLiteral&) {}
@@ -14,3 +15,4 @@ void TypeChecker::visit(NDUnaryExpr&) {}
 void TypeChecker::visit(NDScopeExpr&) {}
 void TypeChecker::visit(NDTupleExpr&) {}
 void TypeChecker::visit(NDListExpr&) {}
+void TypeChecker::visit(NDLambdaExpr&) {}

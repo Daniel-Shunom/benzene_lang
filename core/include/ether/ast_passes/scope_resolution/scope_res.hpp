@@ -23,6 +23,7 @@ public:
   void visit(NDScopeExpr&)       override;
   void visit(NDTupleExpr&)       override;
   void visit(NDListExpr&)        override;
+  void visit(NDLambdaExpr&)      override;
 
 private:
   DiagnosticEngine& diag_eng;

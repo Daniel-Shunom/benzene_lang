@@ -2,7 +2,7 @@
 
 #include "fixtures.hpp"
 
-#include <ether/ast/symbol_resolver/symbol_resolver.hpp>
+#include <ether/ast_passes/symbol_resolver/symbol_resolver.hpp>
 #include <ether/module/module.hpp>
 
 #include <fstream>

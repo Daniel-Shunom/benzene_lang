@@ -4,6 +4,8 @@ Load benzene.list
 Load benzene.set
 Load benzene.threading
 
+const temp_vals = [1, 2, 3, 4, 5]
+
 Cmt docs are okay
 const bar = "functos():"
 
@@ -35,14 +37,14 @@ end
 Cmt {
   Language semantic violations will be trapped at the AST level for proper,
   error handling via some external process (ideally the Language Server).
-  
+
   Code containing semantic violations will not compile.
 }
 
 
 
 Cmt {
-  When declaring a constant, we keep constants at the top level scope of 
+  When declaring a constant, we keep constants at the top level scope of
   the module.
 }
 
@@ -50,16 +52,16 @@ const bar =  10 Cmt this is ok
 
 let a = "10"
 
-const bar = "not allowed" 
+const bar = "not allowed"
 
 
 
 Cmt {
-  Declaring constants elsewhere will be flagged by the compiler and result in, 
-  a compile time error. 
+  Declaring constants elsewhere will be flagged by the compiler and result in,
+  a compile time error.
 }
 
-func const_in_function() :> Nothing 
+func const_in_function() :> Nothing
   let foo = "10"
   const x = 10            Cmt this will not compile
 end
@@ -84,7 +86,7 @@ Cmt {
   error.
 }
 
-{                          Cmt Illegal top-level function scope. 
+{                          Cmt Illegal top-level function scope.
   let x = 10
   let y = 11
 }
@@ -163,7 +165,7 @@ end
 case "dogs" :
    "cats" :> cars
    "variables" :> values
-   
+
 end
 
 
@@ -171,7 +173,7 @@ const car = 10
 
 let bar: Dog = 3 * 5
 
-func bars(param: Nothing) :> LiterallyNothing 
+func bars(param: Nothing) :> LiterallyNothing
   12 * 5 * 9
 end
 
@@ -187,5 +189,33 @@ let invalid = -{5 + {4 * 3} - 2}
 
 
 func bart(name, name) :> Foo
-  
+  let foo: Foo = []
+  let new = 2
+  new
 end
+
+
+const new_list = [1, 2, 3, 4, "5"]
+
+func do()
+  {
+    []
+    [23, "data"]
+    [1, 2, 3]
+    let new_data = 3.5
+    new_data
+    case 1 + 1 == 3.5:
+      True :> 1
+      False :> {
+        println("this condition is false", "new data has come in")
+        let new_value = new_data * 3.5 / 2
+        new_value([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+        |=> to_float()
+        |=> to_result()
+        |=> wrap_with_logs("logs")
+      }
+    end
+  }
+end
+
+const new_tuple = @{"data", "object", 23}

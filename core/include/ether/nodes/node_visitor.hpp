@@ -14,6 +14,7 @@ struct NDUnaryExpr;
 struct NDScopeExpr;
 struct NDListExpr;
 struct NDTupleExpr;
+struct NDLambdaExpr;
 
 class Visitor {
 public:
@@ -33,4 +34,5 @@ public:
   virtual void visit(NDListExpr&) = 0;
   virtual void visit(NDScopeExpr&) = 0;
   virtual void visit(NDTupleExpr&) = 0;
+  virtual void visit(NDLambdaExpr&) = 0;
 };
