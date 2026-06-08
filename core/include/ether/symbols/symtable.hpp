@@ -11,8 +11,13 @@ public:
   explicit SymbolTable(SymbolStorage& arena) : arena(arena) {
     new_scope(ScopeType::Module);
   }
+
+  [[nodiscard]]
   SymbolAttr* declare(const Token&, SymbolKind);
+
+  [[nodiscard]]
   SymbolAttr* lookup(const std::string&);
+
   std::optional<ScopeType> get_current_scope_type() const ;
   void new_scope(ScopeType);
   void pop_scope();
