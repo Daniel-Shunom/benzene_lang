@@ -1,13 +1,15 @@
 #pragma once
 #include <ether/symbols/symbol_types.hpp>
 #include <ether/tokens/token_types.hpp>
+#include <ether/types/types.hpp>
 #include <memory>
 #include <optional>
 #include <vector>
 
 class Visitor;
 struct Node {
-  std::optional<Token> type;
+  TypePtr inferred_type;
+  bool type_is_resolved;
   bool is_poisoned = false;
   virtual ~Node() = default;
   virtual void accept(Visitor &) = 0;
