@@ -1,5 +1,6 @@
 #include "check.hpp"
 #include "ether/ast_passes/scope_resolution/scope_res.hpp"
+#include "ether/ast_passes/type_check/type_check.hpp"
 #include "files.hpp"
 
 #include <ether/ast_passes/print/print.hpp>
@@ -23,10 +24,12 @@ int HandleCheck(const ArgCheck& a) {
   TreePrinter printer;
   ScopeRes scope_resolver(mod.get_symbol_storage(), mod.get_diag_engine());
   SymbolResolver resolver(mod.get_symbol_storage(), mod.get_diag_engine());
+  TypeChecker type_checker;
 
   if (a.show_ast) mod.attach_visitor(printer);
   // mod.attach_visitor(resolver);
   mod.attach_visitor(scope_resolver);
+  mod.attach_visitor(type_checker);
   mod.apply_visitors();
 
   mod.set_exports(resolver.take_exports());
