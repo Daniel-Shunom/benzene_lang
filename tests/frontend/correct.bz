@@ -1,3 +1,14 @@
 Load io
 
 func data()
+end
+
+
+type Data {
+  Integer
+  String
+  Custom(value: Int, desc: String")
+}
+
+type Foo;
+
