@@ -19,7 +19,7 @@ enum class ParseErrorType {
   InvalidTopLvlExpr,
 };
 
-const inline std::string p_err_tToStr(ParseErrorType err) {
+inline auto p_err_tToStr(ParseErrorType err) -> std::string {
   switch (err) {
     using t = ParseErrorType;
     case t::InvalidUnaryExpr: return "Invalid unary expression";
@@ -37,11 +37,12 @@ const inline std::string p_err_tToStr(ParseErrorType err) {
     default: return "Unknown parser error type";
   }
 }
-inline std::string make_parser_error(
-  ParseErrorType t,
+
+inline auto make_parser_error(
+  ParseErrorType type,
   Token& tok,
   std::string msg
-) {
+) -> std::string {
   constexpr auto RESET  = "\033[0m";
   constexpr auto RED    = "\033[31m";
   constexpr auto YELLOW = "\033[33m";
@@ -51,7 +52,7 @@ inline std::string make_parser_error(
   auto header = std::format(
     "{}{}Error:{} {}{}{} ({}Ln {}, Col {}{})",
     BOLD, RED, RESET,
-    CYAN, p_err_tToStr(t), RESET,
+    CYAN, p_err_tToStr(type), RESET,
     YELLOW, tok.line_number, tok.column_number, RESET
   );
 

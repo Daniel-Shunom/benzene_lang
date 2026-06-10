@@ -2,54 +2,60 @@
 #include <ether/parser/parser_types.hpp>
 #include <ether/nodes/node_expr.hpp>
 
-Parser<NDLiteral> parse_literal();
+auto parse_literal() -> Parser<NDLiteral>;
 
-Parser<NDIdentifier> parse_identifier();
+auto parse_identifier() -> Parser<NDIdentifier>;
 
-Parser<NDConstExpr> parse_const_expression();
+auto parse_const_expression() -> Parser<NDConstExpr>;
 
-Parser<NDLetBindExpr> parse_let_expression();
+auto parse_let_expression() -> Parser<NDLetBindExpr>;
 
-Parser<NDScopeExpr> parse_scoped_expression();
+auto parse_scoped_expression() -> Parser<NDScopeExpr>;
 
-Parser<NDListExpr> parse_list_expression();
+auto parse_list_expression() -> Parser<NDListExpr>;
 
-Parser<NDTupleExpr> parse_tuple_expression();
+auto parse_tuple_expression() -> Parser<NDTupleExpr>;
 
-Parser<NDImportDirective> parse_import_stmt();
+auto parse_import_stmt() -> Parser<NDImportDirective>;
 
-Parser<NDFuncDeclExpr> parse_function_declaration();
+auto parse_function_declaration() -> Parser<NDFuncDeclExpr>;
 
-Parser<NDPtr> parse_call_exprs();
+auto parse_lambda_expression() -> Parser<NDLambdaExpr>;
 
-Parser<NDCallExpr> parse_call_expression();
+auto parse_call_exprs() -> Parser<NDPtr>;
 
-Parser<NDCaseExpr> parse_case_expression();
+auto parse_call_expression() -> Parser<NDCallExpr>;
 
-Parser<NDPtr> parse_expression();
+auto parse_case_expression() -> Parser<NDCaseExpr>;
 
-Parser<NDPtr> parse_primary_expression();
+auto parse_expression() -> Parser<NDPtr>;
 
-Parser<NDPtr> parse_value_expression();
+auto parse_top_level_expressions() -> Parser<NDPtr>;
 
-Parser<NDPtr> m_parse_chain_left(Parser<NDPtr>, Parser<Token>);
+auto parse_body_expressions() -> Parser<NDPtr>;
 
-Parser<NDPtr> m_parse_unary_expression();
+auto parse_primary_expression() -> Parser<NDPtr>;
 
-Parser<NDPtr> m_parse_additive_op();
+auto parse_value_expression() -> Parser<NDPtr>;
 
-Parser<NDPtr> m_parse_multiplicative_op();
+auto m_parse_chain_left(Parser<NDPtr>, Parser<Token>) -> Parser<NDPtr>;
 
-Parser<NDPtr> m_parse_comparision_op();
+auto m_parse_unary_expression() -> Parser<NDPtr>;
 
-Parser<NDPtr> m_parser_equality_op();
+auto m_parse_additive_op() -> Parser<NDPtr>;
 
-Parser<NDPtr> m_parse_logical_and();
+auto m_parse_multiplicative_op() -> Parser<NDPtr>;
 
-Parser<NDPtr> parse_binary_expression();
+auto m_parse_comparision_op() -> Parser<NDPtr>;
 
-Parser<Token> match(TokenType);
+auto m_parser_equality_op() -> Parser<NDPtr>;
 
-Parser<Token> parse_type_annotation();
+auto m_parse_logical_and() -> Parser<NDPtr>;
 
-PResult<Parent> run_parser(ParserState& state);
+auto parse_binary_expression() -> Parser<NDPtr>;
+
+auto match(TokenType) -> Parser<Token>;
+
+auto parse_type_annotation() -> Parser<Token>;
+
+auto run_parser(ParserState& state) -> PResult<Parent>;

@@ -2,6 +2,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -12,7 +13,7 @@ using TypeVarId = size_t;
 using TypePtr = std::shared_ptr<Type>;
 
 struct Scheme {
-  std::vector<TypeVarId> quantified{};
+  std::vector<TypeVarId> quantified;
   TypePtr type;
 };
 
@@ -26,21 +27,21 @@ public:
   void pop_type_scope();
 
   [[nodiscard]]
-  Scheme* lookup(const std::string&);
+  auto lookup(const std::string&) noexcept -> Scheme*;
 
   [[nodiscard]]
-  Scheme* declare(const std::string&, Scheme);
+  auto declare(const std::string&, Scheme) noexcept -> Scheme*;
 
 private:
   std::vector<Env> type_scopes;
 };
 
 struct TypeScopeGuard {
-  TypeScopeGuard(TypeTable& t) : table(t) {
+   TypeScopeGuard(TypeTable& tbl) noexcept : table(tbl) {
     table.new_type_scope();
   }
 
-  ~TypeScopeGuard() {
+  ~TypeScopeGuard() noexcept {
     table.pop_type_scope();
   }
 
@@ -58,10 +59,10 @@ enum class BaseType {
 
 struct  TypeField {
   TypeField() = delete;
-  TypeField(std::string field, TypePtr type)
-  : field(field), type(type) {}
+  TypeField(std::string field, TypePtr type) noexcept
+  : field(std::move(field)), type(std::move(type)) {}
 
-  bool operator == (const TypeField& type_field) const {
+  auto operator == (const TypeField& type_field) const noexcept -> bool {
     return type_field.field == field
       && type_field.type == type;
   }
@@ -73,10 +74,10 @@ private:
 
 struct PmtType{
   PmtType() = delete;
-  PmtType(std::string name, std::vector<TypeField> fields)
-  : name(name), type_fields(fields) {}
+  PmtType(std::string name, std::vector<TypeField> fields) noexcept
+  : name(std::move(name)), type_fields(std::move(fields)) {}
 
-  bool operator == (const PmtType& type) const {
+  auto operator == (const PmtType& type) const noexcept -> bool {
     return type.name == name
       && type.type_fields == type_fields;
   }
@@ -87,18 +88,22 @@ private:
 };
 
 struct TypeConstructor {
-  TypeConstructor(std::string type, const std::vector<TypePtr>& params = {})
-  : type(type), args(std::move(params)){};
+  TypeConstructor(std::string type, const std::vector<TypePtr>& params = {}) noexcept
+  : type(std::move(type)), args(std::move(params)){};
   TypeConstructor() = delete;
 
-  bool operator == (const TypeConstructor& tconstr) const {
+  auto operator == (const TypeConstructor& tconstr) const noexcept -> bool {
     return tconstr.type == type
       && tconstr.args == args;
   }
 
-  const std::string& name() const;
+  auto operator | (std::vector<TypePtr>& params) -> TypeConstructor {
+    return TypeConstructor{"", params};
+  }
 
-  const std::vector<TypePtr>& get_args() const;
+  [[nodiscard]] auto name() const noexcept -> const std::string&;
+
+  [[nodiscard]] auto get_args() const noexcept -> const std::vector<TypePtr>&;
 
 private:
   std::string type;
@@ -107,14 +112,14 @@ private:
 
 struct TypeVar {
   TypeVar() = delete;
-  TypeVar(const size_t id) : id(id) {}
+  TypeVar(const size_t id_val) noexcept : id(id_val) {}
 
-  bool operator == (const TypeVar& type) const {
+  auto operator == (const TypeVar& type) const -> bool {
     return type.id == id;
   }
 
   [[nodiscard]]
-  size_t get_id() const;
+  auto get_id() const noexcept -> size_t;
 
 private:
   size_t id;
@@ -122,23 +127,27 @@ private:
 
 struct Type {
   Type() = delete;
-  Type(BaseType b) : value(b) {}
-  Type(TypeConstructor b) : value(b) {}
-  Type(TypeVar b) : value(b) {}
-  Type(PmtType b) : value(b) {}
+  Type(BaseType type) : value(type) {}
+  Type(TypeConstructor type) : value(type) {}
+  Type(TypeVar type) : value(type) {}
+  Type(PmtType type) : value(type) {}
 
 
-  bool operator == (const Type& type) const {
+  auto operator == (const Type& type) const noexcept -> bool {
     return type.value == value;
   }
 
-  const bool isBaseType() const;
+  [[nodiscard]]
+  auto isBaseType() const noexcept -> const bool;
 
-  const bool isTypeVar() const;
+  [[nodiscard]]
+  auto isTypeVar() const noexcept -> const bool;
 
-  const bool isPmtType() const;
+  [[nodiscard]]
+  auto isPmtType() const noexcept -> const bool;
 
-  const bool isTypeConstructor() const;
+  [[nodiscard]]
+  auto isTypeConstructor() const noexcept -> const bool;
 
   std::variant<
     BaseType,
@@ -150,30 +159,32 @@ struct Type {
 
 struct TypeVarFactory {
   [[nodiscard("Type vars must be used!")]]
-  TypeVar operator () () {
-    return TypeVar(counter++);
+  auto operator () () noexcept -> TypePtr {
+    return std::make_shared<Type>(TypeVar{counter++});
   }
 
 private:
   size_t counter{0};
 };
 
-TypePtr makeFunc(TypePtr from, TypePtr to);
+auto makeTypeConstructor(std::string name, const std::vector<TypePtr>& types) noexcept -> TypePtr;
 
-TypePtr makeList(TypePtr type);
+auto makeFunc(TypePtr from, TypePtr to) noexcept -> TypePtr;
 
-TypePtr makeTuple(std::vector<TypePtr> args);
+auto makeList(TypePtr type) noexcept -> TypePtr;
 
-TypePtr makeSet(TypePtr type);
+auto makeTuple(std::vector<TypePtr> args) noexcept -> TypePtr;
 
-TypePtr makeDict(TypePtr key, TypePtr value);
+auto makeSet(TypePtr type) noexcept -> TypePtr;
 
-const TypePtr makeInt();
+auto makeDict(TypePtr key, TypePtr value) noexcept -> TypePtr;
 
-const TypePtr makeFloat();
+auto makeInt() noexcept -> const TypePtr;
 
-const TypePtr makeString();
+auto makeFloat() noexcept -> const TypePtr;
 
-const TypePtr makeBool();
+auto makeString() noexcept -> const TypePtr;
 
-const TypePtr makeNil();
+auto makeBool() noexcept -> const TypePtr;
+
+auto makeNil() noexcept -> const TypePtr;

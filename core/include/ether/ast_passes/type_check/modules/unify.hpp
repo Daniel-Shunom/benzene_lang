@@ -4,19 +4,20 @@
 
 class TCModule_Unify: public TCModule {
   using TCModule::TCModule;
-  void visit(NDLiteral&)          override;
-  void visit(NDImportDirective&)  override;
-  void visit(NDIdentifier&)       override;
-  void visit(NDLetBindExpr&)      override;
-  void visit(NDConstExpr&)        override;
-  void visit(NDCallExpr&)         override;
-  void visit(NDCallChain&)        override;
-  void visit(NDFuncDeclExpr&)     override;
-  void visit(NDCaseExpr&)         override;
-  void visit(NDBinaryExpr&)       override;
-  void visit(NDUnaryExpr&)        override;
-  void visit(NDScopeExpr&)        override;
-  void visit(NDTupleExpr&)        override;
-  void visit(NDListExpr&)         override;
-  void visit(NDLambdaExpr&)       override;
+  void visit(NDLiteral& expr)          override;
+  void visit(NDImportDirective& expr)  override;
+  void visit(NDIdentifier& expr)       override;
+  void visit(NDLetBindExpr& expr)      override;
+  void visit(NDConstExpr& expr)        override;
+  void visit(NDCallExpr& expr)         override;
+  void visit(NDCallChain& expr)        override;
+  void visit(NDFuncDeclExpr& expr)     override;
+  void visit(NDCaseExpr& expr)         override;
+  void visit(NDBinaryExpr& expr)       override;
+  void visit(NDUnaryExpr& expr)        override;
+  void visit(NDScopeExpr& expr)        override;
+  void visit(NDTupleExpr& expr)        override;
+  void visit(NDListExpr& expr)         override;
+  void visit(NDLambdaExpr& expr)       override;
+  void visit(NDFuncParam& expr)        override;
 };

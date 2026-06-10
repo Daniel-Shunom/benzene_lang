@@ -17,99 +17,99 @@ struct Node {
 
 using NDPtr = std::unique_ptr<Node>;
 
-struct FuncParam {
-  Token param_token;
+struct NDIdentifier : Node {
+  SymbolAttr *identifier_symbol;
+  Token identifier;
+  void accept(Visitor & /*nused*/) override;
+};
+
+struct NDFuncParam: Node {
+  NDIdentifier identifier;
   std::optional<Token> param_type;
   SymbolAttr *param_sym;
 };
 
 struct NDLiteral : Node {
   Token literal;
-  void accept(Visitor &) override;
+  void accept(Visitor & visitor) override;
 };
 
 struct NDUnaryExpr : Node {
   std::optional<Token> op;
   NDPtr rhs;
-  void accept(Visitor &) override;
+  void accept(Visitor & visitor) override;
 };
 
 struct NDBinaryExpr : Node {
   NDPtr lhs;
   Token op;
   NDPtr rhs;
-  void accept(Visitor &) override;
+  void accept(Visitor & visitor) override;
 };
 
 struct NDScopeExpr : Node {
   Token open_brace;
-  std::vector<NDPtr> expressions;
-  void accept(Visitor &) override;
+  std::vector<NDPtr> visitoressions;
+  void accept(Visitor & visitor) override;
 };
 
 struct NDListExpr : Node {
   Token open_brac;
   std::vector<NDPtr> values;
-  void accept(Visitor &) override;
+  void accept(Visitor & visitor) override;
 };
 
 struct NDTupleExpr : Node {
   Token at_sym;
   std::vector<NDPtr> values;
-  void accept(Visitor &) override;
+  void accept(Visitor & visitor) override;
 };
 
 struct NDImportDirective : Node {
   Token import_directive;
-  void accept(Visitor &) override;
-};
-
-struct NDIdentifier : Node {
-  SymbolAttr *identifier_symbol;
-  Token identifier;
-  void accept(Visitor &) override;
+  void accept(Visitor & visitor) override;
 };
 
 struct NDLetBindExpr : Node {
   std::unique_ptr<NDIdentifier> identifier;
   NDPtr bound_value;
-  void accept(Visitor &) override;
+  void accept(Visitor & visitor) override;
 };
 
 struct NDConstExpr : Node {
   std::unique_ptr<NDIdentifier> identifier;
   NDPtr bound_value;
-  void accept(Visitor &) override;
+  void accept(Visitor & visitor) override;
 };
 
 struct NDCallExpr : Node {
   std::unique_ptr<NDIdentifier> identifier;
   std::vector<NDPtr> args;
-  void accept(Visitor &) override;
+  void accept(Visitor & visitor) override;
 };
 
 struct NDCallChain : Node {
   Token start_token;
   std::vector<NDPtr> calls;
-  void accept(Visitor &) override;
+  void accept(Visitor & visitor) override;
 };
 
 struct NDFuncDeclExpr : Node {
   Token func_identifier;
   SymbolAttr *func_sym;
   std::optional<Token> return_type;
-  std::vector<FuncParam> func_params;
+  std::vector<NDFuncParam> func_params;
   std::vector<NDPtr> func_body;
-  void accept(Visitor &) override;
+  void accept(Visitor & visitor) override;
 };
 
 struct NDLambdaExpr : Node {
   SymbolAttr *func_sym;
   Token lambda_start;
   std::optional<Token> return_type;
-  std::vector<FuncParam> func_params;
+  std::vector<NDFuncParam> func_params;
   std::vector<NDPtr> func_body;
-  void accept(Visitor &) override;
+  void accept(Visitor & visitor) override;
 };
 
 struct NDCaseExpr : Node {
@@ -120,7 +120,7 @@ struct NDCaseExpr : Node {
   Token case_keyword;
   std::vector<NDPtr> conditions;
   std::vector<Branch> branches;
-  void accept(Visitor &) override;
+  void accept(Visitor & visitor) override;
 };
 
 struct Parent {
@@ -130,12 +130,12 @@ struct Parent {
   Parent() = default;
 
   Parent(const Parent &) = delete;
-  Parent &operator=(const Parent &) = delete;
+  auto operator=(const Parent &) -> Parent & = delete;
 
   Parent(Parent &&) = default;
-  Parent &operator=(Parent &&) = default;
+  auto operator=(Parent &&) -> Parent & = default;
 
-  void add_visitor(Visitor &v) { this->visitors.push_back(&v); }
+  void add_visitor(Visitor &visitor) { this->visitors.push_back(&visitor); }
 
   void apply_visitors() {
     for (auto &node : children) {
