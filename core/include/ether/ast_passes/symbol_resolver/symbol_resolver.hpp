@@ -13,7 +13,7 @@ enum class SymbolErrorKind {
   InvalidFuncCall,
 };
 
-inline std::string symbol_error_to_str(SymbolErrorKind err) {
+inline auto symbol_error_to_str(SymbolErrorKind err) -> std::string {
   switch (err) {
     case SymbolErrorKind::InvalidDeclaration: return "Invalid symbol declaration";
     case SymbolErrorKind::InvalidScope:       return "Invalid scope";
@@ -44,7 +44,7 @@ public:
   void visit(NDLambdaExpr& expr)      override;
   void visit(NDFuncParam& expr)       override;
 
-  std::unordered_map<std::string, SymbolAttr*> take_exports() {
+  auto take_exports() -> std::unordered_map<std::string, SymbolAttr*> {
     return std::move(exports);
   }
 

@@ -36,8 +36,8 @@ private:
   // `├──` vs `└──` connector at the current depth.
   std::vector<bool> last_stack;
 
-  std::string prefix() const;
-  std::string connector() const;
+  [[nodiscard]] auto prefix() const -> std::string;
+  [[nodiscard]] auto connector() const -> std::string;
   void emit_line(const std::string& content);
 
   void enter_child(bool is_last) { last_stack.push_back(is_last); }
@@ -49,5 +49,5 @@ private:
   // Print a leaf field: "├── label: value".
   void leaf_field(const std::string& label, const std::string& value, bool is_last);
 
-  std::string type_header(const std::string& type_name, bool is_poisoned);
+  auto type_header(const std::string& type_name, bool is_poisoned) -> std::string;
 };

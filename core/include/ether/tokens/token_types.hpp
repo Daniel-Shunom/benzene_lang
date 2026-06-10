@@ -76,7 +76,7 @@ struct Token {
 };
 
 
-inline std::string token_type_to_str(TokenType type) {
+inline auto token_type_to_str(TokenType type) -> std::string {
   using t = TokenType;
   switch (type) {
     case t::ImportKeyword: return "ImportKeyword";

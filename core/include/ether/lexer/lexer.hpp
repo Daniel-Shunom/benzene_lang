@@ -22,9 +22,9 @@ public:
 
   void print_tokens(std::ostream& out = std::cout) const;
 
-  std::vector<Token> get_tokens();
+  auto get_tokens() -> std::vector<Token>;
 
-private: 
+private:
   LexerDiagnostics lex_diag;
 
   size_t position{};
@@ -41,9 +41,9 @@ private:
 
   void scan_number();
 
-  bool scan_operator();
+  auto scan_operator() -> bool;
 
-  bool scan_other_symbol();
+  auto scan_other_symbol() -> bool;
 
   void scan_keyword_or_identifier();
 
@@ -53,39 +53,39 @@ private:
 
   void scan_multi_line_comment();
 
-  bool is_newline(const char&);
+  auto is_newline(const char&) -> bool;
 
-  bool is_file_end();
+  auto is_file_end() -> bool;
 
-  bool is_whitespace_or_newline(const char&);
+  auto is_whitespace_or_newline(const char&) -> bool;
 
-  bool is_whitespace(const char&);
+  auto is_whitespace(const char&) -> bool;
 
-  bool is_identifier_char(const char&);
+  auto is_identifier_char(const char&) -> bool;
 
-  bool is_string_apo(const char&);
+  auto is_string_apo(const char&) -> bool;
 
-  bool is_dot(const char&);
+  auto is_dot(const char&) -> bool;
 
-  bool is_digit(const char&);
+  auto is_digit(const char&) -> bool;
 
-  bool is_delim(const char&);
+  auto is_delim(const char&) -> bool;
 
-  bool match(const std::string& expected);
+  auto match(const std::string& expected) -> bool;
 
-  char peek();
+  auto peek() -> char;
 
-  char advance();
+  auto advance() -> char;
 
-  size_t get_line_number();
+  auto get_line_number() -> size_t;
 
-  size_t get_column_number();
+  auto get_column_number() -> size_t;
 
   void set_token_start();
 
-  Token make_token(TokenType, std::string);
+  auto make_token(TokenType, std::string) -> Token;
 
-  std::string_view input{};
+  std::string_view input;
 
-  std::vector<Token> tokens{};
+  std::vector<Token> tokens;
 };

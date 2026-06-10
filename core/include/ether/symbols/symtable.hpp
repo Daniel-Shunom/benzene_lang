@@ -13,12 +13,12 @@ public:
   }
 
   [[nodiscard]]
-  SymbolAttr* declare(const Token&, SymbolKind);
+  auto declare(const Token&, SymbolKind) -> SymbolAttr*;
 
   [[nodiscard]]
-  SymbolAttr* lookup(const std::string&);
+  auto lookup(const std::string&) -> SymbolAttr*;
 
-  std::optional<ScopeType> get_current_scope_type() const ;
+  [[nodiscard]] auto get_current_scope_type() const -> std::optional<ScopeType> ;
   void new_scope(ScopeType);
   void pop_scope();
 
@@ -29,8 +29,8 @@ private:
 
 struct ScopeGuard {
   SymbolTable& table;
-  ScopeGuard(SymbolTable& t, ScopeType s = ScopeType::Module): table(t) {
-    table.new_scope(s);
+  ScopeGuard(SymbolTable& tbl, ScopeType stype= ScopeType::Module): table(tbl) {
+    table.new_scope(stype);
   }
 
   ~ScopeGuard() {

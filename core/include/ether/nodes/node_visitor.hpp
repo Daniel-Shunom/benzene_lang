@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ether/nodes/node_expr.hpp"
 struct NDLiteral;
 struct NDImportDirective;
 struct NDIdentifier;
@@ -35,4 +36,5 @@ public:
   virtual void visit(NDScopeExpr&) = 0;
   virtual void visit(NDTupleExpr&) = 0;
   virtual void visit(NDLambdaExpr&) = 0;
+  virtual void visit(NDFuncParam&) = 0;
 };
