@@ -12,6 +12,9 @@ using TypeVarId = size_t;
 
 using TypePtr = std::shared_ptr<Type>;
 
+[[nodiscard]]
+auto type_ptr_equal(const TypePtr& lhs, const TypePtr& rhs) noexcept -> bool;
+
 struct Scheme {
   std::vector<TypeVarId> quantified;
   TypePtr type;
@@ -57,14 +60,17 @@ enum class BaseType {
   Nil // Apparently this represents a unit type.
 };
 
-struct  TypeField {
+struct TypeField {
   TypeField() = delete;
   TypeField(std::string field, TypePtr type) noexcept
   : field(std::move(field)), type(std::move(type)) {}
 
+  [[nodiscard]] auto name() const noexcept -> const std::string& { return field; }
+  [[nodiscard]] auto get_type() const noexcept -> const TypePtr& { return type; }
+
   auto operator == (const TypeField& type_field) const noexcept -> bool {
     return type_field.field == field
-      && type_field.type == type;
+      && type_ptr_equal(type_field.type, type);
   }
 
 private:
@@ -76,6 +82,9 @@ struct PmtType{
   PmtType() = delete;
   PmtType(std::string name, std::vector<TypeField> fields) noexcept
   : name(std::move(name)), type_fields(std::move(fields)) {}
+
+  [[nodiscard]] auto get_name() const noexcept -> const std::string& { return name; }
+  [[nodiscard]] auto get_fields() const noexcept -> const std::vector<TypeField>& { return type_fields; }
 
   auto operator == (const PmtType& type) const noexcept -> bool {
     return type.name == name
@@ -93,8 +102,15 @@ struct TypeConstructor {
   TypeConstructor() = delete;
 
   auto operator == (const TypeConstructor& tconstr) const noexcept -> bool {
-    return tconstr.type == type
-      && tconstr.args == args;
+    if (tconstr.type != type || tconstr.args.size() != args.size()) {
+      return false;
+    }
+    for (size_t i = 0; i < args.size(); ++i) {
+      if (!type_ptr_equal(tconstr.args[i], args[i])) {
+        return false;
+      }
+    }
+    return true;
   }
 
   auto operator | (std::vector<TypePtr>& params) -> TypeConstructor {
@@ -108,6 +124,33 @@ struct TypeConstructor {
 private:
   std::string type;
   std::vector<TypePtr> args;
+};
+
+struct FunctionType {
+  FunctionType(std::vector<TypePtr> params, TypePtr rtn_type) noexcept
+    : param_types(std::move(params)), return_type(std::move(rtn_type)) {}
+  FunctionType() = delete;
+
+  auto operator == (const FunctionType& ftype) const noexcept -> bool {
+    if (ftype.param_types.size() != param_types.size()) {
+      return false;
+    }
+    for (size_t i = 0; i < param_types.size(); ++i) {
+      if (!type_ptr_equal(ftype.param_types[i], param_types[i])) {
+        return false;
+      }
+    }
+    return type_ptr_equal(ftype.return_type, return_type);
+  }
+
+  [[nodiscard]] auto get_param_types() const noexcept
+      -> const std::vector<TypePtr>& { return param_types; }
+  [[nodiscard]] auto get_return_type() const noexcept
+      -> const TypePtr& { return return_type; }
+
+private:
+  std::vector<TypePtr> param_types;
+  TypePtr return_type;
 };
 
 struct TypeVar {
@@ -131,6 +174,7 @@ struct Type {
   Type(TypeConstructor type) : value(type) {}
   Type(TypeVar type) : value(type) {}
   Type(PmtType type) : value(type) {}
+  Type(FunctionType type) : value(type) {}
 
 
   auto operator == (const Type& type) const noexcept -> bool {
@@ -138,21 +182,25 @@ struct Type {
   }
 
   [[nodiscard]]
-  auto isBaseType() const noexcept -> const bool;
+  auto isBaseType() const noexcept -> bool;
 
   [[nodiscard]]
-  auto isTypeVar() const noexcept -> const bool;
+  auto isTypeVar() const noexcept -> bool;
 
   [[nodiscard]]
-  auto isPmtType() const noexcept -> const bool;
+  auto isPmtType() const noexcept -> bool;
 
   [[nodiscard]]
-  auto isTypeConstructor() const noexcept -> const bool;
+  auto isTypeConstructor() const noexcept -> bool;
+
+  [[nodiscard]]
+  auto isFunctionType() const noexcept -> bool;
 
   std::variant<
     BaseType,
     PmtType,
     TypeConstructor,
+    FunctionType,
     TypeVar
   > value;
 };
@@ -169,7 +217,8 @@ private:
 
 auto makeTypeConstructor(std::string name, const std::vector<TypePtr>& types) noexcept -> TypePtr;
 
-auto makeFunc(TypePtr from, TypePtr to) noexcept -> TypePtr;
+auto makeFunc(std::vector<TypePtr> from, TypePtr into) noexcept -> TypePtr;
+auto makeFunc(TypePtr from, TypePtr into) noexcept -> TypePtr;
 
 auto makeList(TypePtr type) noexcept -> TypePtr;
 
@@ -179,12 +228,12 @@ auto makeSet(TypePtr type) noexcept -> TypePtr;
 
 auto makeDict(TypePtr key, TypePtr value) noexcept -> TypePtr;
 
-auto makeInt() noexcept -> const TypePtr;
+auto makeInt() noexcept -> TypePtr;
 
-auto makeFloat() noexcept -> const TypePtr;
+auto makeFloat() noexcept -> TypePtr;
 
-auto makeString() noexcept -> const TypePtr;
+auto makeString() noexcept -> TypePtr;
 
-auto makeBool() noexcept -> const TypePtr;
+auto makeBool() noexcept -> TypePtr;
 
-auto makeNil() noexcept -> const TypePtr;
+auto makeNil() noexcept -> TypePtr;

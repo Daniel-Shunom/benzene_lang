@@ -15,6 +15,9 @@ enum class TokenType {
   LetKeyword,
   TypeKeyword,
 
+  TypeClass,
+  TypeVal,
+
   IntegerLiteral,
   FloatLiteral,
   StringLiteral,
@@ -85,6 +88,8 @@ inline auto token_type_to_str(TokenType type) -> std::string {
     case t::LetKeyword: return "LetKeyword";
     case t::ConstantKeyword: return "ConstantKeyword";
     case t::TypeKeyword: return "TypeKeyword";
+    case t::TypeClass: return "TypeClass";
+    case t::TypeVal: return "TypeVal";
     case t::IntegerLiteral: return "IntegerLiteral";
     case t::FloatLiteral: return "FloatLiteral";
     case t::StringLiteral: return "StringLiteral";

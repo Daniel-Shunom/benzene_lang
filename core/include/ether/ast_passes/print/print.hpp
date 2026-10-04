@@ -8,8 +8,8 @@
 
 class TreePrinter final : public Visitor {
 public:
-  explicit TreePrinter(std::ostream& out = std::cout)
-    : out(out) {}
+  explicit TreePrinter(std::ostream& out = std::cout, bool show_types = false)
+    : out(out), show_types(show_types) {}
 
   void visit(NDLiteral& expr)           override;
   void visit(NDImportDirective& expr)   override;
@@ -27,9 +27,12 @@ public:
   void visit(NDTupleExpr& expr)         override;
   void visit(NDLambdaExpr& expr)        override;
   void visit(NDFuncParam& expr)         override;
+  void visit(NDTypeDecl& expr)          override;
+  void visit(NDTypeExpr& expr) override;
 
 private:
   std::ostream& out;
+  bool show_types;
 
   // For each ancestor depth, true if this branch was the last child of its
   // parent. Drives the rendering of `│  ` vs `   ` trail segments and the
@@ -49,5 +52,5 @@ private:
   // Print a leaf field: "├── label: value".
   void leaf_field(const std::string& label, const std::string& value, bool is_last);
 
-  auto type_header(const std::string& type_name, bool is_poisoned) -> std::string;
+  auto type_header(const std::string& type_name, Node& node) -> std::string;
 };

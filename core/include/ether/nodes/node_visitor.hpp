@@ -8,6 +8,8 @@ struct NDLetBindExpr;
 struct NDConstExpr;
 struct NDCallExpr;
 struct NDCallChain;
+struct NDTypeDecl;
+struct NDTypeExpr;
 struct NDFuncDeclExpr;
 struct NDCaseExpr;
 struct NDBinaryExpr;
@@ -28,6 +30,8 @@ public:
   virtual void visit(NDConstExpr&) = 0;
   virtual void visit(NDCallExpr&) = 0;
   virtual void visit(NDCallChain&) = 0;
+  virtual void visit(NDTypeDecl&) = 0;
+  virtual void visit(NDTypeExpr&) = 0;
   virtual void visit(NDFuncDeclExpr&) = 0;
   virtual void visit(NDCaseExpr&) = 0;
   virtual void visit(NDBinaryExpr&) = 0;

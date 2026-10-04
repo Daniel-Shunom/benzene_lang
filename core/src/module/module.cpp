@@ -2,6 +2,7 @@
 #include <ether/lexer/lexer.hpp>
 #include <ether/parser/parsers.hpp>
 #include <cstdio>
+#include <print>
 #include <utility>
 
 void Module::make_module_ast() {
@@ -17,7 +18,7 @@ void Module::make_module_ast() {
   auto parent = run_parser(state);
 
   if (!parent) {
-    std::fprintf(stderr, "[ERR] Failed to parse module `%s`\n", this->module_path.data());
+    std::println(stderr, "[ERR] Failed to parse module `%s`\n", this->module_path);
     return;
   }
 
@@ -40,6 +41,6 @@ void Module::print_errors(std::ostream& out) {
   this->diag.print_all(out);
 }
 
-Parent Module::get_ast() {
+auto Module::get_ast() -> Parent {
   return std::move(this->module_root);
 }

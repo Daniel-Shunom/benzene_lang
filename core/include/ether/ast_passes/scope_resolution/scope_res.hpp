@@ -17,6 +17,8 @@ public:
   void visit(NDCallExpr& expr)        override;
   void visit(NDCallChain& expr)       override;
   void visit(NDFuncDeclExpr& expr)    override;
+  void visit(NDTypeDecl& expr)        override;
+  void visit(NDTypeExpr& expr) override;
   void visit(NDCaseExpr& expr)        override;
   void visit(NDBinaryExpr& expr)      override;
   void visit(NDUnaryExpr& expr)       override;

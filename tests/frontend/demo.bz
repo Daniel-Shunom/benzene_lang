@@ -17,6 +17,10 @@ let testing_bool = ~{"dumy"} + 5  -  - -2
 
 let boolean_exprs = {~{1 + 2 < 6} || 3 >= 5 }
 
+let array_of_values = [1, 2, 3, 4, 5]
+
+let array_of_one_value = [1]
+
 let new_foo = "10" - "5" * 9 / 2 + 0 + 1 + 1 + 1 + 1
 
 let a: Int = 2

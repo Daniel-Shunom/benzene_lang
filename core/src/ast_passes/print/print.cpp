@@ -1,5 +1,13 @@
 #include "ether/nodes/node_expr.hpp"
 #include <ether/ast_passes/print/print.hpp>
+#include <ether/types/type_printer.hpp>
+
+void TreePrinter::visit(NDFuncParam& expr) {
+  expr.identifier.accept(*this);
+  if (expr.param_type) {
+    child_field("annotation", *expr.param_type, true);
+  }
+}
 
 namespace {
   constexpr auto RESET   = "\033[0m";
@@ -13,7 +21,7 @@ namespace {
   constexpr auto GREEN   = "\033[32m";
 }
 
-std::string TreePrinter::prefix() const {
+auto TreePrinter::prefix() const -> std::string {
   std::string p;
   for (size_t i = 0; i + 1 < last_stack.size(); ++i) {
     p += last_stack[i]
@@ -23,8 +31,10 @@ std::string TreePrinter::prefix() const {
   return p;
 }
 
-std::string TreePrinter::connector() const {
-  if (last_stack.empty()) return "";
+auto TreePrinter::connector() const -> std::string {
+  if (last_stack.empty()) {
+    return "";
+  }
   return std::string(DIM) + BLUE
        + (last_stack.back() ? "└── " : "├── ")
        + RESET;
@@ -34,9 +44,13 @@ void TreePrinter::emit_line(const std::string& content) {
   out << prefix() << connector() << content << '\n';
 }
 
-std::string TreePrinter::type_header(const std::string& type_name, bool is_poisoned) {
+auto TreePrinter::type_header(const std::string& type_name, Node& node) -> std::string {
   std::string s = std::string(BOLD) + CYAN + type_name + RESET;
-  if (is_poisoned) {
+  if (show_types && node.inferred_type) {
+    s += " " + std::string(DIM) + "[type: " +
+         TypePrinter{true}.print(node.inferred_type) + "]" + RESET;
+  }
+  if (node.is_poisoned) {
     s += std::string(" ") + BOLD + RED + "[POISONED]" + RESET;
   }
   return s;
@@ -61,22 +75,25 @@ void TreePrinter::leaf_field(const std::string& label, const std::string& value,
 }
 
 void TreePrinter::visit(NDLiteral& n) {
-  emit_line(type_header("Literal", n.is_poisoned));
+  emit_line(type_header("Literal", n));
   leaf_field("value", n.literal.token_value, true);
 }
 
 void TreePrinter::visit(NDImportDirective& n) {
-  emit_line(type_header("ImportDirective", n.is_poisoned));
+  emit_line(type_header("ImportDirective", n));
   leaf_field("module", n.import_directive.token_value, true);
 }
 
 void TreePrinter::visit(NDIdentifier& n) {
-  emit_line(type_header("Identifier", n.is_poisoned));
-  leaf_field("name", n.identifier.token_value, true);
+  emit_line(type_header("Identifier", n));
+  leaf_field("name", n.identifier.token_value, !n.type);
+  if (n.type) {
+    child_field("annotation", *n.type, true);
+  }
 }
 
 void TreePrinter::visit(NDUnaryExpr& n) {
-  emit_line(type_header("UnaryExpr", n.is_poisoned));
+  emit_line(type_header("UnaryExpr", n));
   if (n.op) {
     leaf_field("op", n.op->token_value, false);
   }
@@ -84,14 +101,14 @@ void TreePrinter::visit(NDUnaryExpr& n) {
 }
 
 void TreePrinter::visit(NDBinaryExpr& n) {
-  emit_line(type_header("BinaryExpr", n.is_poisoned));
+  emit_line(type_header("BinaryExpr", n));
   child_field("lhs", *n.lhs, false);
   leaf_field("op", n.op.token_value, false);
   child_field("rhs", *n.rhs, true);
 }
 
 void TreePrinter::visit(NDScopeExpr& n) {
-  emit_line(type_header("ScopeExpr", n.is_poisoned));
+  emit_line(type_header("ScopeExpr", n));
   for (size_t i = 0; i < n.expressions.size(); ++i) {
     bool last = (i + 1 == n.expressions.size());
     enter_child(last);
@@ -101,7 +118,7 @@ void TreePrinter::visit(NDScopeExpr& n) {
 }
 
 void TreePrinter::visit(NDListExpr& n) {
-  emit_line(type_header("ListExpr", n.is_poisoned));
+  emit_line(type_header("ListExpr", n));
   for (size_t i = 0; i < n.values.size(); i++) {
     bool last = (i + 1 == n.values.size());
     enter_child(last);
@@ -111,7 +128,7 @@ void TreePrinter::visit(NDListExpr& n) {
 }
 
 void TreePrinter::visit(NDTupleExpr& n) {
-  emit_line(type_header("TupleExpr", n.is_poisoned));
+  emit_line(type_header("TupleExpr", n));
   for (size_t i = 0; i < n.values.size(); i++) {
     bool last = (i + 1 == n.values.size());
     enter_child(last);
@@ -121,19 +138,19 @@ void TreePrinter::visit(NDTupleExpr& n) {
 }
 
 void TreePrinter::visit(NDLetBindExpr& n) {
-  emit_line(type_header("LetBindExpr", n.is_poisoned));
+  emit_line(type_header("LetBindExpr", n));
   child_field("identifier", *n.identifier, false);
   child_field("value", *n.bound_value, true);
 }
 
 void TreePrinter::visit(NDConstExpr& n) {
-  emit_line(type_header("ConstExpr", n.is_poisoned));
+  emit_line(type_header("ConstExpr", n));
   child_field("identifier", *n.identifier, false);
   child_field("value", *n.bound_value, true);
 }
 
 void TreePrinter::visit(NDCallExpr& n) {
-  emit_line(type_header("CallExpr", n.is_poisoned));
+  emit_line(type_header("CallExpr", n));
   child_field("callee", *n.identifier, n.args.empty());
   if (!n.args.empty()) {
     enter_child(true);
@@ -149,7 +166,7 @@ void TreePrinter::visit(NDCallExpr& n) {
 }
 
 void TreePrinter::visit(NDCallChain& n) {
-  emit_line(type_header("CallChain", n.is_poisoned));
+  emit_line(type_header("CallChain", n));
   for (size_t i = 0; i < n.calls.size(); ++i) {
     bool last = (i + 1 == n.calls.size());
     enter_child(last);
@@ -159,7 +176,7 @@ void TreePrinter::visit(NDCallChain& n) {
 }
 
 void TreePrinter::visit(NDFuncDeclExpr& n) {
-  emit_line(type_header("FuncDecl", n.is_poisoned));
+  emit_line(type_header("FuncDecl", n));
   bool has_return = n.return_type.has_value();
   bool has_params = !n.func_params.empty();
   bool has_body = !n.func_body.empty();
@@ -167,7 +184,7 @@ void TreePrinter::visit(NDFuncDeclExpr& n) {
   leaf_field("name", n.func_identifier.token_value, !has_return && !has_params && !has_body);
 
   if (has_return) {
-    leaf_field("return_type", n.return_type->token_value, !has_params && !has_body);
+    leaf_field("return_type", TypePrinter{true}.print(n.return_type->parsed_type), !has_params && !has_body);
   }
 
   if (has_params) {
@@ -177,10 +194,10 @@ void TreePrinter::visit(NDFuncDeclExpr& n) {
       const auto& p = n.func_params[i];
       bool last = (i + 1 == n.func_params.size());
       std::string text =
-        std::string(GREEN) + p.param_token.token_value + RESET;
+        std::string(GREEN) + p.identifier.identifier.token_value + RESET;
       if (p.param_type) {
         text += std::string(DIM) + " : " + RESET +
-                std::string(YELLOW) + p.param_type->token_value + RESET;
+                TypePrinter{true}.print(p.param_type->parsed_type);
       }
       enter_child(last);
       emit_line(text);
@@ -202,14 +219,32 @@ void TreePrinter::visit(NDFuncDeclExpr& n) {
   }
 }
 
+void TreePrinter::visit(NDTypeDecl& type_decl) {
+  emit_line(type_header("TypeDecl", type_decl));
+  leaf_field("type", type_decl.type_identifier.token_value, !type_decl.alias_target && !type_decl.sub_types);
+  if (type_decl.alias_target) {
+    child_field("alias_target", *type_decl.alias_target, !type_decl.sub_types);
+  }
+  if (type_decl.sub_types) {
+    enter_child(true);
+    emit_line(std::string(DIM) + "subtypes" + RESET);
+    for (size_t i = 0; i < type_decl.sub_types->size(); ++i) {
+      enter_child(i + 1 == type_decl.sub_types->size());
+      (*type_decl.sub_types)[i].accept(*this);
+      leave_child();
+    }
+    leave_child();
+  }
+}
+
 void TreePrinter::visit(NDLambdaExpr& n) {
-  emit_line(type_header("LambdaExpr", n.is_poisoned));
+  emit_line(type_header("LambdaExpr", n));
   bool has_return = n.return_type.has_value();
   bool has_params = !n.func_params.empty();
   bool has_body = !n.func_body.empty();
 
   if (has_return) {
-    leaf_field("return_type", n.return_type->token_value, !has_params && !has_body);
+    leaf_field("return_type", TypePrinter{true}.print(n.return_type->parsed_type), !has_params && !has_body);
   }
 
   if (has_params) {
@@ -219,10 +254,10 @@ void TreePrinter::visit(NDLambdaExpr& n) {
       const auto& p = n.func_params[i];
       bool last = (i + 1 == n.func_params.size());
       std::string text =
-        std::string(GREEN) + p.param_token.token_value + RESET;
+        std::string(GREEN) + p.identifier.identifier.token_value + RESET;
       if (p.param_type) {
         text += std::string(DIM) + " : " + RESET +
-                std::string(YELLOW) + p.param_type->token_value + RESET;
+                TypePrinter{true}.print(p.param_type->parsed_type);
       }
       enter_child(last);
       emit_line(text);
@@ -245,7 +280,7 @@ void TreePrinter::visit(NDLambdaExpr& n) {
 }
 
 void TreePrinter::visit(NDCaseExpr& n) {
-  emit_line(type_header("CaseExpr", n.is_poisoned));
+  emit_line(type_header("CaseExpr", n));
   bool has_branches = !n.branches.empty();
 
   enter_child(!has_branches);
@@ -282,3 +317,7 @@ void TreePrinter::visit(NDCaseExpr& n) {
   }
 }
 
+void TreePrinter::visit(NDTypeExpr& expr) {
+  emit_line(type_header("TypeExpr", expr));
+  leaf_field("type", TypePrinter{true}.print(expr.parsed_type), true);
+}

@@ -57,7 +57,6 @@ void Lexer::scan_tokens() {
 
     auto tok = this->make_token(TokenType::Unknown, {c});
     this->lex_diag.unknown_character(tok);
-    continue;
   }
 
   this->make_token(TokenType::EoF, "");

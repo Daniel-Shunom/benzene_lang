@@ -17,16 +17,38 @@ struct Node {
 
 using NDPtr = std::unique_ptr<Node>;
 
+// Node for containing explicit type annotations.
+struct NDExplicitTypeAnot: Node {
+  TypePtr explicit_type;
+  void accept(Visitor & visitor) override;
+};
+
+struct NDTypeExpr: Node {
+  TypePtr parsed_type;
+  void accept(Visitor & visitor) override;
+};
+
+struct NDTypeDecl: Node {
+  Token type_identifier;
+  std::optional<NDTypeExpr> alias_target;
+  // A body is distinct from a bare declaration, even when it has no members.
+  std::optional<std::vector<NDTypeExpr>> sub_types;
+
+  void accept(Visitor & visitor) override;
+};
+
 struct NDIdentifier : Node {
   SymbolAttr *identifier_symbol;
   Token identifier;
-  void accept(Visitor & /*nused*/) override;
+  std::optional<NDTypeExpr> type;
+  void accept(Visitor & visitor) override;
 };
 
 struct NDFuncParam: Node {
   NDIdentifier identifier;
-  std::optional<Token> param_type;
+  std::optional<NDTypeExpr> param_type;
   SymbolAttr *param_sym;
+  void accept(Visitor & visitor) override;
 };
 
 struct NDLiteral : Node {
@@ -49,7 +71,7 @@ struct NDBinaryExpr : Node {
 
 struct NDScopeExpr : Node {
   Token open_brace;
-  std::vector<NDPtr> visitoressions;
+  std::vector<NDPtr> expressions;
   void accept(Visitor & visitor) override;
 };
 
@@ -97,7 +119,7 @@ struct NDCallChain : Node {
 struct NDFuncDeclExpr : Node {
   Token func_identifier;
   SymbolAttr *func_sym;
-  std::optional<Token> return_type;
+  std::optional<NDTypeExpr> return_type;
   std::vector<NDFuncParam> func_params;
   std::vector<NDPtr> func_body;
   void accept(Visitor & visitor) override;
@@ -106,7 +128,7 @@ struct NDFuncDeclExpr : Node {
 struct NDLambdaExpr : Node {
   SymbolAttr *func_sym;
   Token lambda_start;
-  std::optional<Token> return_type;
+  std::optional<NDTypeExpr> return_type;
   std::vector<NDFuncParam> func_params;
   std::vector<NDPtr> func_body;
   void accept(Visitor & visitor) override;

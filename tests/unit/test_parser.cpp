@@ -70,8 +70,8 @@ TEST_SUITE("parser / let bindings") {
     REQUIRE(p.has_value());
     auto* let = as<NDLetBindExpr>(p->children[0]);
     REQUIRE(let);
-    REQUIRE(let->type.has_value());
-    CHECK(let->type->token_value == "Int");
+    REQUIRE(let->identifier->type.has_value());
+    CHECK(std::get<TypeConstructor>(let->identifier->type->parsed_type->value).name() == "Int");
   }
 
   TEST_CASE("let missing `=` reports parser diagnostic") {
@@ -90,7 +90,9 @@ TEST_SUITE("parser / const expressions") {
     REQUIRE(p->children.size() == 1);
     auto* c = as<NDConstExpr>(p->children[0]);
     REQUIRE(c);
-    CHECK(c->literal.literal.token_value == "10");
+    auto* literal = dynamic_cast<NDLiteral*>(c->bound_value.get());
+    REQUIRE(literal != nullptr);
+    CHECK(literal->literal.token_value == "10");
   }
 
   TEST_CASE("const with non-literal RHS fails") {
@@ -108,8 +110,8 @@ TEST_SUITE("parser / const expressions") {
     REQUIRE(p.has_value());
     auto* c = as<NDConstExpr>(p->children[0]);
     REQUIRE(c);
-    REQUIRE(c->type.has_value());
-    CHECK(c->type->token_value == "String");
+    REQUIRE(c->identifier->type.has_value());
+    CHECK(std::get<TypeConstructor>(c->identifier->type->parsed_type->value).name() == "String");
   }
 }
 
@@ -202,9 +204,9 @@ TEST_SUITE("parser / function declarations") {
     REQUIRE(fn);
     CHECK(fn->func_params.size() == 2);
     REQUIRE(fn->func_params[0].param_type.has_value());
-    CHECK(fn->func_params[0].param_type->token_value == "Int");
+    CHECK(std::get<TypeConstructor>(fn->func_params[0].param_type->parsed_type->value).name() == "Int");
     REQUIRE(fn->return_type.has_value());
-    CHECK(fn->return_type->token_value == "Int");
+    CHECK(std::get<TypeConstructor>(fn->return_type->parsed_type->value).name() == "Int");
   }
 
   TEST_CASE("missing closing paren reports a diagnostic") {
@@ -298,5 +300,367 @@ TEST_SUITE("parser / recovery") {
       if (dynamic_cast<NDLetBindExpr*>(c.get())) found_let = true;
     }
     CHECK(found_let);
+  }
+}
+
+
+TEST_SUITE("parser / type expressions") {
+  TEST_CASE("tagged types retain their own names and consume closing parentheses") {
+    DiagnosticEngine diag;
+    auto state = make_state(lex_all("First(value: Int) Second(item: List(String))", diag), diag);
+    for (const auto* name : {"First", "Second"}) {
+      auto result = parse_type_expression()(state);
+      REQUIRE(result);
+      REQUIRE(result->parsed_type);
+      const auto& type = std::get<TypeConstructor>(result->parsed_type->value);
+      CHECK(type.name() == name);
+      REQUIRE(type.get_args().size() == 1);
+    }
+    REQUIRE(state.peek());
+    CHECK(state.peek()->token_type == TokenType::EoF);
+  }
+
+  TEST_CASE("function types preserve input and nested return types") {
+    DiagnosticEngine diag;
+    auto state = make_state(lex_all("Fn(String) :> List(Int)", diag), diag);
+    auto result = parse_type_expression()(state);
+    REQUIRE(result);
+    const auto& fn = std::get<FunctionType>(result->parsed_type->value);
+    REQUIRE(fn.get_param_types().size() == 1);
+    CHECK(std::get<TypeConstructor>(fn.get_param_types()[0]->value).name() == "String");
+    const auto& output = std::get<TypeConstructor>(fn.get_return_type()->value);
+    CHECK(output.name() == "List");
+    REQUIRE(output.get_args().size() == 1);
+    CHECK(std::get<TypeConstructor>(output.get_args()[0]->value).name() == "Int");
+    REQUIRE(state.peek());
+    CHECK(state.peek()->token_type == TokenType::EoF);
+  }
+
+  TEST_CASE("malformed type expressions fail and rewind without throwing") {
+    for (const auto* source : {"Pair(a: Int b: String)", "Pair(a: Int", "Pair(a:)",
+                               "Fn(String :> Int", "Fn(String) Int", "Fn(String) :>"}) {
+      CAPTURE(std::string(source));
+      DiagnosticEngine diag;
+      auto state = make_state(lex_all(source, diag), diag);
+      CHECK_FALSE(parse_type_expression()(state));
+      CHECK(state.pos == 0);
+    }
+  }
+
+  TEST_CASE("returned tagged parsers own their names independently") {
+    auto first = h_parse_type_expr_ident_wtagged_params("First");
+    auto second = h_parse_type_expr_ident_wtagged_params("Second");
+    DiagnosticEngine diag;
+    auto first_state = make_state(lex_all("value: Int)", diag), diag);
+    auto second_state = make_state(lex_all("value: Int)", diag), diag);
+    auto a = first(first_state);
+    auto b = second(second_state);
+    REQUIRE(a);
+    REQUIRE(b);
+    CHECK(std::get<TypeConstructor>((*a)->value).name() == "First");
+    CHECK(std::get<TypeConstructor>((*b)->value).name() == "Second");
+  }
+
+  TEST_CASE("unterminated type bodies fail without hanging or registering a type") {
+    DiagnosticEngine diag;
+    auto state = make_state(lex_all("type Example { Variant", diag), diag);
+    CHECK_FALSE(parse_type_declaration()(state));
+    CHECK(state.pos == 0);
+    CHECK(state.type_collections.empty());
+  }
+}
+
+TEST_CASE("supported type expression forms consume exactly one expression") {
+  for (const auto* source : {"Int", "Custom", "List(Int)", "List(List(Int))", "Empty()",
+                             "Pair(left: Int, right: String)", "Pair(left: Int,)",
+                             "Handler(callback: Fn(Int) :> String)",
+                             "Fn(Fn(Int) :> String) :> Fn(String) :> Int"}) {
+    CAPTURE(std::string(source));
+    DiagnosticEngine diag;
+    auto state = make_state(lex_all(source, diag), diag);
+    REQUIRE(parse_type_expression()(state));
+    REQUIRE(state.peek());
+    CHECK(state.peek()->token_type == TokenType::EoF);
+  }
+}
+
+
+TEST_SUITE("parser / aliases and type arguments") {
+  TEST_CASE("multiple arguments preserve recursive structure") {
+    DiagnosticEngine diag;
+    auto state = make_state(lex_all("Dict(String, List(Fn(Int, Bool) :> String))", diag), diag);
+    auto result = parse_type_expression()(state);
+    REQUIRE(result);
+    const auto& dict = std::get<TypeConstructor>(result->parsed_type->value);
+    CHECK(dict.name() == "Dict");
+    REQUIRE(dict.get_args().size() == 2);
+    CHECK(std::get<TypeConstructor>(dict.get_args()[0]->value).name() == "String");
+    const auto& list = std::get<TypeConstructor>(dict.get_args()[1]->value);
+    REQUIRE(list.get_args().size() == 1);
+    const auto& fn = std::get<FunctionType>(list.get_args()[0]->value);
+    REQUIRE(fn.get_param_types().size() == 2);
+    CHECK(std::get<TypeConstructor>(fn.get_param_types()[0]->value).name() == "Int");
+    CHECK(std::get<TypeConstructor>(fn.get_param_types()[1]->value).name() == "Bool");
+    CHECK(std::get<TypeConstructor>(fn.get_return_type()->value).name() == "String");
+    CHECK(state.peek()->token_type == TokenType::EoF);
+  }
+
+  TEST_CASE("aliases retain names and targets and leave the following declaration") {
+    DiagnosticEngine diag;
+    auto parent = parse_source("type Converter = Fn(String) :> List(Int) type Mapping = Dict(String, Int) type Bare", diag);
+    REQUIRE(parent);
+    REQUIRE(parent->children.size() == 3);
+    auto* converter = as<NDTypeDecl>(parent->children[0]);
+    auto* mapping = as<NDTypeDecl>(parent->children[1]);
+    auto* bare = as<NDTypeDecl>(parent->children[2]);
+    REQUIRE(converter);
+    REQUIRE(mapping);
+    REQUIRE(bare);
+    CHECK(converter->type_identifier.token_value == "Converter");
+    REQUIRE(converter->alias_target);
+    CHECK(std::holds_alternative<FunctionType>(converter->alias_target->parsed_type->value));
+    REQUIRE(mapping->alias_target);
+    CHECK(std::get<TypeConstructor>(mapping->alias_target->parsed_type->value).name() == "Dict");
+    CHECK_FALSE(bare->alias_target);
+    CHECK_FALSE(diag.has_errors());
+  }
+
+  TEST_CASE("zero argument functions and trailing commas parse") {
+    for (const auto* source : {"Fn() :> Int", "Fn(Int, String,) :> Bool", "Dict(String, Int,)",
+                               "Pair(callback: Fn() :> Int, value: List(Int))"}) {
+      CAPTURE(std::string(source));
+      DiagnosticEngine diag;
+      auto state = make_state(lex_all(source, diag), diag);
+      REQUIRE(parse_type_expression()(state));
+      CHECK(state.peek()->token_type == TokenType::EoF);
+    }
+  }
+
+  TEST_CASE("malformed argument lists and aliases fail transactionally") {
+    for (const auto* source : {"type A =", "type A = Dict(Int String)", "type A = Dict(Int,, String)",
+                               "type A = Dict(Int,", "type A = Fn(Int Bool) :> String",
+                               "type A = Fn(Int) :>", "type A = Dict(key: Int, String)"}) {
+      CAPTURE(std::string(source));
+      DiagnosticEngine diag;
+      auto state = make_state(lex_all(source, diag), diag);
+      CHECK_FALSE(parse_type_declaration()(state));
+      CHECK(state.pos == 0);
+      CHECK(state.type_collections.empty());
+      CHECK(diag.has_errors());
+    }
+  }
+}
+
+
+TEST_SUITE("parser / type diagnostics") {
+  TEST_CASE("type failures report one specific diagnostic at the offending token") {
+    struct Example { const char* source; const char* message; const char* offending; };
+    for (const auto& example : {
+      Example{"type = Int", "Expected a type name after 'type'", "="},
+      Example{"type A =", "Expected a type expression after '='", ""},
+      Example{"type A = List(Int String)", "Expected ',' or ')' after type argument", "String"},
+      Example{"type A = Pair(a: Int b: String)", "Expected ',' or ')' after labelled type argument", "b"},
+      Example{"type A = Pair(a: Int, b String)", "Expected ':' after type argument label", "String"},
+      Example{"type A = Pair(a:)", "Expected a type expression after field label and ':'", ")"},
+      Example{"type A = Pair(a: Int, 2)", "Expected a field name or ')' in labelled type arguments", "2"},
+      Example{"type A = List(,)", "Expected a type argument or closing ')'", ","},
+      Example{"type A = Fn Int", "Expected '(' after 'Fn'", "Int"},
+      Example{"type A = Fn(Int String) :> Int", "Expected ',' or ')' after function parameter type", "String"},
+      Example{"type A = Fn(,) :> Int", "Expected a parameter type or ')' in function type", ","},
+      Example{"type A = Fn(Int) Int", "Expected ':>' before function return type", "Int"},
+      Example{"type A = Fn(Int) :>", "Expected a return type after ':>'", ""},
+      Example{"type A {", "Expected '}' to close the type declaration", ""},
+      Example{"type A { 123 }", "Expected a subtype expression or '}' in type declaration", "123"}
+    }) {
+      CAPTURE(std::string(example.source));
+      DiagnosticEngine diag;
+      auto state = make_state(lex_all(example.source, diag), diag);
+      CHECK_FALSE(parse_type_declaration()(state));
+      CHECK(state.pos == 0);
+      REQUIRE(diag.all().size() == 1);
+      const auto& error = diag.all().front();
+      CHECK(error.message == example.message);
+      CHECK(error.phase == DiagnosticPhase::Parser);
+      CHECK(error.level == DiagnosticLevel::Fail);
+      // Use the last occurrence: parameter and return types may share a name.
+      const Token* offending = nullptr;
+      for (const auto& token : state.tokens) {
+        if ((std::string(example.offending).empty() && token.token_type == TokenType::EoF) ||
+            (!std::string(example.offending).empty() && token.token_value == example.offending)) {
+          offending = &token;
+        }
+      }
+      REQUIRE(offending);
+      CHECK(error.location.line == offending->line_number);
+      CHECK(error.location.column == offending->column_number);
+    }
+  }
+
+  TEST_CASE("valid alternatives and unrelated parser probes emit no diagnostics") {
+    for (const auto* source : {"List(Int)", "Dict(String, Int)", "Pair(a: Int, b: Fn() :> Int)", "Empty()"}) {
+      DiagnosticEngine diag;
+      auto state = make_state(lex_all(source, diag), diag);
+      REQUIRE(parse_type_expression()(state));
+      CHECK(diag.all().empty());
+    }
+    DiagnosticEngine diag;
+    auto state = make_state(lex_all("123", diag), diag);
+    CHECK_FALSE(parse_type_declaration()(state));
+    CHECK_FALSE(parse_type_expression()(state));
+    CHECK_FALSE(parse_type_annotation()(state));
+    CHECK(diag.all().empty());
+  }
+
+  TEST_CASE("type diagnostics handle physical end of stream and annotation failures") {
+    for (const auto* source : {"type A =", "type A = Fn(Int) :>"}) {
+      DiagnosticEngine diag;
+      ParserState state(diag);
+      state.set_state(lex_no_eof(source));
+      CHECK_FALSE(parse_type_declaration()(state));
+      REQUIRE(diag.all().size() == 1);
+      CHECK(diag.all()[0].location.line == 1);
+      CHECK(diag.all()[0].location.column > 0);
+    }
+    DiagnosticEngine diag;
+    auto state = make_state(lex_all(": 123", diag), diag);
+    CHECK_FALSE(parse_type_annotation()(state));
+    REQUIRE(diag.all().size() == 1);
+    CHECK(diag.all()[0].message == "Expected a type expression after ':'");
+  }
+
+  TEST_CASE("a malformed alias reports its inner error and recovers to the next declaration") {
+    DiagnosticEngine diag;
+    auto parent = parse_source("type Bad = List(Int String) type Good = Int", diag);
+    REQUIRE(parent);
+    REQUIRE(parent->children.size() == 1);
+    auto* good = as<NDTypeDecl>(parent->children.front());
+    REQUIRE(good);
+    CHECK(good->type_identifier.token_value == "Good");
+    REQUIRE(diag.all().size() == 1);
+    CHECK(diag.all()[0].message == "Expected ',' or ')' after type argument");
+  }
+}
+
+
+TEST_SUITE("parser / expression annotations") {
+  TEST_CASE("functions and lambdas retain compound parameter annotations") {
+    for (const auto* source : {"func f(items: Dict(String, Int), callback: Fn(Int) :> String, plain) plain end",
+                               "Fn(items: Dict(String, Int), callback: Fn(Int) :> String, plain) plain end"}) {
+      DiagnosticEngine diag;
+      auto state = make_state(lex_all(source, diag), diag);
+      auto result = parse_expression()(state);
+      REQUIRE(result);
+      auto* function = dynamic_cast<NDFuncDeclExpr*>(result->get());
+      auto* lambda = dynamic_cast<NDLambdaExpr*>(result->get());
+      REQUIRE((function || lambda));
+      const auto& params = function ? function->func_params : lambda->func_params;
+      REQUIRE(params.size() == 3);
+      REQUIRE(params[0].param_type);
+      REQUIRE(params[1].param_type);
+      CHECK_FALSE(params[2].param_type);
+      const auto& dict = std::get<TypeConstructor>(params[0].param_type->parsed_type->value);
+      CHECK(dict.name() == "Dict");
+      CHECK(dict.get_args().size() == 2);
+      CHECK(std::holds_alternative<FunctionType>(params[1].param_type->parsed_type->value));
+      CHECK(diag.all().empty());
+    }
+  }
+
+  TEST_CASE("binding annotations retain compound types") {
+    DiagnosticEngine diag;
+    auto state = make_state(lex_all("let items: List(Int) = [1]", diag), diag);
+    auto result = parse_let_expression()(state);
+    REQUIRE(result);
+    REQUIRE(result->identifier->type);
+    CHECK(std::get<TypeConstructor>(result->identifier->type->parsed_type->value).name() == "List");
+    CHECK(diag.all().empty());
+  }
+
+  TEST_CASE("malformed parameter annotations emit one diagnostic and fail") {
+    for (const auto* source : {"func f(x: ) x end", "Fn(x: List(Int String)) x end"}) {
+      DiagnosticEngine diag;
+      auto state = make_state(lex_all(source, diag), diag);
+      if (state.peek()->token_type == TokenType::FuncStart) {
+        CHECK_FALSE(parse_function_declaration()(state));
+      } else {
+        CHECK_FALSE(parse_lambda_expression()(state));
+      }
+      CHECK(state.pos == 0);
+      REQUIRE(diag.all().size() == 1);
+    }
+  }
+}
+
+
+TEST_SUITE("parser / multivariate declarations") {
+  TEST_CASE("declarations retain ordered subtype expressions and consume their braces") {
+    DiagnosticEngine diag;
+    auto state = make_state(lex_all(
+      "type Data { Integer String Custom(value: Int, desc: String) "
+      "Dict(String, List(Int)) Fn(Int) :> String } type Next", diag), diag);
+    auto result = parse_type_declaration()(state);
+    REQUIRE(result);
+    REQUIRE(result->sub_types);
+    REQUIRE(result->sub_types->size() == 5);
+    CHECK_FALSE(result->alias_target);
+    const auto& members = *result->sub_types;
+    CHECK(std::get<TypeConstructor>(members[0].parsed_type->value).name() == "Integer");
+    CHECK(std::get<TypeConstructor>(members[1].parsed_type->value).name() == "String");
+    const auto& custom = std::get<TypeConstructor>(members[2].parsed_type->value);
+    CHECK(custom.name() == "Custom");
+    REQUIRE(custom.get_args().size() == 2);
+    CHECK(std::get<TypeConstructor>(custom.get_args()[0]->value).name() == "value");
+    CHECK(std::get<TypeConstructor>(members[3].parsed_type->value).name() == "Dict");
+    CHECK(std::holds_alternative<FunctionType>(members[4].parsed_type->value));
+    REQUIRE(state.type_collections.size() == 1);
+    const auto& nominal = std::get<TypeConstructor>(state.type_collections[0]->value);
+    CHECK(nominal.name() == "Data");
+    CHECK(nominal.get_args().empty());
+    auto next = parse_type_declaration()(state);
+    REQUIRE(next);
+    CHECK(next->type_identifier.token_value == "Next");
+    CHECK_FALSE(next->sub_types);
+    CHECK(diag.all().empty());
+  }
+
+  TEST_CASE("empty and commented bodies parse without phantom members") {
+    for (const auto* source : {"type Empty {}", "type Data { Cmt note\n Item Cmt { explanation } Other }"}) {
+      DiagnosticEngine diag;
+      auto state = make_state(lex_all(source, diag), diag);
+      auto result = parse_type_declaration()(state);
+      REQUIRE(result);
+      REQUIRE(result->sub_types);
+      CHECK(result->sub_types->size() == (std::string(source).find("Empty") != std::string::npos ? 0 : 2));
+      CHECK(diag.all().empty());
+      CHECK(state.peek()->token_type == TokenType::EoF);
+    }
+  }
+
+  TEST_CASE("bad subtype bodies rewind and never register a partial definition") {
+    for (const auto* source : {"type Data { List(Int String) }", "type Data { Item", "type Data { 1 }",
+                               "type Data { Fn(Int) :> }", "type Data { Item type Next"}) {
+      CAPTURE(std::string(source));
+      DiagnosticEngine diag;
+      ParserState state(diag);
+      state.set_state(lex_no_eof(source));
+      CHECK_FALSE(parse_type_declaration()(state));
+      CHECK(state.pos == 0);
+      CHECK(state.type_collections.empty());
+      REQUIRE(diag.all().size() == 1);
+    }
+  }
+
+  TEST_CASE("a missing brace recovers at the next declaration") {
+    DiagnosticEngine diag;
+    auto parent = parse_source("type Bad { Item type Good { Value }", diag);
+    REQUIRE(parent);
+    REQUIRE(parent->children.size() == 1);
+    auto* good = as<NDTypeDecl>(parent->children[0]);
+    REQUIRE(good);
+    CHECK(good->type_identifier.token_value == "Good");
+    REQUIRE(good->sub_types);
+    CHECK(good->sub_types->size() == 1);
+    REQUIRE(diag.all().size() == 1);
+    CHECK(diag.all()[0].message == "Expected '}' to close the type declaration");
   }
 }

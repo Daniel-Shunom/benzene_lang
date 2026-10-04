@@ -9,6 +9,7 @@ struct ArgRun    {};
 struct ArgCheck  {
   std::string path;
   bool show_ast = false;
+  bool show_types = false;
 };
 struct ArgHelp   {};
 

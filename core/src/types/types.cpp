@@ -4,70 +4,92 @@
 #include <variant>
 #include <vector>
 
-size_t TypeVar::get_id() const {
+auto type_ptr_equal(const TypePtr& lhs, const TypePtr& rhs) noexcept -> bool {
+  if (lhs == rhs) {
+    return true;
+  }
+  if (!lhs || !rhs) {
+    return false;
+  }
+  return *lhs == *rhs;
+}
+
+auto TypeVar::get_id() const noexcept -> size_t {
   return id;
 }
 
-const bool Type::isBaseType() const {
+auto Type::isBaseType() const noexcept -> bool {
   return std::holds_alternative<BaseType>(value);
 }
 
-const bool Type::isTypeVar() const {
+auto Type::isTypeVar() const noexcept -> bool {
   return std::holds_alternative<TypeVar>(value);
 }
 
-const bool Type::isPmtType() const {
+auto Type::isPmtType() const noexcept -> bool {
   return std::holds_alternative<PmtType>(value);
 }
 
-const bool Type::isTypeConstructor() const {
+auto Type::isTypeConstructor() const noexcept -> bool {
   return std::holds_alternative<TypeConstructor>(value);
 }
 
-const std::string& TypeConstructor::name() const {
+auto Type::isFunctionType() const noexcept -> bool {
+  return std::holds_alternative<FunctionType>(value);
+}
+
+auto TypeConstructor::name() const noexcept -> const std::string& {
   return type;
 }
 
-const std::vector<TypePtr>& TypeConstructor::get_args() const {
+auto TypeConstructor::get_args() const noexcept -> const std::vector<TypePtr>& {
   return args;
 }
 
-TypePtr makeFunc(TypePtr from, TypePtr to) {
-  return std::make_shared<Type>(TypeConstructor("Fn", {from, to}));
+auto makeTypeConstructor(std::string name, const std::vector<TypePtr>& types) noexcept -> TypePtr {
+  return std::make_shared<Type>(TypeConstructor{name, std::move(types)});
 }
 
-TypePtr makeList(TypePtr type) {
+auto makeFunc(std::vector<TypePtr> from, TypePtr into) noexcept -> TypePtr {
+  return std::make_shared<Type>(FunctionType(std::move(from), std::move(into)));
+}
+
+auto makeFunc(TypePtr from, TypePtr into) noexcept -> TypePtr {
+  return makeFunc(std::vector<TypePtr>{std::move(from)}, std::move(into));
+}
+
+auto makeList(TypePtr type) noexcept -> TypePtr {
   return std::make_shared<Type>(TypeConstructor("List", {type}));
 }
 
-TypePtr makeTuple(std::vector<TypePtr> args) {
+auto makeTuple(std::vector<TypePtr> args)  noexcept -> TypePtr {
   return std::make_shared<Type>(TypeConstructor("Tuple", args));
 }
 
-TypePtr makeSet(TypePtr type) {
+auto makeSet(TypePtr type) noexcept -> TypePtr {
   return std::make_shared<Type>(TypeConstructor("Set", {type}));
 }
 
-TypePtr makeDict(TypePtr key, TypePtr value) {
+auto makeDict(TypePtr key, TypePtr value) noexcept -> TypePtr {
   return std::make_shared<Type>(TypeConstructor("Dict", {key, value}));
 }
 
-const TypePtr makeInt() {
+auto makeInt() noexcept -> TypePtr {
   return std::make_shared<Type>(BaseType::Int);
 }
 
-const TypePtr makeFloat() {
+auto makeFloat() noexcept -> TypePtr {
   return std::make_shared<Type>(BaseType::Float);
 }
 
-const TypePtr makeString() {
+auto makeString() noexcept -> TypePtr {
   return std::make_shared<Type>(BaseType::String);
 }
 
-const TypePtr makeBool() {
+auto makeBool() noexcept -> TypePtr {
   return std::make_shared<Type>(BaseType::Bool);
 }
 
-const TypePtr makeNil() {
+auto makeNil() noexcept -> TypePtr {
   return std::make_shared<Type>(BaseType::Nil);
 }

@@ -8,8 +8,10 @@
 
 class TypeChecker: public Visitor {
 public:
-  TypeChecker();
+  explicit TypeChecker(bool print_types = false);
   void dispatch_to_modules(Node&);
+  void set_print_types(bool enabled) noexcept { print_types = enabled; }
+  [[nodiscard]] auto prints_types() const noexcept -> bool { return print_types; }
 
   void visit(NDLiteral& expr)          override;
   void visit(NDImportDirective& expr)  override;
@@ -18,6 +20,8 @@ public:
   void visit(NDConstExpr& expr)        override;
   void visit(NDCallExpr& expr)         override;
   void visit(NDCallChain& expr)        override;
+  void visit(NDTypeDecl& expr)         override;
+  void visit(NDTypeExpr& expr) override;
   void visit(NDFuncDeclExpr& expr)     override;
   void visit(NDCaseExpr& expr)         override;
   void visit(NDBinaryExpr& expr)       override;
@@ -31,5 +35,5 @@ public:
   TypeVarFactory varFactory;
 private:
   std::vector<std::unique_ptr<TCModule>> modules;
+  bool print_types = false;
 };
-

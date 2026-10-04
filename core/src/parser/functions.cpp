@@ -1,3 +1,4 @@
+#include "ether/parser/types.hpp"
 #include <ether/parser/parsers.hpp>
 
 using std::nullopt;
@@ -60,11 +61,13 @@ auto parse_lambda_expression() -> Parser<NDLambdaExpr> {
       return std::nullopt;
     }
 
-    std::optional<Token> func_rtn_type;
+
+
+    std::optional<NDTypeExpr> func_rtn_type;
     if (auto rtnop = match(TokenType::RtnTypeOp)(state)) {
-      func_rtn_type = expect(
+      func_rtn_type = expect_wp(
         state,
-        TokenType::Identifier,
+        parse_type_expression(),
         ParseErrorType::InvalidFuncDeclExpr,
         "Function is missing the indicated return type"
       );
@@ -148,11 +151,11 @@ auto parse_function_declaration() -> Parser<NDFuncDeclExpr> {
       return std::nullopt;
     }
 
-    std::optional<Token> func_rtn_type;
+    std::optional<NDTypeExpr> func_rtn_type;
     if (auto rtnop = match(TokenType::RtnTypeOp)(state)) {
-      func_rtn_type = expect(
+      func_rtn_type = expect_wp(
         state,
-        TokenType::Identifier,
+        parse_type_expression(),
         ParseErrorType::InvalidFuncDeclExpr,
         "Function is missing the indicated return type"
       );

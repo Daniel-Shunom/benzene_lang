@@ -21,16 +21,21 @@ int HandleCheck(const ArgCheck& a) {
   Module mod(a.path, std::move(source));
   mod.generate_ast();
 
-  TreePrinter printer;
+  TreePrinter printer(std::cout, a.show_types);
   ScopeRes scope_resolver(mod.get_symbol_storage(), mod.get_diag_engine());
   SymbolResolver resolver(mod.get_symbol_storage(), mod.get_diag_engine());
-  TypeChecker type_checker;
+  TypeChecker type_checker(a.show_types);
 
-  if (a.show_ast) mod.attach_visitor(printer);
   // mod.attach_visitor(resolver);
   mod.attach_visitor(scope_resolver);
   mod.attach_visitor(type_checker);
   mod.apply_visitors();
+
+  // Print after type checking so inferred types are visible on AST nodes.
+  if (a.show_ast || a.show_types) {
+    mod.attach_visitor(printer);
+    mod.apply_visitors();
+  }
 
   mod.set_exports(resolver.take_exports());
   mod.print_errors();

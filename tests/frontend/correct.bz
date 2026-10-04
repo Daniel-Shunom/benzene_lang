@@ -1,14 +1,25 @@
 Load io
 
-func data()
+func data(apply: Fn(data) :> Int, transform: Fn(Int) :> a)
+  let garri = 3
+  let fufu = "stringy"
+  let foo: Int = 2
+  let dict: Dict(a, b, c) = new_dict()
+  case 2, "three", foo, 2 > 3 :
+    "cats" :> cars
+    "dogs" :> loaves
+  end
+  apply(foo)
 end
 
+
+type FooBar = Fn(List(Fn(Tuple(List(Int),Int)) :> String)) :> String
 
 type Data {
   Integer
   String
-  Custom(value: Int, desc: String")
+  Custom(value: Fn(Int, Int, String) :> String, desc: String)
 }
 
-type Foo;
+type Foo
 

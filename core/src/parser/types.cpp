@@ -302,9 +302,7 @@ auto h_parse_type_expr_lambda() -> Parser<TypePtr> {
     }
 
     checkpoint.commit();
-    signature.push_back(std::move(ret_type_expr->parsed_type));
-    auto func = makeTypeConstructor("Fn", signature);
-    return func;
+    return makeFunc(std::move(signature), std::move(ret_type_expr->parsed_type));
   };
 
   return parser;
