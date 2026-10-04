@@ -1,12 +1,12 @@
 #pragma once
-#include <ether/parser/parser_err.hpp>
-#include <optional>
 #include <cstdio>
-#include <functional>
-#include <string>
-#include <ether/nodes/node_expr.hpp>
-#include <ether/tokens/token_types.hpp>
 #include <ether/diagnostics/diagnostic_eng.hpp>
+#include <ether/nodes/node_expr.hpp>
+#include <ether/parser/parser_err.hpp>
+#include <ether/tokens/token_types.hpp>
+#include <functional>
+#include <optional>
+#include <string>
 
 enum class ScopeStackType {
   Function,
@@ -15,8 +15,7 @@ enum class ScopeStackType {
 };
 
 struct ParserState {
-  ParserState(DiagnosticEngine& eng)
-  : diag_eng(eng) {};
+  ParserState(DiagnosticEngine &eng) : diag_eng(eng) {};
 
   std::vector<Token> tokens;
 
@@ -26,9 +25,7 @@ struct ParserState {
 
   bool logs_on = false;
 
-  void activate_logs() {
-    this->logs_on = true;
-  }
+  void activate_logs() { this->logs_on = true; }
 
   void reset_pos(size_t old) {
     if (old < tokens.size()) {
@@ -36,13 +33,9 @@ struct ParserState {
     }
   }
 
-  [[nodiscard]] auto is_at_end() const -> bool {
-    return pos >= tokens.size();
-  }
+  [[nodiscard]] auto is_at_end() const -> bool { return pos >= tokens.size(); }
 
-  void set_state(std::vector<Token> tokens) {
-    this->tokens = tokens;
-  }
+  void set_state(std::vector<Token> tokens) { this->tokens = tokens; }
 
   auto peek() -> std::optional<Token> {
     if (is_at_end()) {
@@ -52,9 +45,8 @@ struct ParserState {
   }
 
   static auto is_comment(TokenType type) -> bool {
-    return type == TokenType::MLComment
-      || type == TokenType::SLComment
-      || type == TokenType::UTComment;
+    return type == TokenType::MLComment || type == TokenType::SLComment ||
+           type == TokenType::UTComment;
   }
 
   auto advance() -> Token {
@@ -65,8 +57,8 @@ struct ParserState {
   }
 
   void skip_until(TokenType type) {
-    while(!is_at_end()) {
-      if(auto tok = peek(); tok->token_type == type) {
+    while (!is_at_end()) {
+      if (auto tok = peek(); tok->token_type == type) {
         return;
       }
       this->advance();
@@ -74,23 +66,19 @@ struct ParserState {
   }
 
   std::vector<ScopeStackType> stack;
-  DiagnosticEngine& diag_eng;
+  std::vector<TypePtr> type_collections;
+  DiagnosticEngine &diag_eng;
 };
 
-template<typename T>
-using PResult = std::optional<T>;
+template <typename T> using PResult = std::optional<T>;
 
-template<typename T>
-using Parser = std::function<PResult<T>(ParserState&)>;
+template <typename T> using Parser = std::function<PResult<T>(ParserState &)>;
 
-
-template<typename A, typename F>
-auto map(Parser<A> parser, F func)
-  -> Parser<std::invoke_result_t<F, A>>
-{
+template <typename A, typename F>
+auto map(Parser<A> parser, F func) -> Parser<std::invoke_result_t<F, A>> {
   using B = std::invoke_result_t<F, A>;
 
-  return [=](ParserState& state) -> PResult<B> {
+  return [=](ParserState &state) -> PResult<B> {
     size_t start = state.pos;
 
     auto ret = parser(state);
@@ -103,14 +91,13 @@ auto map(Parser<A> parser, F func)
   };
 }
 
-
-template<typename T>
+template <typename T>
 auto seq(std::vector<Parser<T>> parsers) -> Parser<std::vector<T>> {
-  return [=](ParserState& state) -> PResult<std::vector<T>> {
+  return [=](ParserState &state) -> PResult<std::vector<T>> {
     size_t start = state.pos;
     std::vector<T> out;
 
-    for (auto& parser : parsers) {
+    for (auto &parser : parsers) {
       auto ret = parser(state);
       if (!ret) {
         state.pos = start;
@@ -123,14 +110,13 @@ auto seq(std::vector<Parser<T>> parsers) -> Parser<std::vector<T>> {
   };
 }
 
-template<typename T>
-auto choice(std::vector<Parser<T>> parsers) -> Parser<T> {
-  return [=](ParserState& state) -> PResult<T> {
+template <typename T> auto choice(std::vector<Parser<T>> parsers) -> Parser<T> {
+  return [=](ParserState &state) -> PResult<T> {
     size_t start = state.pos;
 
-    for (auto& parser: parsers) {
+    for (auto &parser : parsers) {
       auto ret = parser(state);
-      if(ret) {
+      if (ret) {
         return ret;
       }
       state.reset_pos(start);
@@ -140,9 +126,9 @@ auto choice(std::vector<Parser<T>> parsers) -> Parser<T> {
   };
 }
 
-template<typename A, typename B>
+template <typename A, typename B>
 auto bind(Parser<A> parser, std::function<Parser<B>(A)> func) -> Parser<B> {
-  return [=](ParserState& state) -> PResult<B> {
+  return [=](ParserState &state) -> PResult<B> {
     size_t start = state.pos;
 
     auto ret = parser(state);
@@ -161,49 +147,44 @@ auto bind(Parser<A> parser, std::function<Parser<B>(A)> func) -> Parser<B> {
   };
 }
 
-template<typename T>
-auto run(Parser<T> parser, ParserState& state) -> PResult<T> {
+template <typename T>
+auto run(Parser<T> parser, ParserState &state) -> PResult<T> {
   return parser(state);
 }
 
 // Defers resolving `factory` until first invocation. Use at recursion points
 // where memoized parsers reference each other to avoid static-init cycles.
-template<typename T>
-auto lazy(Parser<T> (*factory)()) -> Parser<T> {
-  return [factory](ParserState& state) -> PResult<T> {
+template <typename T> auto lazy(Parser<T> (*factory)()) -> Parser<T> {
+  return [factory](ParserState &state) -> PResult<T> {
     static const Parser<T> cached = factory();
     return cached(state);
   };
 }
 
 struct ParseCheckpoint {
-  ParserState& state;
+  ParserState &state;
   size_t start;
   bool committed = false;
 
-  ParseCheckpoint(ParserState& stt)
-    : state(stt), start(stt.pos) {}
+  ParseCheckpoint(ParserState &stt) : state(stt), start(stt.pos) {}
 
-  void commit() {
-    committed = true;
-  }
+  void commit() { committed = true; }
 
   ~ParseCheckpoint() {
     if (!committed) {
       state.reset_pos(start);
     }
   }
-
 };
 
 struct ScopeStackGuard {
-  ParserState& state;
+  ParserState &state;
   size_t start;
 
   ScopeStackType type;
 
-  ScopeStackGuard(ParserState& state, ScopeStackType type)
-  : state(state), start(state.pos), type(type) {
+  ScopeStackGuard(ParserState &state, ScopeStackType type)
+      : state(state), start(state.pos), type(type) {
     state.stack.push_back(type);
   }
 
@@ -220,9 +201,8 @@ struct ScopeStackGuard {
   }
 };
 
-
-template<typename T>
-auto optional(Parser<T> parser, ParserState& state) -> std::optional<T> {
+template <typename T>
+auto optional(Parser<T> parser, ParserState &state) -> std::optional<T> {
   ParseCheckpoint checkpoint(state);
   if (auto ret = parser(state)) {
     checkpoint.commit();
@@ -231,12 +211,8 @@ auto optional(Parser<T> parser, ParserState& state) -> std::optional<T> {
   return std::nullopt;
 }
 
-auto inline expect(
-  ParserState& state,
-  TokenType type,
-  ParseErrorType err_type,
-  const std::string& message
-) -> std::optional<Token> {
+auto inline expect(ParserState &state, TokenType type, ParseErrorType err_type,
+                   const std::string &message) -> std::optional<Token> {
   auto tok = state.peek();
   if (!tok) {
     return std::nullopt;
@@ -244,7 +220,7 @@ auto inline expect(
 
   if (tok->token_type == type) {
     state.advance();
-      return tok;
+    return tok;
   }
 
   auto diag = Diagnostic();
@@ -258,13 +234,10 @@ auto inline expect(
   return std::nullopt;
 }
 
-template<typename T>
-auto inline expect_wp(
-  ParserState& state,
-  Parser<T> parser,
-  ParseErrorType err_type,
-  const std::string& message
-) -> PResult<T> {
+template <typename T>
+auto inline expect_wp(ParserState &state, Parser<T> parser,
+                      ParseErrorType err_type, const std::string &message)
+    -> PResult<T> {
   auto res = parser(state);
   if (!res) {
     if (!state.peek()) {
