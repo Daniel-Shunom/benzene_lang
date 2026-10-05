@@ -1,13 +1,18 @@
 # ether-lsp — a language server for Benzene
 
 > [!WARNING]
-> **Highly experimental, and mostly AI-generated.**
+> **Highly experimental, and largely AI-assisted.**
 >
-> This whole directory (plus the `ether scan` subcommand that backs it) was
-> written by Claude across two automated sessions and has not been reviewed line
-> by line. It is tested — see [Status](#status) for exactly what is verified and
-> how — but treat it as a starting point to read and rewrite, not as trusted
-> code. Expect rough edges outside the paths the tests cover.
+> This directory, the `ether scan` subcommand, and the `lsp_index` pass in
+> `core/` were written by Claude across several automated sessions. So were two
+> changes to the compiler proper, made while chasing problems that surfaced
+> here: the parser's rejection of assignment without a binder, and the source
+> locations now carried on type constraints.
+>
+> None of it has been reviewed line by line. It is tested — see
+> [Status](#status) for what is covered and how — but treat it as a starting
+> point to read and rewrite, not as trusted code, and expect rough edges
+> outside the paths the tests exercise.
 
 A language server for Benzene, written in Gleam. Live type checking, completion,
 hover types, go-to-definition, references, rename, inlay hints, signature help,
