@@ -424,6 +424,20 @@ pub fn completion_offers_each_label_once_test() {
   occurrences |> should.equal(2)
 }
 
+pub fn completion_does_not_offer_module_paths_test() {
+  // `Load benzene.list` declares a name, but never one that can stand where an
+  // expression goes.
+  let imported =
+    analysis([], [
+      Entry(..entry("benzene.list", 1, 6, 12), kind: "Module", inferred: ""),
+      Entry(..entry("value", 3, 7, 5), kind: "Binding"),
+    ])
+
+  let rendered = json.to_string(feature.completion(imported, "  ", 3, 2))
+  string.contains(rendered, "\"value\"") |> should.be_true
+  string.contains(rendered, "benzene.list") |> should.be_false
+}
+
 pub fn completion_hides_locals_from_other_functions_test() {
   let two_functions =
     analysis([], [

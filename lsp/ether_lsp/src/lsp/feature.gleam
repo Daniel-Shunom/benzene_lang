@@ -223,6 +223,9 @@ fn value_completions(analysis: Scan, line: Int) -> List(json.Json) {
   let visible =
     analysis.index
     |> list.filter(fn(entry) { entry.is_definition })
+    // A module path is a name, not a value: `Load benzene.list` can never be
+    // written where an expression goes.
+    |> list.filter(fn(entry) { entry.kind != "Module" })
     |> list.filter(fn(entry) { in_scope(entry, scope) })
     |> list.map(fn(entry) {
       let detail = case entry.detail {

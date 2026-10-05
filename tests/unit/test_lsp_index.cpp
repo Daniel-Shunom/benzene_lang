@@ -45,7 +45,7 @@ Indexed index_source(const std::string& source) {
   result.module->apply_visitors();
   result.checker->unify_constraints();
 
-  LspIndexer indexer(&result.checker->substitutions());
+  LspIndexer indexer(&result.checker->substitutions(), result.checker.get());
   result.module->apply_visitor(indexer);
   result.entries = indexer.entries();
   return result;
@@ -189,6 +189,83 @@ TEST_SUITE("lsp index / types") {
     auto bare_param = declaration(indexed.entries, "y");
     REQUIRE(bare_param.has_value());
     CHECK_FALSE(bare_param->annotated);
+  }
+}
+
+TEST_SUITE("lsp index / what the checker knows") {
+  TEST_CASE("a constructor resolves to the type it builds") {
+    // The node is left open by unification; the checker records constructors
+    // in a table instead, and the editor should say `Box` rather than a bare
+    // type variable.
+    auto indexed = index_source(
+      "type Box {\n"
+      "  Wrap(value: Int)\n"
+      "}\n"
+      "\n"
+      "func make() :> Box\n"
+      "  Wrap(1)\n"
+      "end\n");
+
+    const auto& entries = indexed.entries;
+    auto use = std::find_if(entries.begin(), entries.end(),
+      [](const IndexEntry& entry) { return entry.name == "Wrap"; });
+    REQUIRE(use != entries.end());
+    CHECK(use->type == "Box");
+  }
+
+  TEST_CASE("an alias declaration reports its target") {
+    auto indexed = index_source("type Count = Int\n");
+    auto entry = declaration(indexed.entries, "Count");
+    REQUIRE(entry.has_value());
+    CHECK(entry->type == "Int");
+  }
+
+  TEST_CASE("an import is a module, not an unresolved name") {
+    // Nothing declares a symbol for an import, but calling it unresolved tells
+    // the editor the compiler failed at something it never attempted.
+    auto indexed = index_source("Load benzene.list\n");
+    auto entry = declaration(indexed.entries, "benzene.list");
+    REQUIRE(entry.has_value());
+    CHECK(entry->kind == "Module");
+  }
+
+  TEST_CASE("an import carries no type") {
+    // The checker deliberately does not type imports, and nothing should
+    // invent one by matching the path against a table.
+    auto indexed = index_source("Load benzene.list\n");
+    auto entry = declaration(indexed.entries, "benzene.list");
+    REQUIRE(entry.has_value());
+    CHECK(entry->type.empty());
+  }
+
+  TEST_CASE("a literal carries its type but is not a declaration") {
+    // Marking one a declaration would put an inlay hint after every number in
+    // the file and list each one in the outline.
+    auto indexed = index_source(
+      "func f()\n"
+      "  42\n"
+      "end\n");
+
+    const auto& entries = indexed.entries;
+    auto literal = std::find_if(entries.begin(), entries.end(),
+      [](const IndexEntry& entry) { return entry.kind == "Literal"; });
+    REQUIRE(literal != entries.end());
+    CHECK(literal->type == "Int");
+    CHECK_FALSE(literal->is_definition);
+  }
+
+  TEST_CASE("a string literal spans its quotes") {
+    auto indexed = index_source(
+      "func f()\n"
+      "  \"hi\"\n"
+      "end\n");
+
+    const auto& entries = indexed.entries;
+    auto literal = std::find_if(entries.begin(), entries.end(),
+      [](const IndexEntry& entry) { return entry.kind == "Literal"; });
+    REQUIRE(literal != entries.end());
+    // `hi` plus the two quotes the lexer did not keep.
+    CHECK(literal->length == 4);
   }
 }
 

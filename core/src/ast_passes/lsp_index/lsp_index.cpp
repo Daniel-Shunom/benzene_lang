@@ -1,5 +1,7 @@
 #include <ether/ast_passes/lsp_index/lsp_index.hpp>
 
+#include <ether/ast_passes/type_check/type_check.hpp>
+
 #include <ether/symbols/symbol_types.hpp>
 #include <ether/types/type_printer.hpp>
 
@@ -66,6 +68,49 @@ auto LspIndexer::function_return(const TypePtr& type) const -> TypePtr {
     if (constructor->name() == "Fn" && !constructor->get_args().empty()) {
       return constructor->get_args().back();
     }
+  }
+
+  return nullptr;
+}
+
+auto LspIndexer::span_length(const Token& token) -> size_t {
+  // The lexer stores a string literal's contents without its quotes, but the
+  // editor highlights and selects the quotes too.
+  switch (token.token_type) {
+    case TokenType::StringLiteral:   return token.token_value.size() + 2;
+    case TokenType::UTStringLiteral: return token.token_value.size() + 1;
+    default:                         return token.token_value.size();
+  }
+}
+
+auto LspIndexer::known_type(const SymbolAttr* symbol,
+                            const std::string& name) const -> TypePtr {
+  if (!checker) {
+    return nullptr;
+  }
+
+  // What the symbol was bound to. This is the answer for an occurrence whose
+  // own node was left open by unification.
+  if (symbol) {
+    const auto& bindings = checker->types().all_bindings();
+    // The map is keyed by non-const pointer; the lookup does not mutate it.
+    auto found = bindings.find(const_cast<SymbolAttr*>(symbol));
+    if (found != bindings.end() && is_solved(found->second.type)) {
+      return found->second.type;
+    }
+  }
+
+  // A constructor builds its declared type, which is the useful thing to say
+  // about `Wrap` in `Wrap(1)`.
+  if (auto parent = checker->constructor_parent(name)) {
+    return parent;
+  }
+
+  // An alias stands for its target. Reported as the target so that hovering
+  // `Count` says `Int`, while anything *annotated* `Count` keeps saying
+  // `Count` -- that is what the user wrote, and what the checker carries.
+  if (auto target = checker->type_aliases().lookup(name)) {
+    return target;
   }
 
   return nullptr;
@@ -158,8 +203,20 @@ void LspIndexer::record(const Token& token, const SymbolAttr* symbol,
   entry.name      = token.token_value;
   entry.line      = token.line_number;
   entry.column    = token.column_number;
-  entry.length    = token.token_value.size();
+  entry.length    = span_length(token);
   entry.type      = render(type);
+
+  // The node's own type is the first answer, but unification can leave an
+  // occurrence open even where the checker knows the symbol perfectly well.
+  //
+  // A module is the exception: an import names a module, not a value. The
+  // checker deliberately does not type one, and nothing here should invent a
+  // type by looking the path up in a table it has no business matching.
+  if (entry.kind != "Module" && !is_solved(type)) {
+    if (auto better = known_type(symbol, entry.name)) {
+      entry.type = render(better);
+    }
+  }
   entry.annotated = annotated;
   entry.detail    = std::move(detail);
   entry.returns   = std::move(returns);
@@ -205,10 +262,18 @@ void LspIndexer::visit(NDIdentifier& expr) {
   }
 }
 
-void LspIndexer::visit(NDLiteral&) {}
+void LspIndexer::visit(NDLiteral& expr) {
+  // Recorded as an occurrence, never a declaration. A literal has a type worth
+  // showing on hover, but marking it a definition would put an inlay hint after
+  // every number in the file and list each one in the outline.
+  record(expr.literal, nullptr, expr.inferred_type, false, false, {}, "Literal");
+}
 
 void LspIndexer::visit(NDImportDirective& expr) {
-  record(expr.import_directive, nullptr, expr.inferred_type);
+  // No symbol is created for an import -- the resolver only scope-checks it --
+  // but the token is unambiguously a module path, and saying "unresolved" would
+  // tell the editor the compiler failed at something it never attempted.
+  record(expr.import_directive, nullptr, nullptr, true, false, {}, "Module");
 }
 
 void LspIndexer::visit(NDTypeExpr&) {}

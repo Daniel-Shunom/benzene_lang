@@ -158,7 +158,7 @@ int HandleScan(const ArgScan& a) {
 
   // Indexed after unification so every rendered type is solved rather than a
   // bare type variable.
-  LspIndexer indexer(&type_checker.substitutions());
+  LspIndexer indexer(&type_checker.substitutions(), &type_checker);
   mod.apply_visitor(indexer);
 
   std::ostream& out = std::cout;

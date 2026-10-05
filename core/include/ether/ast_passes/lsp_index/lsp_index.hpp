@@ -51,18 +51,27 @@ struct IndexEntry {
   size_t scope_column = 0;
 };
 
+class TypeChecker;
+
 // Walks the typed AST and collects every identifier occurrence and declaration
 // name. Run this *after* the type checker has unified, and hand it the
 // resulting substitution map so rendered types are solved rather than raw type
 // variables.
+//
+// Pass the checker itself as well. A node's `inferred_type` is not always the
+// whole story: unification can leave an occurrence open even though the checker
+// knows exactly what the symbol is, and constructors and aliases are recorded
+// in tables rather than on the nodes. Consulting it is what keeps the editor
+// agreeing with the compiler instead of reporting less than it knows.
 //
 // This is what the language server is built on: `ether scan` serialises the
 // result, and the editor answers hover, go-to-definition, rename, completion
 // and inlay hints out of it without re-deriving anything.
 class LspIndexer final : public Visitor {
 public:
-  explicit LspIndexer(const Subst* substitutions = nullptr)
-    : substitutions(substitutions) {}
+  explicit LspIndexer(const Subst* substitutions = nullptr,
+                      const TypeChecker* checker = nullptr)
+    : substitutions(substitutions), checker(checker) {}
 
   [[nodiscard]] auto entries() const -> const std::vector<IndexEntry>& {
     return collected;
@@ -89,6 +98,7 @@ public:
 
 private:
   const Subst* substitutions;
+  const TypeChecker* checker;
   std::vector<IndexEntry> collected;
 
   // Name tokens of the functions currently being walked, innermost last.
@@ -106,8 +116,18 @@ private:
   // return. Null when the type is not a function.
   [[nodiscard]] auto function_return(const TypePtr&) const -> TypePtr;
 
+  // How many characters a token covers in the source, which is not always the
+  // length of the text the lexer kept for it.
+  [[nodiscard]] static auto span_length(const Token&) -> size_t;
+
   // Whether a type is anything more definite than an unsolved variable.
   [[nodiscard]] auto is_solved(const TypePtr&) const -> bool;
+
+  // What the checker knows about this name, for when the node does not say.
+  // Consults the type environment, then the constructor table, then the alias
+  // table. Null when none of them have anything better.
+  [[nodiscard]] auto known_type(const SymbolAttr*, const std::string& name) const
+      -> TypePtr;
 
   // The best answer available for what a function returns.
   [[nodiscard]] auto effective_return(const NDFuncDeclExpr&) const -> TypePtr;
