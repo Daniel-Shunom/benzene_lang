@@ -1,0 +1,10 @@
+-std=c++26
+-Wall
+-Wextra
+-Wpedantic
+-g3
+-O0
+-fno-omit-frame-pointer
+-Icore/include
+-Imcp/include
+-Icli/src
