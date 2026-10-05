@@ -9,10 +9,17 @@ if exists("b:current_syntax")
   finish
 endif
 
-" `Cmt` runs to end of line, or wraps a brace-delimited block. Defined first so
-" keywords inside a comment do not match.
-syn region  benzeneComment start="\<Cmt\>\s*{" end="}" contains=@Spell
-syn match   benzeneComment "\<Cmt\>.*$" contains=@Spell
+" `Cmt` either wraps a brace-delimited block or runs to end of line.
+"
+" The two forms have to be kept apart. A plain `.*$` match would also match
+" `Cmt {`, and since it starts at the same column it would win -- leaving the
+" body and the closing brace outside the comment entirely.
+"
+" A backtick escapes the next character, so ``}` does not close the block.
+" `skip=` has to consume both characters or the brace would still end it.
+syn region  benzeneComment start="\<Cmt\>\s*{" skip=+`.+ end="}" contains=@Spell
+syn match   benzeneComment "\<Cmt\>\s*$" contains=@Spell
+syn match   benzeneComment "\<Cmt\>\s*[^{[:space:]].*$" contains=@Spell
 
 syn keyword benzeneKeyword   func end case default let const type
 syn keyword benzeneInclude   Load

@@ -29,6 +29,7 @@ fn entry(name: String, line: Int, column: Int, length: Int) -> Entry {
     length: length,
     inferred: "Int",
     detail: "",
+    returns: "",
     def_line: line,
     def_column: column,
     scope_line: 0,
@@ -58,6 +59,7 @@ fn program() -> Scan {
       length: 8,
       inferred: "Fn(Int) :> Int",
       detail: "identity(x: Int) :> Int",
+      returns: "Int",
       def_line: 1,
       def_column: 6,
       scope_line: 0,
@@ -472,7 +474,12 @@ pub fn a_function_return_hint_lands_after_the_parameter_list_test() {
         token(1, 8, 1, "RParen"),
       ],
       [
-        Entry(..entry("f", 1, 6, 1), kind: "Function", inferred: "Fn() :> Int"),
+        Entry(
+          ..entry("f", 1, 6, 1),
+          kind: "Function",
+          inferred: "Fn() :> Int",
+          returns: "Int",
+        ),
       ],
     )
 

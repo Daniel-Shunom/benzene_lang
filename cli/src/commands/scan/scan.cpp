@@ -207,6 +207,7 @@ int HandleScan(const ArgScan& a) {
         << ",\"length\":"     << entry.length
         << ",\"type\":"       << json::quote(entry.type)
         << ",\"detail\":"     << json::quote(entry.detail)
+        << ",\"returns\":"    << json::quote(entry.returns)
         << ",\"defLine\":"    << entry.def_line
         << ",\"defColumn\":"  << entry.def_column
         << ",\"scopeLine\":"  << entry.scope_line

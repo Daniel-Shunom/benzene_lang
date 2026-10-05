@@ -41,6 +41,10 @@ pub type Entry {
     inferred: String,
     /// Human-readable signature; functions only, empty elsewhere.
     detail: String,
+    /// A function's return type on its own. Supplied separately because
+    /// recovering it from the rendered `Fn(...) :> R` is ambiguous as soon as a
+    /// parameter or the return is itself a function.
+    returns: String,
     def_line: Int,
     def_column: Int,
     /// Name token of the enclosing function, or 0 at module scope.
@@ -147,6 +151,7 @@ fn entry_decoder() -> decode.Decoder(Entry) {
   use length <- decode.field("length", decode.int)
   use inferred <- decode.field("type", decode.string)
   use detail <- decode.field("detail", decode.string)
+  use returns <- decode.field("returns", decode.string)
   use def_line <- decode.field("defLine", decode.int)
   use def_column <- decode.field("defColumn", decode.int)
   use scope_line <- decode.field("scopeLine", decode.int)
@@ -161,6 +166,7 @@ fn entry_decoder() -> decode.Decoder(Entry) {
     length:,
     inferred:,
     detail:,
+    returns:,
     def_line:,
     def_column:,
     scope_line:,

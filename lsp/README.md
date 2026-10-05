@@ -159,12 +159,24 @@ Highlighting, diagnostics and inferred-type hints should all appear.
 | Document symbols      | nested: locals sit under the function that declares them           |
 | Folding               | `func`/`case`/`{}` paired from the token stream, not indentation   |
 | Semantic highlighting | identifiers coloured by what the compiler resolved them to         |
+| Closing blocks        | `func`, `case` and `Fn` get their `end` as you open them           |
 
 `refactor.rewrite` is the only code-action kind, so `vim.lsp.buf.code_action()`
 on an unannotated binding offers to write its type down.
 
 Completion works through whatever completion plugin you already use
 (`nvim-cmp`, `blink.cmp`, or Neovim's built-in `vim.lsp.completion`).
+
+Opening a block writes its `end`. Pressing Enter after `func f()`, `case x:` or
+a `Fn(...)` lambda adds the closing `end` at the opener's indent and leaves the
+cursor inside. It does nothing when the block is already closed, on a `Cmt`
+line, or on a `type` expression that merely mentions `Fn`. Turn it off with
+`vim.g.benzene_auto_end = false`.
+
+This one is in the plugin rather than the server: the line it has to judge is
+the one just typed, which is by definition newer than anything the compiler has
+seen. It also avoids mapping `<CR>`, since a buffer-local mapping would shadow
+the one a completion plugin uses to accept a completion.
 
 Highlighting is layered. `syntax/benzene.vim` colours the buffer the instant it
 opens, using ordinary pattern rules. Once the server attaches, its semantic
@@ -243,12 +255,14 @@ covers the half that only exists inside the editor.
 
 Verified by those tests:
 
-- 136 compiler tests, 70 Gleam unit tests
+- 145 compiler tests, 70 Gleam unit tests
 - every feature above, driven over the wire by a scripted LSP client, including
   that the annotate action is withheld where the inferred type has no spelling
   the grammar accepts
 - Neovim 0.11.1: attach, `utf-8` encoding negotiation, inlay hints on attach,
   foldexpr wiring, and each feature through `vim.lsp`
+- block closing driven by real keystrokes, and comment highlighting checked
+  against the actual syntax groups
 - diagnostics on open and on edit **without saving**
 - semantic tokens decoded back onto the source and checked span by span
 - debouncing, coalescing, request freshness during a burst, and idle silence
@@ -290,6 +304,32 @@ Not done, and worth knowing before relying on this:
   debounce and the background worker are what keep that affordable. The
   compiler also scales badly — roughly quadratically — so very large files lag
   noticeably even though the editor itself stays responsive.
+
+## Known compiler issues
+
+Found while testing this, and left alone because they are the front-end's to
+fix, not the editor's. The server reports what it is told.
+
+- **Type errors land on line 1.** `Unifier::report_failure` hardcodes
+  `location = {1, 1}` (`core/src/ast_passes/type_check/modules/unify.cpp`),
+  and `Constraint` carries no source location at all, so there is nothing
+  better to report. Giving `Constraint` a `SourceLocation`, filled in where
+  the constraint is generated, is what would put the squiggle on the offending
+  line.
+- **A scoped expression containing a `let` does not propagate its type.**
+
+  ```
+  func f()
+    { let b = 2
+      b }
+  end          -- infers Fn() :> 't1, should be Fn() :> Int
+  ```
+
+  `ether check -show-constraints` shows the block's constraint coming out as
+  `'t1 ~ 't1`: the trailing identifier carries the scope's own type variable
+  rather than the binding's. Without the `let` it is `'t0 ~ Int` and resolves.
+  Let generalisation itself is fine -- a `let`-bound function is correctly used
+  at two different types.
 
 ## Layout
 

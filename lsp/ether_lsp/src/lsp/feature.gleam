@@ -341,8 +341,8 @@ fn annotation(analysis: Scan, entry: Entry) -> Result(Annotation, Nil) {
           Ok(Annotation(
             token.line - 1,
             token.column - 1 + token.length,
-            " :> " <> return_of(entry.inferred),
-            return_of(entry.inferred),
+            " :> " <> entry.returns,
+            entry.returns,
           ))
         Error(_) -> Error(Nil)
       }
@@ -435,15 +435,6 @@ fn closing_paren(analysis: Scan, entry: Entry) -> Result(Token, Nil) {
     || { token.line == entry.line && token.column <= entry.column }
   })
   |> list.find(fn(token) { token.kind == "RParen" })
-}
-
-/// `Fn(Int) :> Int` -> `Int`. Splitting on the last arrow is what makes a
-/// higher-order parameter like `Fn(Fn(Int) :> Int) :> Bool` come out right.
-fn return_of(rendered: String) -> String {
-  case list.last(string.split(rendered, " :> ")) {
-    Ok(tail) -> tail
-    Error(_) -> rendered
-  }
 }
 
 // --- signature help ---------------------------------------------------------

@@ -40,6 +40,11 @@ struct IndexEntry {
   // for functions; the solved `type` is what everything else displays.
   std::string detail;
 
+  // A function's return type on its own. Kept apart from `type` so the editor
+  // never has to recover it by splitting the rendered `Fn(...) :> R`, which a
+  // higher-order parameter makes ambiguous.
+  std::string returns;
+
   // Name token of the function enclosing this entry, or zero at module scope.
   // Lets the editor nest an outline without reconstructing scopes itself.
   size_t scope_line   = 0;
@@ -101,16 +106,30 @@ private:
   // return. Null when the type is not a function.
   [[nodiscard]] auto function_return(const TypePtr&) const -> TypePtr;
 
+  // Whether a type is anything more definite than an unsolved variable.
+  [[nodiscard]] auto is_solved(const TypePtr&) const -> bool;
+
+  // The best answer available for what a function returns.
+  [[nodiscard]] auto effective_return(const NDFuncDeclExpr&) const -> TypePtr;
+
   // Renders `func(a: Int, b: Int) :> Int` from a declaration's own syntax,
   // falling back to the solved type for anything left unannotated.
   [[nodiscard]] auto signature(const Token& name,
                                const std::vector<NDFuncParam>& params,
-                               const std::optional<NDTypeExpr>& returns,
-                               const TypePtr& inferred) const -> std::string;
+                               const TypePtr& returns) const -> std::string;
+
+  // Renders `Alias = Int` or `Data { Integer, Custom(Int) }` from a type
+  // declaration's own syntax, so hovering one says what it actually declares.
+  [[nodiscard]] auto describe_type(const NDTypeDecl&) const -> std::string;
 
   // Records `token` as an occurrence. `symbol` may be null, in which case the
   // entry carries no definition site.
+  //
+  // `kind_override` names the kind for declarations the resolver binds but does
+  // not hand back: a type declaration gets a symbol, yet `NDTypeDecl` has no
+  // field to hold the pointer, so the node cannot say what it is.
   void record(const Token& token, const SymbolAttr* symbol, const TypePtr& type,
               bool force_definition = false, bool annotated = false,
-              std::string detail = {});
+              std::string detail = {}, std::string kind_override = {},
+              std::string returns = {});
 };

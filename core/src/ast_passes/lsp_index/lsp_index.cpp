@@ -71,10 +71,38 @@ auto LspIndexer::function_return(const TypePtr& type) const -> TypePtr {
   return nullptr;
 }
 
+auto LspIndexer::is_solved(const TypePtr& type) const -> bool {
+  TypePtr resolved = resolve(type);
+  return resolved && !std::holds_alternative<TypeVar>(resolved->value);
+}
+
+auto LspIndexer::effective_return(const NDFuncDeclExpr& decl) const -> TypePtr {
+  // What the user wrote always wins.
+  if (decl.return_type && decl.return_type->parsed_type) {
+    return decl.return_type->parsed_type;
+  }
+
+  if (auto solved = function_return(decl.inferred_type); is_solved(solved)) {
+    return solved;
+  }
+
+  // Unification left the return open. A function's value is its body's last
+  // expression, so that node is the better answer when it has one -- this
+  // reads a type off the tree rather than deriving one, and only ever fills a
+  // hole the checker left, so it cannot contradict it.
+  if (!decl.func_body.empty()) {
+    const auto& tail = decl.func_body.back();
+    if (tail && is_solved(tail->inferred_type)) {
+      return resolve(tail->inferred_type);
+    }
+  }
+
+  return function_return(decl.inferred_type);
+}
+
 auto LspIndexer::signature(const Token& name,
                            const std::vector<NDFuncParam>& params,
-                           const std::optional<NDTypeExpr>& returns,
-                           const TypePtr& inferred) const -> std::string {
+                           const TypePtr& returns) const -> std::string {
   std::string text = name.token_value + "(";
 
   for (size_t i = 0; i < params.size(); ++i) {
@@ -84,9 +112,10 @@ auto LspIndexer::signature(const Token& name,
     text += params[i].identifier.identifier.token_value;
 
     // Prefer what the user wrote; fall back to what was inferred for it.
-    const TypePtr& param_type = params[i].param_type && params[i].param_type->parsed_type
-      ? params[i].param_type->parsed_type
-      : params[i].inferred_type;
+    const TypePtr& param_type =
+      params[i].param_type && params[i].param_type->parsed_type
+        ? params[i].param_type->parsed_type
+        : params[i].inferred_type;
     if (auto rendered = render(param_type); !rendered.empty()) {
       text += ": " + rendered;
     }
@@ -94,20 +123,37 @@ auto LspIndexer::signature(const Token& name,
 
   text += ")";
 
-  // What the user wrote wins; otherwise show what was inferred for the return.
-  std::string result = returns && returns->parsed_type
-    ? render(returns->parsed_type)
-    : render(function_return(inferred));
-
-  if (!result.empty()) {
-    text += " :> " + result;
+  if (auto rendered = render(returns); !rendered.empty()) {
+    text += " :> " + rendered;
   }
+  return text;
+}
+
+auto LspIndexer::describe_type(const NDTypeDecl& decl) const -> std::string {
+  const std::string& name = decl.type_identifier.token_value;
+
+  if (decl.alias_target) {
+    return name + " = " + render(decl.alias_target->parsed_type);
+  }
+
+  if (!decl.sub_types) {
+    // `type Foo` with no body: a declaration and nothing more.
+    return name;
+  }
+
+  std::string text = name + " {";
+  for (size_t i = 0; i < decl.sub_types->size(); ++i) {
+    text += i ? ", " : " ";
+    text += render((*decl.sub_types)[i].parsed_type);
+  }
+  text += decl.sub_types->empty() ? "}" : " }";
   return text;
 }
 
 void LspIndexer::record(const Token& token, const SymbolAttr* symbol,
                         const TypePtr& type, bool force_definition,
-                        bool annotated, std::string detail) {
+                        bool annotated, std::string detail,
+                        std::string kind_override, std::string returns) {
   IndexEntry entry;
   entry.name      = token.token_value;
   entry.line      = token.line_number;
@@ -116,6 +162,7 @@ void LspIndexer::record(const Token& token, const SymbolAttr* symbol,
   entry.type      = render(type);
   entry.annotated = annotated;
   entry.detail    = std::move(detail);
+  entry.returns   = std::move(returns);
 
   if (!scopes.empty() && scopes.back() != &token) {
     entry.scope_line   = scopes.back()->line_number;
@@ -133,6 +180,10 @@ void LspIndexer::record(const Token& token, const SymbolAttr* symbol,
       entry.def_line == entry.line && entry.def_column == entry.column;
   } else {
     entry.kind = "UnResolved";
+  }
+
+  if (!kind_override.empty()) {
+    entry.kind = std::move(kind_override);
   }
 
   if (force_definition) {
@@ -163,7 +214,12 @@ void LspIndexer::visit(NDImportDirective& expr) {
 void LspIndexer::visit(NDTypeExpr&) {}
 
 void LspIndexer::visit(NDTypeDecl& expr) {
-  record(expr.type_identifier, nullptr, expr.inferred_type, true);
+  // The resolver declares a symbol for this name, but discards the pointer --
+  // `NDTypeDecl` has nowhere to keep it -- so the kind has to be stated here
+  // rather than read back off the node. Without this every declared type looks
+  // unresolved to the editor, even though the checker resolves it fine.
+  record(expr.type_identifier, nullptr, expr.inferred_type, true, false,
+         describe_type(expr), "Type");
   if (expr.alias_target) {
     expr.alias_target->accept(*this);
   }
@@ -220,10 +276,11 @@ void LspIndexer::visit(NDFuncParam& expr) {
 }
 
 void LspIndexer::visit(NDFuncDeclExpr& expr) {
+  TypePtr returns = effective_return(expr);
   record(expr.func_identifier, expr.func_sym, expr.inferred_type, true,
          expr.return_type.has_value() && expr.return_type->parsed_type != nullptr,
-         signature(expr.func_identifier, expr.func_params, expr.return_type,
-                   expr.inferred_type));
+         signature(expr.func_identifier, expr.func_params, returns), {},
+         render(returns));
 
   // Pushed before the params and body so everything inside is attributed to
   // this function, and popped after so siblings are not.

@@ -192,6 +192,112 @@ TEST_SUITE("lsp index / types") {
   }
 }
 
+TEST_SUITE("lsp index / return types") {
+  TEST_CASE("a declared return type is used as written") {
+    auto indexed = index_source(
+      "func f() :> Int\n"
+      "  2\n"
+      "end\n");
+
+    auto entry = declaration(indexed.entries, "f");
+    REQUIRE(entry.has_value());
+    CHECK(entry->returns == "Int");
+  }
+
+  TEST_CASE("the return type is reported on its own, not split out of the signature") {
+    // Recovering it from the rendered `Fn(...) :> R` is ambiguous the moment a
+    // parameter is itself a function: there is more than one arrow to split on.
+    auto indexed = index_source(
+      "func apply(g: Fn(Int) :> Int, v: Int) :> Int\n"
+      "  g(v)\n"
+      "end\n");
+
+    auto entry = declaration(indexed.entries, "apply");
+    REQUIRE(entry.has_value());
+    CHECK(entry->returns == "Int");
+  }
+
+  TEST_CASE("an inferred return type is reported too") {
+    auto indexed = index_source(
+      "func answer()\n"
+      "  42\n"
+      "end\n");
+
+    auto entry = declaration(indexed.entries, "answer");
+    REQUIRE(entry.has_value());
+    CHECK(entry->returns == "Int");
+  }
+
+  TEST_CASE("a polymorphic return stays a variable") {
+    // Nothing should invent a concrete type here: the function really is
+    // generic, and the editor must not claim otherwise.
+    auto indexed = index_source(
+      "func identity(x)\n"
+      "  x\n"
+      "end\n");
+
+    auto entry = declaration(indexed.entries, "identity");
+    REQUIRE(entry.has_value());
+    CHECK(entry->returns.starts_with("'"));
+  }
+}
+
+TEST_SUITE("lsp index / type declarations") {
+  TEST_CASE("a declared type is recorded as a type") {
+    // The resolver declares a symbol for the name but discards the pointer, so
+    // the node cannot say what it is. Reporting it as unresolved would tell the
+    // editor the compiler failed to bind a name it binds perfectly well.
+    auto indexed = index_source("type Data {\n  Integer\n}\n");
+    auto entry = declaration(indexed.entries, "Data");
+    REQUIRE(entry.has_value());
+    CHECK(entry->kind == "Type");
+  }
+
+  TEST_CASE("a sum type lists its constructors") {
+    auto indexed = index_source(
+      "type Shape {\n"
+      "  Circle(radius: Int)\n"
+      "  Square(side: Int)\n"
+      "}\n");
+
+    auto entry = declaration(indexed.entries, "Shape");
+    REQUIRE(entry.has_value());
+    CHECK(entry->detail.starts_with("Shape {"));
+    CHECK(entry->detail.find("Circle") != std::string::npos);
+    CHECK(entry->detail.find("Square") != std::string::npos);
+  }
+
+  TEST_CASE("an alias shows what it aliases") {
+    auto indexed = index_source("type Count = Int\n");
+    auto entry = declaration(indexed.entries, "Count");
+    REQUIRE(entry.has_value());
+    CHECK(entry->detail == "Count = Int");
+  }
+
+  TEST_CASE("a bare declaration shows just its name") {
+    auto indexed = index_source("type Opaque\n");
+    auto entry = declaration(indexed.entries, "Opaque");
+    REQUIRE(entry.has_value());
+    CHECK(entry->kind == "Type");
+    CHECK(entry->detail == "Opaque");
+  }
+
+  TEST_CASE("a declared type is usable as an annotation") {
+    // The point of all this: the checker resolves the name, so a parameter
+    // annotated with it gets that type, and the editor should agree.
+    auto indexed = index_source(
+      "type Data {\n  Integer\n}\n"
+      "\n"
+      "func take(d: Data) :> Int\n"
+      "  1\n"
+      "end\n");
+
+    auto param = declaration(indexed.entries, "d");
+    REQUIRE(param.has_value());
+    CHECK(param->type == "Data");
+  }
+}
+
 TEST_SUITE("lsp index / scopes") {
   TEST_CASE("module-level declarations have no enclosing scope") {
     auto indexed = index_source("const top: Int = 1\n");
