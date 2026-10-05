@@ -20,6 +20,7 @@ public:
   void attach_visitor(Visitor&);
   void generate_ast();
   void apply_visitors();
+  void apply_visitor(Visitor&);
   void print_errors(std::ostream& out = std::cout);
   auto get_ast() -> Parent;
 

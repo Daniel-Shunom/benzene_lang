@@ -20,14 +20,17 @@ void TCModule_Populate::visit(NDTypeDecl& expr) {
 }
 
 void TCModule_Populate::visit(NDFuncParam& expr) {
+  TypePtr type;
   if (expr.param_type) {
     expr.param_type->accept(*this);
-    expr.inferred_type = expr.param_type.value().inferred_type;
-    expr.identifier.inferred_type = expr.param_type.value().inferred_type;
+    type = expr.param_type.value().inferred_type;
   } else {
-    expr.inferred_type = context.varFactory();
-    expr.identifier.inferred_type = expr.inferred_type;
+    type = context.varFactory();
   }
+
+  expr.inferred_type = type;
+  expr.identifier.inferred_type = type;
+  context.types().bind(expr.param_sym, Scheme{{}, type});
 }
 
 void TCModule_Populate::visit(NDLiteral& expr) {
@@ -60,21 +63,50 @@ void TCModule_Populate::visit(NDLiteral& expr) {
 void TCModule_Populate::visit(NDIdentifier& expr) {
   if (expr.type) {
     expr.inferred_type = expr.type->parsed_type;
+    context.types().bind(expr.identifier_symbol, Scheme{{}, expr.inferred_type});
+  } else if (auto* scheme = context.types().lookup(expr.identifier_symbol)) {
+    expr.inferred_type = scheme->type;
   } else {
     expr.inferred_type = context.varFactory();
+    context.types().bind(expr.identifier_symbol, Scheme{{}, expr.inferred_type});
   }
 }
 
 void TCModule_Populate::visit(NDLetBindExpr& expr) {
-  // Todo. Allow type annoations into node
-  expr.identifier->accept(*this);
   expr.bound_value->accept(*this);
+
+  TypePtr binding_type;
+  if (expr.identifier->type) {
+    expr.identifier->accept(*this);
+    binding_type = expr.identifier->inferred_type;
+  } else {
+    binding_type = context.varFactory();
+    expr.identifier->inferred_type = binding_type;
+  }
+
+  context.types().bind(
+    expr.identifier->identifier_symbol,
+    Scheme{{}, binding_type}
+  );
   expr.inferred_type = expr.identifier->inferred_type;
 }
 
 void TCModule_Populate::visit(NDConstExpr& expr) {
-  expr.identifier->accept(*this);
   expr.bound_value->accept(*this);
+
+  TypePtr binding_type;
+  if (expr.identifier->type) {
+    expr.identifier->accept(*this);
+    binding_type = expr.identifier->inferred_type;
+  } else {
+    binding_type = context.varFactory();
+    expr.identifier->inferred_type = binding_type;
+  }
+
+  context.types().bind(
+    expr.identifier->identifier_symbol,
+    Scheme{{}, binding_type}
+  );
   expr.inferred_type = expr.identifier->inferred_type;
 }
 
@@ -94,6 +126,8 @@ void TCModule_Populate::visit(NDCallChain& expr) {
 }
 
 void TCModule_Populate::visit(NDFuncDeclExpr& expr) {
+  context.types().push_scope();
+
   auto param_types = expr.func_params
     | std::views::transform([&](NDFuncParam& param) -> TypePtr {
       param.accept(*this);
@@ -101,29 +135,32 @@ void TCModule_Populate::visit(NDFuncDeclExpr& expr) {
     })
     | std::ranges::to<std::vector<TypePtr>>();
 
+  TypePtr return_type;
   if (expr.return_type) {
     expr.return_type->accept(*this);
-    expr.inferred_type = makeFunc(param_types, expr.return_type.value().inferred_type);
-    for (auto& exp: expr.func_body) {
-      exp->accept(*this);
-    }
+    return_type = expr.return_type->inferred_type;
   } else {
-    if (expr.func_body.empty()) {
-      expr.inferred_type = makeFunc(param_types, context.varFactory());
-      return;
-    }
+    return_type = context.varFactory();
+  }
 
-    auto& last_expr = expr.func_body.back();
-    last_expr->accept(*this);
-    expr.inferred_type = makeFunc(param_types, last_expr->inferred_type);
+  if (!expr.return_type) {
+    NDTypeExpr rtn_type_expr;
+    rtn_type_expr.inferred_type = return_type;
+    expr.return_type = std::move(rtn_type_expr);
+  }
 
-    for (auto& exp: expr.func_body
-      | std::views::reverse
-      | std::views::drop(1)
-      | std::views::reverse
-    ) {
-      exp->accept(*this);
-    }
+  expr.inferred_type = makeFunc(param_types, return_type);
+  if (expr.func_sym) {
+    context.types().bind(expr.func_sym, Scheme{{}, expr.inferred_type});
+  }
+
+  for (auto& exp : expr.func_body) {
+    exp->accept(*this);
+  }
+
+  context.types().pop_scope();
+  if (expr.func_sym) {
+    context.types().bind(expr.func_sym, Scheme{{}, expr.inferred_type});
   }
 }
 void TCModule_Populate::visit(NDCaseExpr& expr) {
@@ -162,6 +199,8 @@ void TCModule_Populate::visit(NDUnaryExpr& expr) {
 }
 
 void TCModule_Populate::visit(NDScopeExpr& expr) {
+  context.types().push_scope();
+
   if (!expr.expressions.empty()) {
     auto& last_expr = expr.expressions.back();
     last_expr->accept(*this);
@@ -177,6 +216,8 @@ void TCModule_Populate::visit(NDScopeExpr& expr) {
   } else {
     expr.inferred_type = makeNil();
   }
+
+  context.types().pop_scope();
 }
 
 void TCModule_Populate::visit(NDTupleExpr& expr) {
@@ -208,6 +249,8 @@ void TCModule_Populate::visit(NDListExpr& expr) {
 }
 
 void TCModule_Populate::visit(NDLambdaExpr& expr) {
+  context.types().push_scope();
+
   auto param_types = expr.func_params
     | std::views::transform([&](NDFuncParam& param) -> TypePtr {
       param.accept(*this);
@@ -215,33 +258,31 @@ void TCModule_Populate::visit(NDLambdaExpr& expr) {
     })
     | std::ranges::to<std::vector<TypePtr>>();
 
+  TypePtr return_type;
   if (expr.return_type) {
     expr.return_type->accept(*this);
-    expr.inferred_type = makeFunc(param_types, expr.return_type.value().inferred_type);
-    for (auto& exp: expr.func_body) {
-      exp->accept(*this);
-    }
+    return_type = expr.return_type->inferred_type;
   } else {
-    if (expr.func_body.empty()) {
-      expr.inferred_type = makeFunc(param_types, context.varFactory());
-      return;
-    }
-
-    auto& last_expr = expr.func_body.back();
-    last_expr->accept(*this);
-    expr.inferred_type = makeFunc(param_types, last_expr->inferred_type);
-
-    for (auto& exp: expr.func_body
-      | std::views::reverse
-      | std::views::drop(1)
-      | std::views::reverse
-    ) {
-      exp->accept(*this);
-    }
+    return_type = context.varFactory();
   }
+
+  if (!expr.return_type) {
+    NDTypeExpr rtn_type_expr;
+    rtn_type_expr.inferred_type = return_type;
+    expr.return_type = std::move(rtn_type_expr);
+  }
+
+  expr.inferred_type = makeFunc(param_types, return_type);
+  for (auto& exp : expr.func_body) {
+    exp->accept(*this);
+  }
+
+  context.types().pop_scope();
 }
 
 void TCModule_Populate::visit(NDTypeExpr& expr) {
   // Type-expression semantics are not implemented in this pass yet.
-  expr.inferred_type = expr.parsed_type;
+  if (expr.parsed_type) {
+    expr.inferred_type = expr.parsed_type;
+  }
 }

@@ -8,8 +8,9 @@
 
 class TreePrinter final : public Visitor {
 public:
-  explicit TreePrinter(std::ostream& out = std::cout, bool show_types = false)
-    : out(out), show_types(show_types) {}
+  explicit TreePrinter(std::ostream& out = std::cout, bool show_types = false,
+                       const Subst* substitutions = nullptr)
+    : out(out), show_types(show_types), substitutions(substitutions) {}
 
   void visit(NDLiteral& expr)           override;
   void visit(NDImportDirective& expr)   override;
@@ -33,6 +34,7 @@ public:
 private:
   std::ostream& out;
   bool show_types;
+  const Subst* substitutions;
 
   // For each ancestor depth, true if this branch was the last child of its
   // parent. Drives the rendering of `│  ` vs `   ` trail segments and the

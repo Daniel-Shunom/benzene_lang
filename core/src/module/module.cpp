@@ -37,6 +37,10 @@ void Module::apply_visitors() {
   this->module_root.apply_visitors();
 }
 
+void Module::apply_visitor(Visitor& visitor) {
+  this->module_root.apply_visitor(visitor);
+}
+
 void Module::print_errors(std::ostream& out) {
   this->diag.print_all(out);
 }

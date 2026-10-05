@@ -38,6 +38,7 @@ void ScopeRes::visit(NDLetBindExpr& let_bind) {
     && scope != ScopeType::FunctionExpression
     && scope != ScopeType::LambdaExpression
     && scope != ScopeType::ScopedExpression
+    && scope != ScopeType::CaseExpression
   ) {
     let_bind.is_poisoned = true;
 

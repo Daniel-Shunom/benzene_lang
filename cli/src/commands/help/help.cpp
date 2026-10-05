@@ -24,6 +24,8 @@ int HandleHelp(const ArgHelp&) {
     "  %scheck%s %s<file>%s     Parse and resolve a source file\n"
     "      %s-show-ast%s    also print the AST\n"
     "      %s-show-types%s  print inferred types during checking\n"
+    "      -show-constraints    print generated type constraints\n"
+    "      -show-unification    print solved type substitutions\n"
     "  %sbuild%s            Compile the project %s(not yet implemented)%s\n"
     "  %srun%s              Build and execute %s(not yet implemented)%s\n"
     "  %shelp%s             Show this help\n",

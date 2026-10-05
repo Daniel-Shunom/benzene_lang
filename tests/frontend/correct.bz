@@ -1,17 +1,31 @@
 Load io
 
-func data(apply: Fn(data) :> Int, transform: Fn(Int) :> a)
+func data(apply, transform: Fn(Int) :> a)
   let garri = 3
+  garri
   let fufu = "stringy"
   let foo: Int = 2
+  foo
+  foo
+  foo
   let dict: Dict(a, b, c) = new_dict()
-  case 2, "three", foo, 2 > 3 :
+  case 2, "three", foo, {2 > 3} :
     "cats" :> cars
     "dogs" :> loaves
   end
   apply(foo)
 end
 
+func new(data) :> Int
+end
+
+func old(data) :> aA
+end
+
+func void(data)
+  data(new(data), old(new(data)))
+  gojo(data)
+end
 
 type FooBar = Fn(List(Fn(Tuple(List(Int),Int)) :> String)) :> String
 
@@ -23,3 +37,4 @@ type Data {
 
 type Foo
 
+type Food = Int

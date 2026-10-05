@@ -33,6 +33,8 @@ void SymbolResolver::visit(NDLiteral& expr) {
     cscope_type
     && cscope_type != ScopeType::ScopedExpression
     && cscope_type != ScopeType::FunctionExpression
+    && cscope_type != ScopeType::LambdaExpression
+    && cscope_type != ScopeType::CaseExpression
     && cscope_type != ScopeType::Module
   ) {
     expr.is_poisoned = true;
@@ -58,6 +60,8 @@ void SymbolResolver::visit(NDIdentifier& expr) {
     cscope_type
     && cscope_type != ScopeType::ScopedExpression
     && cscope_type != ScopeType::FunctionExpression
+    && cscope_type != ScopeType::LambdaExpression
+    && cscope_type != ScopeType::CaseExpression
     && cscope_type != ScopeType::Module
   ) {
     expr.is_poisoned = true;
@@ -87,6 +91,8 @@ void SymbolResolver::visit(NDLetBindExpr& expr) {
     cscope_type
     && cscope_type != ScopeType::FunctionExpression
     && cscope_type != ScopeType::ScopedExpression
+    && cscope_type != ScopeType::LambdaExpression
+    && cscope_type != ScopeType::CaseExpression
   ) {
     expr.is_poisoned = true;
 
@@ -205,7 +211,10 @@ void SymbolResolver::visit(NDCallExpr& expr) {
     diag.phase = DiagnosticPhase::Resolver;
     diag.location.column = expr.identifier->identifier.column_number;
     diag.location.line = expr.identifier->identifier.line_number;
-    diag.message = "`Call` expression is not in valid scope";
+    diag.message = std::format(
+      "Unable to resolve called function `{}`",
+      ident
+    );
 
     this->diag_eng.report(diag);
     return;
@@ -217,6 +226,7 @@ void SymbolResolver::visit(NDCallExpr& expr) {
     && cscope_type != ScopeType::CaseExpression
     && cscope_type != ScopeType::ScopedExpression
     && cscope_type != ScopeType::FunctionExpression
+    && cscope_type != ScopeType::LambdaExpression
   ) {
     expr.is_poisoned = true;
 
@@ -247,6 +257,7 @@ void SymbolResolver::visit(NDCallChain& expr) {
     && cscope_type != ScopeType::ScopedExpression
     && cscope_type != ScopeType::FunctionExpression
     && cscope_type != ScopeType::CaseExpression
+    && cscope_type != ScopeType::LambdaExpression
   ) {
     expr.is_poisoned = true;
 
@@ -266,12 +277,7 @@ void SymbolResolver::visit(NDCallChain& expr) {
 
 void SymbolResolver::visit(NDFuncDeclExpr& expr) {
   auto cscope_type = this->sym_table.get_current_scope_type();
-  if (
-    cscope_type
-    && cscope_type != ScopeType::ScopedExpression
-    && cscope_type != ScopeType::FunctionExpression
-    && cscope_type != ScopeType::Module
-  ) {
+  if (cscope_type && cscope_type != ScopeType::Module) {
     expr.is_poisoned = true;
 
     auto diag = Diagnostic();
@@ -388,6 +394,8 @@ void SymbolResolver::visit(NDLambdaExpr& lambda) {
     cscope_type
     && cscope_type != ScopeType::ScopedExpression
     && cscope_type != ScopeType::FunctionExpression
+    && cscope_type != ScopeType::LambdaExpression
+    && cscope_type != ScopeType::CaseExpression
   ) {
     lambda.is_poisoned = true;
 
@@ -439,6 +447,8 @@ void SymbolResolver::visit(NDScopeExpr& expr) {
     cscope_type
     && cscope_type != ScopeType::FunctionExpression
     && cscope_type != ScopeType::ScopedExpression
+    && cscope_type != ScopeType::LambdaExpression
+    && cscope_type != ScopeType::CaseExpression
   ) {
     expr.is_poisoned = true;
 
@@ -471,6 +481,8 @@ void SymbolResolver::visit(NDCaseExpr& expr) {
     cscope_type
     && cscope_type != ScopeType::FunctionExpression
     && cscope_type != ScopeType::ScopedExpression
+    && cscope_type != ScopeType::LambdaExpression
+    && cscope_type != ScopeType::CaseExpression
   ) {
     expr.is_poisoned = true;
 

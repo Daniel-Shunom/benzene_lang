@@ -7,6 +7,7 @@
 #include <vector>
 
 struct Type;
+struct SymbolAttr;
 
 using TypeVarId = size_t;
 
@@ -18,6 +19,59 @@ auto type_ptr_equal(const TypePtr& lhs, const TypePtr& rhs) noexcept -> bool;
 struct Scheme {
   std::vector<TypeVarId> quantified;
   TypePtr type;
+};
+
+using SymbolTypeScope = std::unordered_map<SymbolAttr*, Scheme>;
+
+class TypeEnvironment {
+public:
+  TypeEnvironment() {
+    push_scope();
+  }
+
+  void push_scope() {
+    scopes.emplace_back();
+  }
+
+  void pop_scope() {
+    if (scopes.size() > 1) {
+      scopes.pop_back();
+    }
+  }
+
+  void bind(SymbolAttr* symbol, Scheme scheme) {
+    if (symbol) {
+      // Keep a symbol-keyed record after a lexical scope is popped.  The
+      // resolver has already attached the exact SymbolAttr to each use, so
+      // later type-checking passes can recover the declaration's type without
+      // having to recreate the population pass's scope walk.
+      scopes.back()[symbol] = scheme;
+      bindings[symbol] = std::move(scheme);
+    }
+  }
+
+  [[nodiscard]]
+  auto lookup(SymbolAttr* symbol) noexcept -> Scheme* {
+    if (!symbol) {
+      return nullptr;
+    }
+
+    for (auto scope = scopes.rbegin(); scope != scopes.rend(); ++scope) {
+      if (auto found = scope->find(symbol); found != scope->end()) {
+        return &found->second;
+      }
+    }
+
+    if (auto found = bindings.find(symbol); found != bindings.end()) {
+      return &found->second;
+    }
+
+    return nullptr;
+  }
+
+private:
+  std::vector<SymbolTypeScope> scopes;
+  std::unordered_map<SymbolAttr*, Scheme> bindings;
 };
 
 using Env = std::unordered_map<std::string, Scheme>;
@@ -218,6 +272,7 @@ private:
 auto makeTypeConstructor(std::string name, const std::vector<TypePtr>& types) noexcept -> TypePtr;
 
 auto makeFunc(std::vector<TypePtr> from, TypePtr into) noexcept -> TypePtr;
+
 auto makeFunc(TypePtr from, TypePtr into) noexcept -> TypePtr;
 
 auto makeList(TypePtr type) noexcept -> TypePtr;

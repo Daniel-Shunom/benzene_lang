@@ -10,6 +10,8 @@ struct ArgCheck  {
   std::string path;
   bool show_ast = false;
   bool show_types = false;
+  bool show_constraints = false;
+  bool show_unification = false;
 };
 struct ArgHelp   {};
 

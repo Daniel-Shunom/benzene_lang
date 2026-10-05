@@ -41,6 +41,10 @@ auto GetArgs(int argc, char* argv[]) -> Args {
         arg.show_ast = true;
       } else if (tok == "-show-types") {
         arg.show_types = true;
+      } else if (tok == "-show-constraints") {
+        arg.show_constraints = true;
+      } else if (tok == "-show-unification") {
+        arg.show_unification = true;
       } else if (!tok.empty() && tok.front() == '-') {
         throw std::invalid_argument("unknown check flag: `" + std::string(tok) + "`");
       } else if (arg.path.empty()) {
@@ -51,7 +55,7 @@ auto GetArgs(int argc, char* argv[]) -> Args {
     }
 
     if (arg.path.empty()) {
-      throw std::invalid_argument("usage: ether check <file> [-show-ast] [-show-types]");
+      throw std::invalid_argument("usage: ether check <file> [-show-ast] [-show-types] [-show-constraints] [-show-unification]");
     }
 
     return arg;

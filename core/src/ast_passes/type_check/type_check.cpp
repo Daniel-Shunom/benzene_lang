@@ -7,10 +7,39 @@
 #include <iostream>
 #include <memory>
 
-TypeChecker::TypeChecker(bool print_types) : print_types(print_types) {
+namespace {
+  auto default_diagnostics() -> DiagnosticEngine& {
+    static DiagnosticEngine diagnostics;
+    return diagnostics;
+  }
+}
+
+TypeChecker::TypeChecker(bool print_types)
+  : TypeChecker(print_types, default_diagnostics()) {}
+
+TypeChecker::TypeChecker(bool print_types, DiagnosticEngine& diagnostics)
+  : print_types(print_types), diag_engine(diagnostics) {
   modules.push_back(std::make_unique<TCModule_Populate>(*this));
-  modules.push_back(std::make_unique<TCModule_Constrain>(*this));
-  modules.push_back(std::make_unique<TCModule_Unify>(*this));
+  auto constrain = std::make_unique<TCModule_Constrain>(*this);
+  constrain_module = constrain.get();
+  modules.push_back(std::move(constrain));
+  unifier = std::make_unique<Unifier>(diag_engine);
+}
+
+auto TypeChecker::constraints() const noexcept -> const Constraints& {
+  static const Constraints empty;
+  return constrain_module ? constrain_module->constraints : empty;
+}
+
+auto TypeChecker::substitutions() const noexcept -> const Subst& {
+  static const Subst empty;
+  return unifier ? unifier->substitutions() : empty;
+}
+
+void TypeChecker::unify_constraints() {
+  if (unifier && constrain_module) {
+    unifier->solve(constrain_module->constraints);
+  }
 }
 
 void TypeChecker::visit(NDLiteral& node) { dispatch_to_modules(node); }

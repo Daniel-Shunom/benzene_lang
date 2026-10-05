@@ -242,3 +242,9 @@ func do()
 end
 
 const new_tuple = @{"data", "object", 23}
+
+type Fugazzi {
+  Foolishness
+  Madness(Fn(Int) :> String)
+  Happiness(joy: Int, smiles: Fn(List(Fugazzi), Tuple(Int, String)) :> Fugazzi)
+}

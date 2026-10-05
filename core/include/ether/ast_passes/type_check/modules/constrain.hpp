@@ -2,6 +2,7 @@
 
 #include "ether/ast_passes/type_check/modules/module.hpp"
 #include "ether/nodes/node_expr.hpp"
+#include "ether/types/constraints.hpp"
 
 class TCModule_Constrain: public TCModule {
 public:
@@ -14,7 +15,7 @@ public:
   void visit(NDCallExpr& expr)         override;
   void visit(NDCallChain& expr)        override;
   void visit(NDTypeDecl& expr)         override;
-  void visit(NDTypeExpr& expr) override;
+  void visit(NDTypeExpr& expr)         override;
   void visit(NDFuncDeclExpr& expr)     override;
   void visit(NDCaseExpr& expr)         override;
   void visit(NDBinaryExpr& expr)       override;
@@ -25,5 +26,5 @@ public:
   void visit(NDLambdaExpr& expr)       override;
   void visit(NDFuncParam& expr)        override;
 
-private:
+  Constraints constraints;
 };

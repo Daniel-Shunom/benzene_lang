@@ -55,6 +55,7 @@ auto parse_case_expression() -> Parser<NDCaseExpr> {
     ScopeStackGuard stack_guard(state, ScopeStackType::CaseExpr);
 
     std::vector<NDCaseExpr::Branch> branches;
+    bool invalid_branch_arity = false;
     while (true) {
       if (match(TokenType::EndStmt)(state)) {
         break;
@@ -71,9 +72,41 @@ auto parse_case_expression() -> Parser<NDCaseExpr> {
         return std::nullopt;
       }
 
+      const auto branch_start = state.peek();
+      std::vector<NDPtr> patterns;
       auto pattern = parse_value_expression()(state);
       if (!pattern) {
         return std::nullopt;
+      }
+      patterns.push_back(std::move(pattern.value()));
+
+      while (match(TokenType::Delim)(state)) {
+        auto next_pattern = expect_wp(
+          state,
+          parse_value_expression(),
+          ParseErrorType::InvalidCaseExpr,
+          "Expected a pattern expression after `,`"
+        );
+        if (!next_pattern) {
+          return std::nullopt;
+        }
+        patterns.push_back(std::move(next_pattern.value()));
+      }
+
+      if (patterns.size() != conditions.size()) {
+        Diagnostic diag;
+        diag.level = DiagnosticLevel::Fail;
+        diag.phase = DiagnosticPhase::Parser;
+        if (branch_start) {
+          diag.location.line = branch_start->line_number;
+          diag.location.column = branch_start->column_number;
+        } else {
+          diag.location.line = case_tok->line_number;
+          diag.location.column = case_tok->column_number;
+        }
+        diag.message = "Each case branch must have one pattern for every condition";
+        state.diag_eng.report(diag);
+        invalid_branch_arity = true;
       }
 
       auto rtn_op = expect(
@@ -98,11 +131,8 @@ auto parse_case_expression() -> Parser<NDCaseExpr> {
         return std::nullopt;
       }
 
-      auto branch = std::vector<NDPtr>();
-      branch.push_back(std::move(pattern.value()));
-
       branches.push_back(NDCaseExpr::Branch{
-        .pattern = std::move(branch),
+        .pattern = std::move(patterns),
         .result = std::move(result.value())
       });
     }
@@ -111,6 +141,7 @@ auto parse_case_expression() -> Parser<NDCaseExpr> {
     expr.case_keyword = case_tok.value();
     expr.conditions = std::move(conditions);
     expr.branches = std::move(branches);
+    expr.is_poisoned = invalid_branch_arity;
 
     checkpoint.commit();
     return expr;

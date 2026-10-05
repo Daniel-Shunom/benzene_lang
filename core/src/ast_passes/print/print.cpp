@@ -48,7 +48,7 @@ auto TreePrinter::type_header(const std::string& type_name, Node& node) -> std::
   std::string s = std::string(BOLD) + CYAN + type_name + RESET;
   if (show_types && node.inferred_type) {
     s += " " + std::string(DIM) + "[type: " +
-         TypePrinter{true}.print(node.inferred_type) + "]" + RESET;
+         TypePrinter{true, substitutions}.print(node.inferred_type) + "]" + RESET;
   }
   if (node.is_poisoned) {
     s += std::string(" ") + BOLD + RED + "[POISONED]" + RESET;
@@ -184,7 +184,10 @@ void TreePrinter::visit(NDFuncDeclExpr& n) {
   leaf_field("name", n.func_identifier.token_value, !has_return && !has_params && !has_body);
 
   if (has_return) {
-    leaf_field("return_type", TypePrinter{true}.print(n.return_type->parsed_type), !has_params && !has_body);
+    const auto& type = n.return_type->parsed_type
+      ? n.return_type->parsed_type
+      : n.return_type->inferred_type;
+    leaf_field("return_type", TypePrinter{true, substitutions}.print(type), !has_params && !has_body);
   }
 
   if (has_params) {
@@ -197,7 +200,7 @@ void TreePrinter::visit(NDFuncDeclExpr& n) {
         std::string(GREEN) + p.identifier.identifier.token_value + RESET;
       if (p.param_type) {
         text += std::string(DIM) + " : " + RESET +
-                TypePrinter{true}.print(p.param_type->parsed_type);
+                TypePrinter{true, substitutions}.print(p.param_type->parsed_type);
       }
       enter_child(last);
       emit_line(text);
@@ -244,7 +247,10 @@ void TreePrinter::visit(NDLambdaExpr& n) {
   bool has_body = !n.func_body.empty();
 
   if (has_return) {
-    leaf_field("return_type", TypePrinter{true}.print(n.return_type->parsed_type), !has_params && !has_body);
+    const auto& type = n.return_type->parsed_type
+      ? n.return_type->parsed_type
+      : n.return_type->inferred_type;
+    leaf_field("return_type", TypePrinter{true, substitutions}.print(type), !has_params && !has_body);
   }
 
   if (has_params) {
@@ -257,7 +263,7 @@ void TreePrinter::visit(NDLambdaExpr& n) {
         std::string(GREEN) + p.identifier.identifier.token_value + RESET;
       if (p.param_type) {
         text += std::string(DIM) + " : " + RESET +
-                TypePrinter{true}.print(p.param_type->parsed_type);
+                TypePrinter{true, substitutions}.print(p.param_type->parsed_type);
       }
       enter_child(last);
       emit_line(text);
@@ -319,5 +325,5 @@ void TreePrinter::visit(NDCaseExpr& n) {
 
 void TreePrinter::visit(NDTypeExpr& expr) {
   emit_line(type_header("TypeExpr", expr));
-  leaf_field("type", TypePrinter{true}.print(expr.parsed_type), true);
+  leaf_field("type", TypePrinter{true, substitutions}.print(expr.parsed_type), true);
 }

@@ -38,7 +38,7 @@ struct NDTypeDecl: Node {
 };
 
 struct NDIdentifier : Node {
-  SymbolAttr *identifier_symbol;
+  SymbolAttr *identifier_symbol = nullptr;
   Token identifier;
   std::optional<NDTypeExpr> type;
   void accept(Visitor & visitor) override;
@@ -47,7 +47,7 @@ struct NDIdentifier : Node {
 struct NDFuncParam: Node {
   NDIdentifier identifier;
   std::optional<NDTypeExpr> param_type;
-  SymbolAttr *param_sym;
+  SymbolAttr *param_sym = nullptr;
   void accept(Visitor & visitor) override;
 };
 
@@ -118,7 +118,7 @@ struct NDCallChain : Node {
 
 struct NDFuncDeclExpr : Node {
   Token func_identifier;
-  SymbolAttr *func_sym;
+  SymbolAttr *func_sym = nullptr;
   std::optional<NDTypeExpr> return_type;
   std::vector<NDFuncParam> func_params;
   std::vector<NDPtr> func_body;
@@ -126,7 +126,7 @@ struct NDFuncDeclExpr : Node {
 };
 
 struct NDLambdaExpr : Node {
-  SymbolAttr *func_sym;
+  SymbolAttr *func_sym = nullptr;
   Token lambda_start;
   std::optional<NDTypeExpr> return_type;
   std::vector<NDFuncParam> func_params;
@@ -164,6 +164,12 @@ struct Parent {
       for (auto &visitor : visitors) {
         node->accept(*visitor);
       }
+    }
+  }
+
+  void apply_visitor(Visitor& visitor) {
+    for (auto& node : children) {
+      node->accept(visitor);
     }
   }
 };

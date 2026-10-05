@@ -1,25 +1,38 @@
 #pragma once
 
-#include "ether/ast_passes/type_check/modules/module.hpp"
+#include <ether/diagnostics/diagnostic.hpp>
+#include <ether/diagnostics/diagnostic_eng.hpp>
+#include <ether/types/constraints.hpp>
+#include "ether/types/types.hpp"
+#include <unordered_set>
+#include <vector>
 
-class TCModule_Unify: public TCModule {
-  using TCModule::TCModule;
-  void visit(NDLiteral& expr)          override;
-  void visit(NDImportDirective& expr)  override;
-  void visit(NDIdentifier& expr)       override;
-  void visit(NDLetBindExpr& expr)      override;
-  void visit(NDConstExpr& expr)        override;
-  void visit(NDCallExpr& expr)         override;
-  void visit(NDCallChain& expr)        override;
-  void visit(NDTypeDecl& expr)         override;
-  void visit(NDTypeExpr& expr) override;
-  void visit(NDFuncDeclExpr& expr)     override;
-  void visit(NDCaseExpr& expr)         override;
-  void visit(NDBinaryExpr& expr)       override;
-  void visit(NDUnaryExpr& expr)        override;
-  void visit(NDScopeExpr& expr)        override;
-  void visit(NDTupleExpr& expr)        override;
-  void visit(NDListExpr& expr)         override;
-  void visit(NDLambdaExpr& expr)       override;
-  void visit(NDFuncParam& expr)        override;
+class Unifier {
+  Subst subs_record;
+  std::vector<Diagnostic> diagnostic_storage;
+  DiagnosticEngine& diag_engine;
+
+  auto report_failure(std::string message, TypePtr lhs = nullptr,
+                      TypePtr rhs = nullptr) -> void;
+  auto occurs(TypeVarId id, TypePtr type,
+              std::unordered_set<const Type*>& visited) -> bool;
+
+public:
+  explicit Unifier(DiagnosticEngine& diagnostics)
+    : diag_engine(diagnostics) {}
+
+  void solve(const Constraints& constraints);
+  [[nodiscard]] auto substitutions() const noexcept -> const Subst& {
+    return subs_record;
+  }
+
+  [[nodiscard]] auto diagnostics() const noexcept
+      -> const std::vector<Diagnostic>& { return diagnostic_storage; }
+
+private:
+  auto resolve(TypePtr) -> TypePtr;
+  auto unify(TypePtr lhs, TypePtr rhs) -> void;
+  auto unify_functions(TypePtr func1, TypePtr func2) -> void;
+  auto unify_constructors(TypePtr lhs, TypePtr rhs) -> void;
+  auto bind_variable(TypePtr variable, TypePtr type) -> void;
 };
