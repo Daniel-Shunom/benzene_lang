@@ -21,3 +21,19 @@ jobs:
           CXX: g++-14
           CC: gcc-14
         run: bash ./test.sh
+
+  # The language server is a separate toolchain from the compiler, so it gets
+  # its own job rather than slowing the C++ one down.
+  lsp:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: "27"
+          gleam-version: "1.18.0"
+
+      - name: Test the language server
+        working-directory: lsp/ether_lsp
+        run: gleam test

@@ -1,0 +1,27 @@
+#!/usr/bin/env sh
+# Launches the Benzene language server on the Erlang VM.
+#
+# Neovim (and any other LSP client) should be pointed at this file. It speaks
+# LSP on stdin/stdout, so nothing here may print to stdout.
+set -eu
+
+HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+SHIP="$HERE/../ether_lsp/build/erlang-shipment"
+
+if [ ! -d "$SHIP/ether_lsp/ebin" ]; then
+  echo "ether-lsp: not built yet - run lsp/build.sh" >&2
+  exit 1
+fi
+
+# Default to the compiler built from this checkout, so a fresh clone works
+# without touching PATH. An existing ETHER_BIN always wins.
+if [ -z "${ETHER_BIN:-}" ]; then
+  if [ -x "$HERE/../../bin/ether" ]; then
+    ETHER_BIN="$HERE/../../bin/ether"
+  elif [ -x "$HERE/../../bin/ether.exe" ]; then
+    ETHER_BIN="$HERE/../../bin/ether.exe"
+  fi
+  [ -n "${ETHER_BIN:-}" ] && export ETHER_BIN
+fi
+
+exec erl -pa "$SHIP"/*/ebin -noshell -eval "ether_lsp@@main:run(ether_lsp)"

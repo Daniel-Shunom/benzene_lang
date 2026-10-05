@@ -1,3 +1,4 @@
-build/
-bin/
+/build/
+/bin/
 .claude/
+erl_crash.dump

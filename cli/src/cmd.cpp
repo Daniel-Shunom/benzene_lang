@@ -6,6 +6,7 @@
 #include "commands/help/help.hpp"
 #include "commands/init/init.hpp"
 #include "commands/run/run.hpp"
+#include "commands/scan/scan.hpp"
 
 #include <stdexcept>
 #include <string>
@@ -61,6 +62,28 @@ auto GetArgs(int argc, char* argv[]) -> Args {
     return arg;
   }
 
+  if (sub == "scan") {
+    ArgScan arg;
+    for (int i = 2; i < argc; ++i) {
+      std::string_view tok = argv[i];
+      if (tok == "-stdin") {
+        arg.use_stdin = true;
+      } else if (!tok.empty() && tok.front() == '-') {
+        throw std::invalid_argument("unknown scan flag: `" + std::string(tok) + "`");
+      } else if (arg.path.empty()) {
+        arg.path = tok;
+      } else {
+        throw std::invalid_argument("unexpected positional: `" + std::string(tok) + "`");
+      }
+    }
+
+    if (arg.path.empty()) {
+      throw std::invalid_argument("usage: ether scan <file> [-stdin]");
+    }
+
+    return arg;
+  }
+
   if (sub == "help" || sub == "--help" || sub == "-h") {
     return ArgHelp{};
   }
@@ -75,6 +98,7 @@ struct Dispatcher {
   auto operator()(const ArgBuild&  arg) const -> int { return HandleBuild(arg);  }
   auto operator()(const ArgRun&    arg) const -> int { return HandleRun(arg);    }
   auto operator()(const ArgCheck&  arg) const -> int { return HandleCheck(arg);  }
+  auto operator()(const ArgScan&   arg) const -> int { return HandleScan(arg);   }
   auto operator()(const ArgHelp&   arg) const -> int { return HandleHelp(arg);   }
 };
 }

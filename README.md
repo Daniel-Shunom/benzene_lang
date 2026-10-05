@@ -34,11 +34,19 @@ Extra arguments pass through to ctest, e.g. `./test.sh -R lexer`.
 ./bin/ether help
 ```
 
+## Editor support
+
+An experimental language server lives in [`lsp/`](lsp/README.md): live type
+checking, hover types, go-to-definition and semantic highlighting, driven by
+this same front-end. It is mostly AI-generated and not reviewed — read
+[`lsp/README.md`](lsp/README.md) before relying on it.
+
 ## Layout
 
 ```
 core/   library — lexer, parser, AST, passes, diagnostics
 cli/    ether executable
+lsp/    language server (Gleam) + Neovim plugin — experimental
 tests/  unit + integration tests (doctest)
 docs/   grammar specification
 ```

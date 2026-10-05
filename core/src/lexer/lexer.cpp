@@ -149,6 +149,14 @@ void Lexer::scan_multi_line_comment() {
 }
 
 void Lexer::scan_import_module() {
+  // Consume the separator between `Load` and the module path *before* marking
+  // the token start, so the recorded column lands on the first character of
+  // the module name rather than on the space in front of it. Editors underline
+  // from that column, and diagnostics point at it.
+  while (!this->is_file_end() && this->is_whitespace(this->peek())) {
+    this->advance();
+  }
+
   this->set_token_start();
   std::string import_module{};
 

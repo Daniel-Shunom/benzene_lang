@@ -13,6 +13,13 @@ struct ArgCheck  {
   bool show_constraints = false;
   bool show_unification = false;
 };
+struct ArgScan   {
+  std::string path;
+  // When set, the source is read from stdin as a length-prefixed payload
+  // instead of from `path`, so the editor can check an unsaved buffer. `path`
+  // is still the identity reported back in diagnostics.
+  bool use_stdin = false;
+};
 struct ArgHelp   {};
 
 using Args = std::variant<
@@ -20,6 +27,7 @@ using Args = std::variant<
   ArgBuild,
   ArgRun,
   ArgCheck,
+  ArgScan,
   ArgCreate,
   ArgHelp
 >;
