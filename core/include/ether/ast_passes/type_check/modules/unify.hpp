@@ -11,6 +11,7 @@ class Unifier {
   Subst subs_record;
   std::vector<Diagnostic> diagnostic_storage;
   DiagnosticEngine& diag_engine;
+  size_t solved_constraints{0};
 
   auto report_failure(std::string message, TypePtr lhs = nullptr,
                       TypePtr rhs = nullptr) -> void;
@@ -22,6 +23,7 @@ public:
     : diag_engine(diagnostics) {}
 
   void solve(const Constraints& constraints);
+  [[nodiscard]] auto apply(TypePtr) -> TypePtr;
   [[nodiscard]] auto substitutions() const noexcept -> const Subst& {
     return subs_record;
   }
@@ -34,5 +36,6 @@ private:
   auto unify(TypePtr lhs, TypePtr rhs) -> void;
   auto unify_functions(TypePtr func1, TypePtr func2) -> void;
   auto unify_constructors(TypePtr lhs, TypePtr rhs) -> void;
+  auto unify_pmt_types(TypePtr lhs, TypePtr rhs) -> void;
   auto bind_variable(TypePtr variable, TypePtr type) -> void;
 };

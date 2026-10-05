@@ -15,15 +15,14 @@ void TCModule_Constrain::visit(NDImportDirective& expr) {
 }
 
 void TCModule_Constrain::visit(NDIdentifier& expr) {
-  auto* scheme = context.types().lookup(expr.identifier_symbol);
-  if (!scheme) {
-    return;
+  // Population has already resolved this occurrence to either a monomorphic
+  // type or a fresh instantiation of its scheme. Population runs before
+  // constraint generation, however, so a let scheme may have become
+  // polymorphic since that pass. Instantiate it at the use site here.
+  if (auto* scheme = context.types().lookup(expr.identifier_symbol);
+      scheme && !scheme->quantified.empty()) {
+    expr.inferred_type = context.instantiate(*scheme);
   }
-  Constraint constraint({
-    .lhs=scheme->type,
-    .rhs=expr.inferred_type
-  });
-  this->constraints.push_back(constraint);
 }
 
 void TCModule_Constrain::visit(NDLetBindExpr& expr) {
@@ -33,6 +32,7 @@ void TCModule_Constrain::visit(NDLetBindExpr& expr) {
     .rhs=expr.bound_value->inferred_type
   });
   this->constraints.push_back(constraint);
+  context.generalize_binding(expr);
 }
 
 void TCModule_Constrain::visit(NDConstExpr& expr) {
@@ -51,6 +51,11 @@ void TCModule_Constrain::visit(NDCallExpr& expr) {
   for (auto& arg: expr.args) {
     arg->accept(*this);
     call_args.push_back(arg->inferred_type);
+  }
+
+  if (expr.identifier->identifier_symbol
+      && expr.identifier->identifier_symbol->symbol_kind == SymbolKind::Type) {
+    return;
   }
 
   Constraint constraint({
@@ -79,9 +84,11 @@ void TCModule_Constrain::visit(NDTypeDecl& expr) {
 }
 
 void TCModule_Constrain::visit(NDFuncDeclExpr& expr) {
+  context.push_type_scope();
   std::vector<TypePtr> param_types;
   for (auto& param : expr.func_params) {
     param.accept(*this);
+    context.activate_type_symbol(param.param_sym);
     param_types.push_back(param.inferred_type);
   }
 
@@ -100,9 +107,11 @@ void TCModule_Constrain::visit(NDFuncDeclExpr& expr) {
     .lhs = expr.inferred_type,
     .rhs = makeFunc(param_types, expr.return_type.value().inferred_type)
   });
+  context.pop_type_scope();
 }
 
 void TCModule_Constrain::visit(NDCaseExpr& expr) {
+  if (expr.is_poisoned) return;
   for (auto& condition : expr.conditions) {
     condition->accept(*this);
   }
@@ -193,6 +202,7 @@ void TCModule_Constrain::visit(NDUnaryExpr& expr) {
 }
 
 void TCModule_Constrain::visit(NDScopeExpr& expr) {
+  context.push_type_scope();
   for (auto& expr: expr.expressions) {
     expr->accept(*this);
   }
@@ -204,6 +214,7 @@ void TCModule_Constrain::visit(NDScopeExpr& expr) {
       .rhs = last_expr->inferred_type
     });
   }
+  context.pop_type_scope();
 }
 
 void TCModule_Constrain::visit(NDTupleExpr& expr) {
@@ -244,9 +255,11 @@ void TCModule_Constrain::visit(NDListExpr& expr) {
 }
 
 void TCModule_Constrain::visit(NDLambdaExpr& expr) {
+  context.push_type_scope();
   std::vector<TypePtr> param_types;
   for (auto& param : expr.func_params) {
     param.accept(*this);
+    context.activate_type_symbol(param.param_sym);
     param_types.push_back(param.inferred_type);
   }
 
@@ -265,12 +278,14 @@ void TCModule_Constrain::visit(NDLambdaExpr& expr) {
     .lhs = expr.inferred_type,
     .rhs = makeFunc(param_types, expr.return_type.value().inferred_type)
   });
+  context.pop_type_scope();
 }
 
 void TCModule_Constrain::visit(NDFuncParam& expr) {
   if (expr.param_type) {
     expr.param_type->accept(*this);
   }
+  context.activate_type_symbol(expr.param_sym);
 }
 
 void TCModule_Constrain::visit(NDTypeExpr& expr) {

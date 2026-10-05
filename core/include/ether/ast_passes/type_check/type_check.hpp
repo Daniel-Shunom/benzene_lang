@@ -7,6 +7,8 @@
 #include <ether/diagnostics/diagnostic_eng.hpp>
 #include <ether/types/types.hpp>
 #include <memory>
+#include <string>
+#include <unordered_map>
 #include <vector>
 
 class TypeChecker: public Visitor {
@@ -17,12 +19,27 @@ public:
   void set_print_types(bool enabled) noexcept { print_types = enabled; }
   [[nodiscard]] auto prints_types() const noexcept -> bool { return print_types; }
   [[nodiscard]] auto types() noexcept -> TypeEnvironment& { return type_environment; }
+  [[nodiscard]] auto types() const noexcept -> const TypeEnvironment& {
+    return type_environment;
+  }
   [[nodiscard]] auto constraints() const noexcept -> const Constraints&;
   [[nodiscard]] auto substitutions() const noexcept -> const Subst&;
   void unify_constraints();
   [[nodiscard]] auto diagnostic_engine() const noexcept -> DiagnosticEngine& {
     return diag_engine;
   }
+  [[nodiscard]] auto instantiate(const Scheme&) -> TypePtr;
+  [[nodiscard]] auto generalize(TypePtr, SymbolAttr* excluded = nullptr) -> Scheme;
+  void register_constructor_type(std::string name, TypePtr parent,
+                                 TypePtr fields);
+  [[nodiscard]] auto constructor_type(const std::string& name) const
+      -> TypePtr;
+  [[nodiscard]] auto constructor_parent(const std::string& name) const
+      -> TypePtr;
+  void generalize_binding(NDLetBindExpr&);
+  void push_type_scope() { type_environment.push_scope(); }
+  void pop_type_scope() { type_environment.pop_scope(); }
+  void activate_type_symbol(SymbolAttr* symbol) { type_environment.activate(symbol); }
 
   void visit(NDLiteral& expr)          override;
   void visit(NDImportDirective& expr)  override;
@@ -45,10 +62,13 @@ public:
 
   TypeVarFactory varFactory;
 private:
+  auto free_type_vars(TypePtr, std::vector<TypeVarId>&) const -> void;
   std::vector<std::unique_ptr<TCModule>> modules;
   TCModule_Constrain* constrain_module = nullptr;
   std::unique_ptr<Unifier> unifier;
   TypeEnvironment type_environment;
   bool print_types = false;
   DiagnosticEngine& diag_engine;
+  struct ConstructorInfo { TypePtr parent; TypePtr fields; };
+  std::unordered_map<std::string, ConstructorInfo> constructors;
 };

@@ -203,6 +203,24 @@ void SymbolResolver::visit(NDCallExpr& expr) {
   auto ident  = expr.identifier->identifier.token_value;
   auto sym = this->sym_table.lookup(ident);
 
+  // A constructor pattern is represented by the existing call-shaped AST
+  // node. Constructors are introduced by type declarations, not functions,
+  // so resolve them without applying function-call rules.
+  if (sym && sym->symbol_kind == SymbolKind::Type
+      && this->sym_table.get_current_scope_type() == ScopeType::CaseExpression) {
+    expr.identifier->identifier_symbol = sym;
+    for (auto& arg : expr.args) {
+      if (auto* identifier = dynamic_cast<NDIdentifier*>(arg.get())) {
+        auto* binding = this->sym_table.declare(identifier->identifier,
+                                                SymbolKind::Binding);
+        identifier->identifier_symbol = binding;
+      } else {
+        arg->accept(*this);
+      }
+    }
+    return;
+  }
+
   if (!sym) {
     expr.is_poisoned = true;
 
@@ -381,8 +399,28 @@ void SymbolResolver::visit(NDTypeDecl& type_decl) {
   if (type_decl.alias_target) {
     type_decl.alias_target->accept(*this);
   }
+  // Make the declared type and each of its constructors visible to later
+  // case-pattern resolution. Type expressions retain their full structure;
+  // this only creates the symbol records.
+  if (!sym_table.lookup(type_decl.type_identifier.token_value)) {
+    [[maybe_unused]] auto* type_symbol =
+      sym_table.declare(type_decl.type_identifier, SymbolKind::Type);
+  }
   if (type_decl.sub_types) {
     for (auto& member : *type_decl.sub_types) {
+      if (member.parsed_type && member.parsed_type->isTypeConstructor()) {
+        const auto& constructor = std::get<TypeConstructor>(member.parsed_type->value);
+        Token token{
+          .token_type = TokenType::Identifier,
+          .token_value = constructor.name(),
+          .line_number = type_decl.type_identifier.line_number,
+          .column_number = type_decl.type_identifier.column_number
+        };
+        if (!sym_table.lookup(constructor.name())) {
+          [[maybe_unused]] auto* constructor_symbol =
+            sym_table.declare(token, SymbolKind::Type);
+        }
+      }
       member.accept(*this);
     }
   }

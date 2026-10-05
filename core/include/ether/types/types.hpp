@@ -50,6 +50,20 @@ public:
     }
   }
 
+  void activate(SymbolAttr* symbol) {
+    if (!symbol) return;
+    if (auto* scheme = lookup(symbol)) scopes.back()[symbol] = *scheme;
+  }
+
+  [[nodiscard]]
+  auto active_bindings() const
+      -> std::unordered_map<SymbolAttr*, Scheme> {
+    std::unordered_map<SymbolAttr*, Scheme> result;
+    for (const auto& scope : scopes)
+      for (const auto& [symbol, scheme] : scope) result[symbol] = scheme;
+    return result;
+  }
+
   [[nodiscard]]
   auto lookup(SymbolAttr* symbol) noexcept -> Scheme* {
     if (!symbol) {
@@ -68,6 +82,10 @@ public:
 
     return nullptr;
   }
+
+  [[nodiscard]]
+  auto all_bindings() const noexcept
+      -> const std::unordered_map<SymbolAttr*, Scheme>& { return bindings; }
 
 private:
   std::vector<SymbolTypeScope> scopes;

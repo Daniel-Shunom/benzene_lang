@@ -9,12 +9,18 @@
 void TCModule_Populate::visit(NDImportDirective& expr) { }
 
 void TCModule_Populate::visit(NDTypeDecl& expr) {
+  const auto parent = makeTypeConstructor(expr.type_identifier.token_value, {});
   if (expr.alias_target) {
     expr.alias_target->accept(*this);
   }
   if (expr.sub_types) {
     for (auto& member : *expr.sub_types) {
       member.accept(*this);
+      if (member.parsed_type && member.parsed_type->isTypeConstructor()) {
+        const auto& constructor = std::get<TypeConstructor>(member.parsed_type->value);
+        context.register_constructor_type(constructor.name(), parent,
+                                           makeTypeConstructor(constructor.name(), constructor.get_args()));
+      }
     }
   }
 }
@@ -65,7 +71,7 @@ void TCModule_Populate::visit(NDIdentifier& expr) {
     expr.inferred_type = expr.type->parsed_type;
     context.types().bind(expr.identifier_symbol, Scheme{{}, expr.inferred_type});
   } else if (auto* scheme = context.types().lookup(expr.identifier_symbol)) {
-    expr.inferred_type = scheme->type;
+    expr.inferred_type = context.instantiate(*scheme);
   } else {
     expr.inferred_type = context.varFactory();
     context.types().bind(expr.identifier_symbol, Scheme{{}, expr.inferred_type});
@@ -115,6 +121,25 @@ void TCModule_Populate::visit(NDCallExpr& expr) {
   expr.identifier->accept(*this);
   for (auto& arg: expr.args) {
     arg->accept(*this);
+  }
+  if (expr.identifier->identifier_symbol
+      && expr.identifier->identifier_symbol->symbol_kind == SymbolKind::Type) {
+    if (auto parent = context.constructor_parent(expr.identifier->identifier.token_value)) {
+      expr.inferred_type = parent;
+    }
+    if (auto fields = context.constructor_type(expr.identifier->identifier.token_value)) {
+      // The enclosing constructor pattern has the declared parent type. Its
+      // positional arguments inherit the constructor's field types.
+      const auto& constructor = std::get<TypeConstructor>(fields->value);
+      for (size_t i = 0; i < expr.args.size() && i < constructor.get_args().size(); ++i) {
+        auto field = constructor.get_args()[i];
+        if (field->isTypeConstructor()) {
+          const auto& labelled = std::get<TypeConstructor>(field->value);
+          if (labelled.get_args().size() == 1) field = labelled.get_args().front();
+        }
+        expr.args[i]->inferred_type = field;
+      }
+    }
   }
 }
 

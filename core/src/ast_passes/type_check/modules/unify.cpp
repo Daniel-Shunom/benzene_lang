@@ -5,9 +5,12 @@
 
 auto Unifier::report_failure(std::string message, TypePtr lhs,
                              TypePtr rhs) -> void {
+  std::string rendered_lhs;
+  std::string rendered_rhs;
   if (lhs || rhs) {
-    message += " (" + TypePrinter{}.print(lhs) + " ~ "
-             + TypePrinter{}.print(rhs) + ")";
+    rendered_lhs = TypePrinter{}.print(lhs);
+    rendered_rhs = TypePrinter{}.print(rhs);
+    message += ": expected " + rendered_lhs + ", but found " + rendered_rhs;
   }
 
   Diagnostic diagnostic;
@@ -15,6 +18,15 @@ auto Unifier::report_failure(std::string message, TypePtr lhs,
   diagnostic.phase = DiagnosticPhase::TypeChecker;
   diagnostic.location = {.line = 1, .column = 1};
   diagnostic.message = std::move(message);
+  if (lhs || rhs) {
+    diagnostic.related.push_back(Diagnostic{
+      .level = DiagnosticLevel::Note,
+      .phase = DiagnosticPhase::TypeChecker,
+      .location = {.line = 0, .column = 0},
+      .message = "The two types must agree here. Add or correct an annotation, "
+                 "or check the expression supplying this value."
+    });
+  }
   diagnostic_storage.push_back(diagnostic);
   diag_engine.report(diagnostic);
 }
@@ -64,9 +76,39 @@ auto Unifier::occurs(TypeVarId id, TypePtr type,
   return false;
 }
 void Unifier::solve(const Constraints& constraints) {
-  for (const auto& constraint : constraints) {
+  if (solved_constraints > constraints.size()) solved_constraints = 0;
+  for (size_t i = solved_constraints; i < constraints.size(); ++i) {
+    const auto& constraint = constraints[i];
     unify(constraint.lhs, constraint.rhs);
   }
+  solved_constraints = constraints.size();
+}
+
+auto Unifier::apply(TypePtr type) -> TypePtr {
+  type = resolve(std::move(type));
+  if (!type) return nullptr;
+  if (type->isFunctionType()) {
+    const auto& fn = std::get<FunctionType>(type->value);
+    std::vector<TypePtr> params;
+    params.reserve(fn.get_param_types().size());
+    for (const auto& p : fn.get_param_types()) params.push_back(apply(p));
+    return makeFunc(std::move(params), apply(fn.get_return_type()));
+  }
+  if (type->isTypeConstructor()) {
+    const auto& c = std::get<TypeConstructor>(type->value);
+    std::vector<TypePtr> args;
+    args.reserve(c.get_args().size());
+    for (const auto& a : c.get_args()) args.push_back(apply(a));
+    return makeTypeConstructor(c.name(), args);
+  }
+  if (type->isPmtType()) {
+    const auto& p = std::get<PmtType>(type->value);
+    std::vector<TypeField> fields;
+    fields.reserve(p.get_fields().size());
+    for (const auto& f : p.get_fields()) fields.emplace_back(f.name(), apply(f.get_type()));
+    return std::make_shared<Type>(PmtType{p.get_name(), std::move(fields)});
+  }
+  return type;
 }
 
 auto Unifier::resolve(TypePtr ptr) -> TypePtr {
@@ -130,7 +172,7 @@ auto Unifier::unify_functions(TypePtr func1, TypePtr func2) -> void {
     auto rfunc = std::get<FunctionType>(func2->value);
 
     if (lfunc.get_param_types().size() != rfunc.get_param_types().size()) {
-      report_failure("Function argument counts do not match", func1, func2);
+      report_failure("Cannot use functions with different numbers of arguments", func1, func2);
       return;
     }
 
@@ -159,6 +201,23 @@ auto Unifier::unify_constructors(TypePtr lhs, TypePtr rhs) -> void {
 
   for (size_t i = 0; i < left.get_args().size(); ++i) {
     unify(left.get_args()[i], right.get_args()[i]);
+  }
+}
+
+auto Unifier::unify_pmt_types(TypePtr lhs, TypePtr rhs) -> void {
+  const auto& left = std::get<PmtType>(lhs->value);
+  const auto& right = std::get<PmtType>(rhs->value);
+  if (left.get_name() != right.get_name()
+      || left.get_fields().size() != right.get_fields().size()) {
+    report_failure("Pattern types do not match", lhs, rhs);
+    return;
+  }
+  for (size_t i = 0; i < left.get_fields().size(); ++i) {
+    if (left.get_fields()[i].name() != right.get_fields()[i].name()) {
+      report_failure("Pattern type fields do not match", lhs, rhs);
+      return;
+    }
+    unify(left.get_fields()[i].get_type(), right.get_fields()[i].get_type());
   }
 }
 
@@ -196,5 +255,10 @@ auto Unifier::unify(TypePtr lhs, TypePtr rhs) -> void {
     return;
   }
 
-  report_failure("Types do not unify", lhs, rhs);
+  if (lhs->isPmtType() && rhs->isPmtType()) {
+    unify_pmt_types(lhs, rhs);
+    return;
+  }
+
+  report_failure("These types are incompatible", lhs, rhs);
 }

@@ -2,6 +2,7 @@
 #include <ether/diagnostics/diagnostic_eng.hpp>
 #include <ether/nodes/node_expr.hpp>
 #include <ether/symbols/symbol_types.hpp>
+#include <ether/types/types.hpp>
 #include <iosfwd>
 #include <iostream>
 #include <string>
@@ -35,6 +36,14 @@ public:
     exported_symbols = std::move(syms);
   }
 
+  [[nodiscard]] auto get_exported_type_environment() const noexcept
+      -> const TypeEnvironment& { return exported_type_environment; }
+  [[nodiscard]] auto get_exported_type_environment() noexcept
+      -> TypeEnvironment& { return exported_type_environment; }
+  void set_exported_type_environment(TypeEnvironment environment) {
+    exported_type_environment = std::move(environment);
+  }
+
 private:
   std::string module_path;
   std::string source_text;
@@ -42,6 +51,7 @@ private:
 
   SymbolStorage arena;
   std::unordered_map<std::string, SymbolAttr*> exported_symbols;
+  TypeEnvironment exported_type_environment;
 
   Parent module_root;
 

@@ -14,9 +14,19 @@ namespace {
   constexpr auto CYAN    = "\033[36m";
   constexpr auto MAGENTA = "\033[35m";
   constexpr auto BLUE    = "\033[34m";
+  constexpr auto GREEN   = "\033[32m";
 }
 
 void DiagnosticEngine::report(Diagnostic diag) {
+  for (const auto& existing : diagnostics) {
+    if (existing.level == diag.level
+        && existing.phase == diag.phase
+        && existing.location.line == diag.location.line
+        && existing.location.column == diag.location.column
+        && existing.message == diag.message) {
+      return;
+    }
+  }
   this->diagnostics.push_back(diag);
 }
 
@@ -70,6 +80,19 @@ static const char* level_color(DiagnosticLevel level) {
   return RESET;
 }
 
+static const char* phase_color(DiagnosticPhase phase) {
+  switch (phase) {
+    case DiagnosticPhase::Tokenizer:       return BLUE;
+    case DiagnosticPhase::Lexer:           return CYAN;
+    case DiagnosticPhase::Parser:          return MAGENTA;
+    case DiagnosticPhase::Resolver:        return YELLOW;
+    case DiagnosticPhase::ScopeResolution: return GREEN;
+    case DiagnosticPhase::TypeChecker:     return RED;
+    case DiagnosticPhase::CodeGen:         return BLUE;
+  }
+  return RESET;
+}
+
 static std::string gutter(size_t width, const std::string& content = "") {
   std::string pad(width - content.size(), ' ');
   return std::format("{}{}{} |{} ", pad, BLUE, content, RESET);
@@ -84,7 +107,8 @@ void DiagnosticEngine::print_all(std::ostream& out) {
     });
 
   for (const auto& d : diagnostics) {
-    const char* color = level_color(d.level);
+    const char* color = phase_color(d.phase);
+    const char* severity_color = level_color(d.level);
     const bool has_location = d.location.line > 0;
     const bool can_show_source =
       has_location
@@ -92,19 +116,19 @@ void DiagnosticEngine::print_all(std::ostream& out) {
       && d.location.line <= source_lines.size();
 
     out
-      << BOLD << color << level_to_string(d.level) << RESET
+      << BOLD << severity_color << level_to_string(d.level) << RESET
       << BOLD << ": " << d.message << RESET << "\n";
 
     if (has_location) {
       out
-        << "  " << BLUE << "-->" << RESET << " "
+        << "  " << color << "-->" << RESET << " "
         << (source_path.empty() ? "<source>" : source_path)
         << ":" << d.location.line << ":" << d.location.column
-        << DIM << "  [" << MAGENTA << phase_to_string(d.phase)
+        << DIM << "  [" << color << phase_to_string(d.phase)
         << RESET << DIM << "]" << RESET << "\n";
     } else {
       out
-        << "  " << BLUE << "-->" << RESET << " "
+        << "  " << color << "-->" << RESET << " "
         << DIM << "(no source location)  [" << MAGENTA
         << phase_to_string(d.phase) << RESET << DIM << "]" << RESET << "\n";
     }

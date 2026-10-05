@@ -151,6 +151,9 @@ auto parse_type_expression() -> Parser<NDTypeExpr> {
         return std::nullopt;
       }
       type_expr.parsed_type = std::move(texpr.value());
+    } else if (tok->token_type == TokenType::NilLiteral) {
+      state.advance();
+      type_expr.parsed_type = makeNil();
     } else {
       return std::nullopt;
     }

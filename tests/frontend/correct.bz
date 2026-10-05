@@ -33,8 +33,16 @@ type Data {
   Integer
   String
   Custom(value: Fn(Int, Int, String) :> String, desc: String)
+  NewLambda(Fn(a) :> b)
+  Container(Data)
 }
 
 type Foo
 
 type Food = Int
+
+func mainc(are: Data) :> Nil
+  case data:
+    NewLambda(fn) :> fn(are)
+  end
+end
