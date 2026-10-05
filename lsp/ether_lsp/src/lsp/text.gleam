@@ -55,10 +55,24 @@ pub fn in_type_position(text: String, line: Int, character: Int) -> Bool {
 /// Whether `name` is something the lexer would read back as a single
 /// identifier. Rename has to check: the editor will happily send anything.
 pub fn is_identifier(name: String) -> Bool {
+  has_identifier_shape(name) && !is_keyword(name)
+}
+
+/// Whether `rendered` can be written where the grammar expects a type.
+///
+/// Annotations are `":" <identifier>` and nothing more, so a solved type like
+/// `Int` can be written down but a type variable (`'t0`) or a constructed type
+/// (`Fn(Int) :> Int`) cannot -- inserting either would produce source that no
+/// longer parses. Reserved words are allowed here, unlike in `is_identifier`:
+/// `Nil` is both a keyword and a perfectly good type name.
+pub fn is_writable_type(rendered: String) -> Bool {
+  has_identifier_shape(rendered)
+}
+
+fn has_identifier_shape(name: String) -> Bool {
   case string.to_graphemes(name) {
     [] -> False
-    [first, ..rest] ->
-      is_alpha(first) && list.all(rest, is_identifier_char) && !is_keyword(name)
+    [first, ..rest] -> is_alpha(first) && list.all(rest, is_identifier_char)
   }
 }
 

@@ -218,12 +218,35 @@ the cursor. `:LspLog` records any check over 250ms.
 **Highlighting is right but hover is not.** Hover reads the last successful
 analysis. If the file does not parse, that is whatever the parser recovered.
 
+## Testing
+
+```sh
+cd lsp/ether_lsp && gleam test   # pure logic, no server or compiler needed
+python lsp/test/run.py           # the real server, over a real pipe
+python lsp/test/run.py features  # or one suite: features, scheduling, resilience
+```
+
+Both builds must be current first (`build.bat`, then `lspuild.cmd`).
+
+The Neovim half runs separately, since it needs an editor:
+
+```sh
+nvim --headless --cmd "set rtp+=$PWD/lsp/editors/nvim"      -c "edit lsp/test/sample.bz" -c "luafile lsp/test/nvim_check.lua"
+```
+
+`gleam test` covers the features as pure functions. The Python suites cover
+what only appears once a real server is talking to a real compiler over a real
+pipe: framing, scheduling, subprocess failure, and timing. The Neovim suite
+covers the half that only exists inside the editor.
+
 ## Status
 
-Verified by automated tests, run against the real server and a real Neovim:
+Verified by those tests:
 
-- 136 compiler tests, 67 Gleam unit tests
-- every feature above, driven over the wire by a scripted LSP client
+- 136 compiler tests, 70 Gleam unit tests
+- every feature above, driven over the wire by a scripted LSP client, including
+  that the annotate action is withheld where the inferred type has no spelling
+  the grammar accepts
 - Neovim 0.11.1: attach, `utf-8` encoding negotiation, inlay hints on attach,
   foldexpr wiring, and each feature through `vim.lsp`
 - diagnostics on open and on edit **without saving**

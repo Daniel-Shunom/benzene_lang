@@ -5,6 +5,7 @@
 //// and returns the JSON to reply with. That is what makes them testable
 //// without a client, a compiler, or a running server.
 
+import gleam/bool
 import gleam/int
 import gleam/json
 import gleam/list
@@ -392,7 +393,13 @@ pub fn code_actions(
 ) -> json.Json {
   unannotated(analysis, from_line, to_line)
   |> list.filter_map(fn(entry) {
-    use found <- result.map(annotation(analysis, entry))
+    use found <- result.try(annotation(analysis, entry))
+
+    // An inlay hint may show anything -- seeing `'t0` tells you the binding is
+    // generic. An edit may not: the grammar accepts only a bare identifier
+    // after `:`, so inserting a type variable or a function type would leave
+    // the file unparseable.
+    use <- bool.guard(!text.is_writable_type(found.type_name), Error(Nil))
 
     // A zero-width range is an insertion at that point.
     let at = encode.position(found.line, found.character)
@@ -402,19 +409,21 @@ pub fn code_actions(
         #("newText", json.string(found.text)),
       ])
 
-    json.object([
-      #(
-        "title",
-        json.string("Annotate `" <> entry.name <> "` as " <> found.type_name),
-      ),
-      #("kind", json.string("refactor.rewrite")),
-      #(
-        "edit",
-        json.object([
-          #("changes", json.object([#(uri, json.preprocessed_array([edit]))])),
-        ]),
-      ),
-    ])
+    Ok(
+      json.object([
+        #(
+          "title",
+          json.string("Annotate `" <> entry.name <> "` as " <> found.type_name),
+        ),
+        #("kind", json.string("refactor.rewrite")),
+        #(
+          "edit",
+          json.object([
+            #("changes", json.object([#(uri, json.preprocessed_array([edit]))])),
+          ]),
+        ),
+      ]),
+    )
   })
   |> json.preprocessed_array
 }

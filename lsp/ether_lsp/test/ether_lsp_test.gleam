@@ -221,6 +221,19 @@ pub fn identifiers_must_start_with_a_letter_test() {
   text.is_identifier("has-dash") |> should.be_false
 }
 
+pub fn writable_types_are_bare_names_test() {
+  text.is_writable_type("Int") |> should.be_true
+  text.is_writable_type("MyType") |> should.be_true
+  // A keyword is fine as a type name even though it is not a valid binding
+  // name -- `let v: Nil` parses.
+  text.is_writable_type("Nil") |> should.be_true
+
+  text.is_writable_type("'t0") |> should.be_false
+  text.is_writable_type("Fn(Int) :> Int") |> should.be_false
+  text.is_writable_type("List(Int)") |> should.be_false
+  text.is_writable_type("") |> should.be_false
+}
+
 pub fn keywords_are_not_valid_identifiers_test() {
   // Renaming something to `end` would produce a file that no longer parses.
   text.is_identifier("end") |> should.be_false
@@ -489,6 +502,29 @@ pub fn the_annotation_edit_is_an_insertion_test() {
     "\"range\":{\"start\":{\"line\":2,\"character\":11},\"end\":{\"line\":2,\"character\":11}}",
   )
   |> should.be_true
+}
+
+pub fn an_unsolved_type_is_not_offered_as_an_edit_test() {
+  // `'t0` is useful to see as a hint, but writing it into the file would make
+  // it stop parsing: annotations are a bare identifier and nothing else.
+  let generic =
+    analysis([], [Entry(..entry("value", 2, 7, 5), inferred: "'t0")])
+
+  json.to_string(feature.code_actions("file:///a.bz", generic, 0, 100))
+  |> should.equal("[]")
+
+  // The hint still shows it.
+  json.to_string(feature.inlay_hints(generic, 0, 100))
+  |> string.contains("'t0")
+  |> should.be_true
+}
+
+pub fn a_constructed_type_is_not_offered_as_an_edit_test() {
+  let higher_order =
+    analysis([], [Entry(..entry("f", 2, 7, 1), inferred: "Fn(Int) :> Int")])
+
+  json.to_string(feature.code_actions("file:///a.bz", higher_order, 0, 100))
+  |> should.equal("[]")
 }
 
 pub fn an_annotated_binding_offers_nothing_test() {

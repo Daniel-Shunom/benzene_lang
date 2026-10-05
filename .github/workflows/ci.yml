@@ -34,6 +34,24 @@ jobs:
           otp-version: "27"
           gleam-version: "1.18.0"
 
-      - name: Test the language server
+      - name: Unit-test the language server
         working-directory: lsp/ether_lsp
         run: gleam test
+
+      - name: Build the compiler it drives
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++-14 ninja-build cmake
+          cmake -S . -B build -G Ninja -DETHER_BUILD_TESTS=OFF
+          cmake --build build
+        env:
+          CXX: g++-14
+          CC: gcc-14
+
+      - name: Build the language server
+        run: sh ./lsp/build.sh
+
+      # `scheduling` is left out: it asserts on timings, which a shared runner
+      # cannot be relied on to meet. It is the suite to run locally.
+      - name: Integration-test the language server
+        run: python3 lsp/test/run.py features resilience
