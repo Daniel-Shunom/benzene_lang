@@ -206,9 +206,13 @@ int HandleScan(const ArgScan& a) {
         << ",\"column\":"     << entry.column
         << ",\"length\":"     << entry.length
         << ",\"type\":"       << json::quote(entry.type)
+        << ",\"detail\":"     << json::quote(entry.detail)
         << ",\"defLine\":"    << entry.def_line
         << ",\"defColumn\":"  << entry.def_column
+        << ",\"scopeLine\":"  << entry.scope_line
+        << ",\"scopeColumn\":" << entry.scope_column
         << ",\"isDefinition\":" << (entry.is_definition ? "true" : "false")
+        << ",\"annotated\":"  << (entry.annotated ? "true" : "false")
         << "}";
   }
   out << "]}";

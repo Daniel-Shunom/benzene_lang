@@ -39,9 +39,17 @@ pub type Entry {
     column: Int,
     length: Int,
     inferred: String,
+    /// Human-readable signature; functions only, empty elsewhere.
+    detail: String,
     def_line: Int,
     def_column: Int,
+    /// Name token of the enclosing function, or 0 at module scope.
+    scope_line: Int,
+    scope_column: Int,
     is_definition: Bool,
+    /// Whether the declaration carried an explicit type annotation. Inlay
+    /// hints are only worth showing where it did not.
+    annotated: Bool,
   )
 }
 
@@ -139,9 +147,13 @@ fn entry_decoder() -> decode.Decoder(Entry) {
   use column <- decode.field("column", decode.int)
   use length <- decode.field("length", decode.int)
   use inferred <- decode.field("type", decode.string)
+  use detail <- decode.field("detail", decode.string)
   use def_line <- decode.field("defLine", decode.int)
   use def_column <- decode.field("defColumn", decode.int)
+  use scope_line <- decode.field("scopeLine", decode.int)
+  use scope_column <- decode.field("scopeColumn", decode.int)
   use is_definition <- decode.field("isDefinition", decode.bool)
+  use annotated <- decode.field("annotated", decode.bool)
   decode.success(Entry(
     name:,
     kind:,
@@ -149,15 +161,31 @@ fn entry_decoder() -> decode.Decoder(Entry) {
     column:,
     length:,
     inferred:,
+    detail:,
     def_line:,
     def_column:,
+    scope_line:,
+    scope_column:,
     is_definition:,
+    annotated:,
   ))
 }
 
 /// True when the 0-based LSP position falls inside this entry's name span.
+///
+/// The end is inclusive: a cursor resting just past the last character is
+/// still "on" the word, which is where it sits after typing one.
 pub fn entry_covers(entry: Entry, line: Int, character: Int) -> Bool {
   entry.line - 1 == line
   && character >= entry.column - 1
-  && character < entry.column - 1 + entry.length
+  && character <= entry.column - 1 + entry.length
+}
+
+/// Two entries refer to the same thing when they share a declaration site.
+/// Entries the resolver could not bind (`def_line` 0) never match, including
+/// against each other -- two unknown names are not known to be the same name.
+pub fn same_symbol(left: Entry, right: Entry) -> Bool {
+  left.def_line != 0
+  && left.def_line == right.def_line
+  && left.def_column == right.def_column
 }

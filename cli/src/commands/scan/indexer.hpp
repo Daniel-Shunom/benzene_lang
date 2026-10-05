@@ -4,6 +4,7 @@
 #include <ether/types/types.hpp>
 
 #include <cstddef>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -29,6 +30,20 @@ struct IndexEntry {
 
   // True when this entry *is* the declaration site. Drives documentSymbol.
   bool is_definition = false;
+
+  // True when the declaration carried an explicit type annotation. The editor
+  // uses this to decide where an inferred type is worth showing inline: an
+  // annotation the user already wrote does not need repeating.
+  bool annotated = false;
+
+  // Human-readable signature, e.g. `identity(x: Int) :> Int`. Only populated
+  // for functions; the solved `type` is what everything else displays.
+  std::string detail;
+
+  // Name token of the function enclosing this entry, or zero at module scope.
+  // Lets the editor nest an outline without reconstructing scopes itself.
+  size_t scope_line   = 0;
+  size_t scope_column = 0;
 };
 
 // Walks the typed AST and collects every identifier occurrence and declaration
@@ -67,10 +82,31 @@ private:
   const Subst* substitutions;
   std::vector<IndexEntry> collected;
 
+  // Name tokens of the functions currently being walked, innermost last.
+  // Functions nest, so this is a stack rather than a single current scope.
+  std::vector<const Token*> scopes;
+
   [[nodiscard]] auto render(const TypePtr&) const -> std::string;
+
+  // Follows a type variable through the substitution map to whatever it was
+  // solved to. Returns the input unchanged when it is not a variable.
+  [[nodiscard]] auto resolve(const TypePtr&) const -> TypePtr;
+
+  // The return type of a function type, in either representation the model
+  // uses: a `FunctionType`, or a `Fn` constructor whose last argument is the
+  // return. Null when the type is not a function.
+  [[nodiscard]] auto function_return(const TypePtr&) const -> TypePtr;
+
+  // Renders `func(a: Int, b: Int) :> Int` from a declaration's own syntax,
+  // falling back to the solved type for anything left unannotated.
+  [[nodiscard]] auto signature(const Token& name,
+                               const std::vector<NDFuncParam>& params,
+                               const std::optional<NDTypeExpr>& returns,
+                               const TypePtr& inferred) const -> std::string;
 
   // Records `token` as an occurrence. `symbol` may be null, in which case the
   // entry carries no definition site.
   void record(const Token& token, const SymbolAttr* symbol, const TypePtr& type,
-              bool force_definition = false);
+              bool force_definition = false, bool annotated = false,
+              std::string detail = {});
 };

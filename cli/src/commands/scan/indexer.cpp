@@ -3,6 +3,9 @@
 #include <ether/symbols/symbol_types.hpp>
 #include <ether/types/type_printer.hpp>
 
+#include <utility>
+#include <variant>
+
 namespace {
 
 auto kind_to_string(SymbolKind kind) -> std::string {
@@ -27,14 +30,97 @@ auto LspIndexer::render(const TypePtr& type) const -> std::string {
   return TypePrinter{false, substitutions}.print(type);
 }
 
+auto LspIndexer::resolve(const TypePtr& type) const -> TypePtr {
+  TypePtr current = type;
+  if (!substitutions) {
+    return current;
+  }
+
+  // Bounded rather than `while`: a substitution map built from a failed
+  // unification can contain a cycle, and this runs on every keystroke.
+  for (int hops = 0; current && hops < 64; ++hops) {
+    const auto* variable = std::get_if<TypeVar>(&current->value);
+    if (!variable) {
+      break;
+    }
+    auto found = substitutions->find(variable->get_id());
+    if (found == substitutions->end()) {
+      break;
+    }
+    current = found->second;
+  }
+  return current;
+}
+
+auto LspIndexer::function_return(const TypePtr& type) const -> TypePtr {
+  TypePtr resolved = resolve(type);
+  if (!resolved) {
+    return nullptr;
+  }
+
+  if (const auto* function = std::get_if<FunctionType>(&resolved->value)) {
+    return function->get_return_type();
+  }
+
+  if (const auto* constructor = std::get_if<TypeConstructor>(&resolved->value)) {
+    if (constructor->name() == "Fn" && !constructor->get_args().empty()) {
+      return constructor->get_args().back();
+    }
+  }
+
+  return nullptr;
+}
+
+auto LspIndexer::signature(const Token& name,
+                           const std::vector<NDFuncParam>& params,
+                           const std::optional<NDTypeExpr>& returns,
+                           const TypePtr& inferred) const -> std::string {
+  std::string text = name.token_value + "(";
+
+  for (size_t i = 0; i < params.size(); ++i) {
+    if (i > 0) {
+      text += ", ";
+    }
+    text += params[i].identifier.identifier.token_value;
+
+    // Prefer what the user wrote; fall back to what was inferred for it.
+    const TypePtr& param_type = params[i].param_type && params[i].param_type->parsed_type
+      ? params[i].param_type->parsed_type
+      : params[i].inferred_type;
+    if (auto rendered = render(param_type); !rendered.empty()) {
+      text += ": " + rendered;
+    }
+  }
+
+  text += ")";
+
+  // What the user wrote wins; otherwise show what was inferred for the return.
+  std::string result = returns && returns->parsed_type
+    ? render(returns->parsed_type)
+    : render(function_return(inferred));
+
+  if (!result.empty()) {
+    text += " :> " + result;
+  }
+  return text;
+}
+
 void LspIndexer::record(const Token& token, const SymbolAttr* symbol,
-                        const TypePtr& type, bool force_definition) {
+                        const TypePtr& type, bool force_definition,
+                        bool annotated, std::string detail) {
   IndexEntry entry;
-  entry.name   = token.token_value;
-  entry.line   = token.line_number;
-  entry.column = token.column_number;
-  entry.length = token.token_value.size();
-  entry.type   = render(type);
+  entry.name      = token.token_value;
+  entry.line      = token.line_number;
+  entry.column    = token.column_number;
+  entry.length    = token.token_value.size();
+  entry.type      = render(type);
+  entry.annotated = annotated;
+  entry.detail    = std::move(detail);
+
+  if (!scopes.empty() && scopes.back() != &token) {
+    entry.scope_line   = scopes.back()->line_number;
+    entry.scope_column = scopes.back()->column_number;
+  }
 
   if (symbol) {
     entry.kind       = kind_to_string(symbol->symbol_kind);
@@ -61,7 +147,8 @@ void LspIndexer::record(const Token& token, const SymbolAttr* symbol,
 }
 
 void LspIndexer::visit(NDIdentifier& expr) {
-  record(expr.identifier, expr.identifier_symbol, expr.inferred_type);
+  record(expr.identifier, expr.identifier_symbol, expr.inferred_type, false,
+         expr.type.has_value() && expr.type->parsed_type != nullptr);
   if (expr.type) {
     expr.type->accept(*this);
   }
@@ -128,11 +215,19 @@ void LspIndexer::visit(NDFuncParam& expr) {
   // Recorded directly rather than by descending into `identifier`: the param
   // symbol lives on the NDFuncParam, and a parameter name is always its own
   // declaration site.
-  record(expr.identifier.identifier, expr.param_sym, expr.inferred_type, true);
+  record(expr.identifier.identifier, expr.param_sym, expr.inferred_type, true,
+         expr.param_type.has_value() && expr.param_type->parsed_type != nullptr);
 }
 
 void LspIndexer::visit(NDFuncDeclExpr& expr) {
-  record(expr.func_identifier, expr.func_sym, expr.inferred_type, true);
+  record(expr.func_identifier, expr.func_sym, expr.inferred_type, true,
+         expr.return_type.has_value() && expr.return_type->parsed_type != nullptr,
+         signature(expr.func_identifier, expr.func_params, expr.return_type,
+                   expr.inferred_type));
+
+  // Pushed before the params and body so everything inside is attributed to
+  // this function, and popped after so siblings are not.
+  scopes.push_back(&expr.func_identifier);
   for (auto& param : expr.func_params) {
     param.accept(*this);
   }
@@ -141,9 +236,12 @@ void LspIndexer::visit(NDFuncDeclExpr& expr) {
       node->accept(*this);
     }
   }
+  scopes.pop_back();
 }
 
 void LspIndexer::visit(NDLambdaExpr& expr) {
+  // A lambda has no name token to scope by, so its contents stay attributed to
+  // whatever function encloses the lambda itself.
   for (auto& param : expr.func_params) {
     param.accept(*this);
   }

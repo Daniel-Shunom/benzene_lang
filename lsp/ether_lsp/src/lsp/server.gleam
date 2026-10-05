@@ -1,23 +1,43 @@
-//// Request dispatch and the feature handlers.
+//// Server state and request dispatch.
 ////
-//// The server is a plain fold over incoming messages: LSP over stdio is
-//// strictly sequential, so there is no concurrency to manage and no actor to
-//// supervise. Each handler writes its own replies and returns the next state.
+//// Edits do not analyse immediately. A `didChange` marks the document dirty
+//// and returns; the main loop flushes once the client has been quiet for the
+//// debounce interval. Holding a key down therefore costs one compiler run
+//// instead of one per repeat, and because the reader is a separate process the
+//// backlog collapses rather than queues.
+////
+//// A request never waits for that timer. Anything the user explicitly asked
+//// for -- hover, go to definition, completion -- flushes its document first,
+//// so answers are always computed from the buffer as it is now.
 
 import gleam/dict.{type Dict}
 import gleam/dynamic.{type Dynamic}
 import gleam/dynamic/decode
-import gleam/int
 import gleam/json
 import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result
+import gleam/set.{type Set}
+import lsp/feature
 import lsp/rpc
 import lsp/scan
 import lsp/semantic
 import lsp/uri as file_uri
 
-const server_version = "0.1.0"
+/// Runs `work`, calling `recover` if it throws.
+@external(erlang, "ether_lsp_ffi", "guard_with")
+fn guard_with(work: fn() -> State, recover: fn() -> State) -> State
+
+const server_version = "0.2.0"
+
+/// How long the client must be quiet before a changed document is re-checked.
+/// Long enough that ordinary typing produces one run, short enough that the
+/// pause between words already shows results.
+const debounce_ms = 120
+
+/// A scan slower than this is logged. Normal runs are a few milliseconds, so
+/// anything here means the file or the machine is worth looking at.
+const slow_scan_ms = 250
 
 /// Request ids are "number | string" in JSON-RPC and must be echoed back in
 /// the same shape they arrived in.
@@ -27,7 +47,20 @@ pub type Id {
 }
 
 pub type Document {
-  Document(text: String, analysis: Option(scan.Scan))
+  Document(
+    text: String,
+    /// The most recent successful analysis. Kept across a failed run so
+    /// navigation still works while the compiler is broken.
+    analysis: Option(scan.Scan),
+    /// The text of the last *attempt*, successful or not. Re-running is
+    /// skipped while it still matches `text` -- which is what stops a failing
+    /// compiler from being spawned once per request.
+    attempted: Option(String),
+    /// Whether that attempt failed. Saving retries only in that case, so a
+    /// broken toolchain can be fixed and picked up with `:w`, while an
+    /// unchanged save after a good run stays free.
+    failed: Bool,
+  )
 }
 
 pub type State {
@@ -38,6 +71,8 @@ pub type State {
     /// encoding this server is actually correct in.
     position_encoding: String,
     running: Bool,
+    /// Documents edited since their last analysis.
+    dirty: Set(String),
   )
 }
 
@@ -47,7 +82,22 @@ pub fn new(executable: String) -> State {
     executable: executable,
     position_encoding: "utf-16",
     running: True,
+    dirty: set.new(),
   )
+}
+
+/// How long the main loop should wait for the next message: the debounce
+/// interval when work is queued, otherwise indefinitely.
+pub fn idle_timeout(state: State) -> Int {
+  case set.is_empty(state.dirty) {
+    True -> -1
+    False -> debounce_ms
+  }
+}
+
+/// Analyses every document edited since the last flush.
+pub fn flush(state: State) -> State {
+  set.fold(state.dirty, state, fn(carried, uri) { analyze(carried, uri, False) })
 }
 
 // --- dispatch ---------------------------------------------------------------
@@ -58,50 +108,138 @@ pub fn handle(state: State, message: Dynamic) -> State {
     decode.run(message, decode.at(["id"], id_decoder()))
     |> option.from_result
 
-  case method {
-    Error(_) -> state
-    Ok(name) -> route(state, name, id, message)
+  case method, id {
+    Error(_), _ -> state
+
+    // A request is the user waiting on an answer, so the document is brought
+    // up to date first rather than replying from a debounced-stale analysis.
+    Ok(name), Some(request) -> {
+      let prepared = flush_document(state, message)
+      guard_with(fn() { answer(prepared, name, request, message) }, fn() {
+        // Every request must be answered. A handler that throws would
+        // otherwise leave the editor waiting on that id for the rest of the
+        // session, which looks like a hang rather than a bug.
+        respond_error(request, -32_603, "internal error handling " <> name)
+        prepared
+      })
+    }
+
+    Ok(name), None -> notify(state, name, message)
   }
 }
 
-fn route(
-  state: State,
-  method: String,
-  id: Option(Id),
-  message: Dynamic,
-) -> State {
-  case method, id {
-    "initialize", Some(request) -> initialize(state, request, message)
+fn notify(state: State, method: String, message: Dynamic) -> State {
+  case method {
+    "exit" -> State(..state, running: False)
 
-    "shutdown", Some(request) -> {
-      respond(request, json.null())
+    "textDocument/didOpen" -> did_open(state, message)
+    "textDocument/didChange" -> did_change(state, message)
+    // Saving is the natural moment to retry after fixing whatever broke the
+    // compiler, so it forces a run when the last one failed.
+    "textDocument/didSave" -> save(state, message)
+    "textDocument/didClose" -> did_close(state, message)
+
+    // `initialized`, `$/cancelRequest` and `$/setTrace` need no reply and no
+    // state. Cancellation in particular is safe to drop: every request here is
+    // answered from data already in memory.
+    _ -> state
+  }
+}
+
+fn answer(state: State, method: String, id: Id, message: Dynamic) -> State {
+  case method {
+    "initialize" -> initialize(state, id, message)
+
+    "shutdown" -> {
+      respond(id, json.null())
       state
     }
 
-    "exit", _ -> State(..state, running: False)
+    "textDocument/hover" ->
+      with_position(state, id, message, fn(analysis, line, character) {
+        feature.hover(analysis, line, character)
+      })
 
-    "initialized", _ -> state
+    "textDocument/definition" ->
+      with_position(state, id, message, fn(analysis, line, character) {
+        feature.definition(uri_of(message), analysis, line, character)
+      })
 
-    "textDocument/didOpen", _ -> did_open(state, message)
-    "textDocument/didChange", _ -> did_change(state, message)
-    "textDocument/didSave", _ -> reanalyze(state, message)
-    "textDocument/didClose", _ -> did_close(state, message)
+    "textDocument/references" -> {
+      let include =
+        decode.run(
+          message,
+          decode.at(["params", "context", "includeDeclaration"], decode.bool),
+        )
+        |> result.unwrap(True)
 
-    "textDocument/hover", Some(request) -> hover(state, request, message)
-    "textDocument/definition", Some(request) ->
-      definition(state, request, message)
-    "textDocument/documentSymbol", Some(request) ->
-      document_symbols(state, request, message)
-    "textDocument/semanticTokens/full", Some(request) ->
-      semantic_tokens(state, request, message)
+      with_position(state, id, message, fn(analysis, line, character) {
+        feature.references(uri_of(message), analysis, line, character, include)
+      })
+    }
 
-    // A request we do not implement still owes the client a reply, or it waits
-    // forever. Unknown notifications can simply be dropped.
-    _, Some(request) -> {
-      respond_error(request, -32_601, "unsupported method: " <> method)
+    "textDocument/documentHighlight" ->
+      with_position(state, id, message, fn(analysis, line, character) {
+        feature.document_highlight(analysis, line, character)
+      })
+
+    "textDocument/completion" -> {
+      let source =
+        document(state, message)
+        |> result.map(fn(each) { each.text })
+        |> result.unwrap("")
+
+      with_position(state, id, message, fn(analysis, line, character) {
+        feature.completion(analysis, source, line, character)
+      })
+    }
+
+    "textDocument/signatureHelp" ->
+      with_position(state, id, message, fn(analysis, line, character) {
+        feature.signature_help(analysis, line, character)
+      })
+
+    "textDocument/prepareRename" ->
+      with_position(state, id, message, fn(analysis, line, character) {
+        feature.prepare_rename(analysis, line, character)
+      })
+
+    "textDocument/rename" -> rename(state, id, message)
+
+    "textDocument/documentSymbol" -> {
+      respond(id, case analysis_for(state, message) {
+        Ok(analysis) -> feature.document_symbols(analysis)
+        Error(_) -> json.preprocessed_array([])
+      })
       state
     }
-    _, None -> state
+
+    "textDocument/semanticTokens/full" -> {
+      respond(id, case analysis_for(state, message) {
+        Ok(analysis) ->
+          json.object([
+            #("data", semantic.encode(analysis.tokens, analysis.index)),
+          ])
+        Error(_) -> json.object([#("data", json.array([], json.int))])
+      })
+      state
+    }
+
+    "textDocument/foldingRange" -> {
+      respond(id, case analysis_for(state, message) {
+        Ok(analysis) -> feature.folding_ranges(analysis)
+        Error(_) -> json.preprocessed_array([])
+      })
+      state
+    }
+
+    "textDocument/inlayHint" -> inlay_hints(state, id, message)
+
+    // Unimplemented requests still owe a reply, or the client waits forever.
+    _ -> {
+      respond_error(id, -32_601, "unsupported method: " <> method)
+      state
+    }
   }
 }
 
@@ -129,42 +267,7 @@ fn initialize(state: State, id: Id, message: Dynamic) -> State {
   respond(
     id,
     json.object([
-      #(
-        "capabilities",
-        json.object([
-          #("positionEncoding", json.string(encoding)),
-          #(
-            "textDocumentSync",
-            json.object([
-              #("openClose", json.bool(True)),
-              // 1 = full document sync. Benzene files are small and the
-              // compiler re-checks from scratch anyway, so incremental sync
-              // would add bookkeeping for no gain.
-              #("change", json.int(1)),
-              #("save", json.bool(True)),
-            ]),
-          ),
-          #("hoverProvider", json.bool(True)),
-          #("definitionProvider", json.bool(True)),
-          #("documentSymbolProvider", json.bool(True)),
-          #(
-            "semanticTokensProvider",
-            json.object([
-              #(
-                "legend",
-                json.object([
-                  #("tokenTypes", json.array(semantic.token_types, json.string)),
-                  #(
-                    "tokenModifiers",
-                    json.array(semantic.token_modifiers, json.string),
-                  ),
-                ]),
-              ),
-              #("full", json.bool(True)),
-            ]),
-          ),
-        ]),
-      ),
+      #("capabilities", capabilities(encoding)),
       #(
         "serverInfo",
         json.object([
@@ -176,6 +279,61 @@ fn initialize(state: State, id: Id, message: Dynamic) -> State {
   )
 
   State(..state, position_encoding: encoding)
+}
+
+fn capabilities(encoding: String) -> json.Json {
+  json.object([
+    #("positionEncoding", json.string(encoding)),
+    #(
+      "textDocumentSync",
+      json.object([
+        #("openClose", json.bool(True)),
+        // 1 = full document sync. Benzene files are small and the compiler
+        // re-checks from scratch anyway, so incremental sync would add
+        // bookkeeping for no gain.
+        #("change", json.int(1)),
+        #("save", json.bool(True)),
+      ]),
+    ),
+    #("hoverProvider", json.bool(True)),
+    #("definitionProvider", json.bool(True)),
+    #("referencesProvider", json.bool(True)),
+    #("documentHighlightProvider", json.bool(True)),
+    #("documentSymbolProvider", json.bool(True)),
+    #("foldingRangeProvider", json.bool(True)),
+    #("inlayHintProvider", json.bool(True)),
+    #("renameProvider", json.object([#("prepareProvider", json.bool(True))])),
+    #(
+      "completionProvider",
+      json.object([
+        // `:` opens an annotation and `>` completes the `:>` arrow; both are
+        // points where the useful suggestions are types rather than values.
+        #("triggerCharacters", json.array([":", ">"], json.string)),
+      ]),
+    ),
+    #(
+      "signatureHelpProvider",
+      json.object([
+        #("triggerCharacters", json.array(["(", ","], json.string)),
+      ]),
+    ),
+    #(
+      "semanticTokensProvider",
+      json.object([
+        #(
+          "legend",
+          json.object([
+            #("tokenTypes", json.array(semantic.token_types, json.string)),
+            #(
+              "tokenModifiers",
+              json.array(semantic.token_modifiers, json.string),
+            ),
+          ]),
+        ),
+        #("full", json.bool(True)),
+      ]),
+    ),
+  ])
 }
 
 // --- document synchronisation ----------------------------------------------
@@ -196,7 +354,9 @@ fn did_open(state: State, message: Dynamic) -> State {
 
   case fields {
     Error(_) -> state
-    Ok(#(uri, text)) -> store_and_analyze(state, uri, text)
+    // Opening is not typing: the user is looking at the file now, so it is
+    // checked immediately rather than after the debounce.
+    Ok(#(uri, text)) -> analyze(store(state, uri, text), uri, False)
   }
 }
 
@@ -220,7 +380,7 @@ fn did_change(state: State, message: Dynamic) -> State {
     Ok(#(uri, changes)) ->
       case list.last(changes) {
         Error(_) -> state
-        Ok(text) -> store_and_analyze(state, uri, text)
+        Ok(text) -> store(state, uri, text)
       }
   }
 }
@@ -232,277 +392,248 @@ fn did_close(state: State, message: Dynamic) -> State {
       // Diagnostics belong to the server, so a closed file keeps showing them
       // in the editor until they are explicitly cleared.
       publish(uri, [])
-      State(..state, documents: dict.delete(state.documents, uri))
+      State(
+        ..state,
+        documents: dict.delete(state.documents, uri),
+        dirty: set.delete(state.dirty, uri),
+      )
     }
   }
 }
 
-fn reanalyze(state: State, message: Dynamic) -> State {
+/// Records new text and queues the document for analysis.
+fn store(state: State, uri: String, text: String) -> State {
+  let existing =
+    dict.get(state.documents, uri)
+    |> result.unwrap(Document(
+      text: "",
+      analysis: None,
+      attempted: None,
+      failed: False,
+    ))
+
+  State(
+    ..state,
+    documents: dict.insert(
+      state.documents,
+      uri,
+      Document(..existing, text: text),
+    ),
+    dirty: set.insert(state.dirty, uri),
+  )
+}
+
+/// Brings the document named in `message` up to date, if it is queued.
+fn flush_document(state: State, message: Dynamic) -> State {
   case document_uri(message) {
     Error(_) -> state
-    Ok(uri) ->
-      case dict.get(state.documents, uri) {
-        Error(_) -> state
-        Ok(document) -> store_and_analyze(state, uri, document.text)
+    Ok(uri) -> analyze(state, uri, False)
+  }
+}
+
+/// Saving retries a failed run. It is the natural gesture after fixing
+/// whatever broke the compiler, and re-running an identical successful check
+/// would be pure waste.
+fn save(state: State, message: Dynamic) -> State {
+  case document_uri(message) {
+    Error(_) -> state
+    Ok(uri) -> {
+      let retry =
+        dict.get(state.documents, uri)
+        |> result.map(fn(each) { each.failed })
+        |> result.unwrap(False)
+
+      analyze(state, uri, retry)
+    }
+  }
+}
+
+/// Runs the compiler over a document and publishes what it says.
+///
+/// Skipped when this exact text has already been through the compiler, unless
+/// `force` says to try again regardless.
+fn analyze(state: State, uri: String, force: Bool) -> State {
+  case dict.get(state.documents, uri) {
+    Error(_) -> State(..state, dirty: set.delete(state.dirty, uri))
+
+    Ok(document) ->
+      case !force && document.attempted == Some(document.text) {
+        True -> State(..state, dirty: set.delete(state.dirty, uri))
+        False -> run_scan(state, uri, document)
       }
   }
 }
 
-fn store_and_analyze(state: State, uri: String, text: String) -> State {
-  case scan.run(state.executable, file_uri.to_path(uri), text) {
+fn run_scan(state: State, uri: String, document: Document) -> State {
+  let started = rpc.now_ms()
+  let outcome = scan.run(state.executable, file_uri.to_path(uri), document.text)
+  let elapsed = rpc.now_ms() - started
+
+  let dirty = set.delete(state.dirty, uri)
+
+  case outcome {
     Ok(analysis) -> {
-      publish(uri, list.map(analysis.diagnostics, encode_diagnostic))
+      publish(uri, feature.diagnostics(analysis))
+      case elapsed >= slow_scan_ms {
+        True ->
+          rpc.log(
+            "ether-lsp: slow scan - " <> feature.summary(analysis, elapsed),
+          )
+        False -> Nil
+      }
+
       State(
         ..state,
+        dirty: dirty,
         documents: dict.insert(
           state.documents,
           uri,
-          Document(text: text, analysis: Some(analysis)),
+          Document(
+            text: document.text,
+            analysis: Some(analysis),
+            attempted: Some(document.text),
+            failed: False,
+          ),
         ),
       )
     }
 
     Error(reason) -> {
       // Failure here means the compiler could not be run at all -- a bad path,
-      // say. Showing that in the editor beats silently reporting a clean file,
-      // which is what an empty diagnostic list would imply.
-      rpc.log("ether scan failed: " <> reason)
-      publish(uri, [tooling_diagnostic(reason)])
+      // a crash, a timeout. Reporting it in the editor beats silently showing
+      // a clean file, which is what an empty diagnostic list would imply.
+      rpc.log("ether-lsp: scan failed - " <> reason)
+      publish(uri, [feature.tooling_diagnostic(reason)])
+
+      // The previous analysis is kept -- stale navigation beats none -- but
+      // the attempt is recorded so the next hover does not spawn the same
+      // failing process again. An edit, or a save, is what retries.
       State(
         ..state,
+        dirty: dirty,
         documents: dict.insert(
           state.documents,
           uri,
-          Document(text: text, analysis: None),
+          Document(..document, attempted: Some(document.text), failed: True),
         ),
       )
     }
   }
 }
 
-// --- features ---------------------------------------------------------------
+// --- request helpers --------------------------------------------------------
 
-fn hover(state: State, id: Id, message: Dynamic) -> State {
-  case lookup_entry(state, message) {
-    Error(_) -> respond(id, json.null())
-    Ok(entry) -> {
-      let signature = case entry.inferred {
-        "" -> entry.name
-        rendered -> entry.name <> " : " <> rendered
-      }
+/// Replies using the analysis and the cursor position from `message`, or with
+/// `null` when either is missing.
+fn with_position(
+  state: State,
+  id: Id,
+  message: Dynamic,
+  build: fn(scan.Scan, Int, Int) -> json.Json,
+) -> State {
+  let answer = {
+    use analysis <- result.try(analysis_for(state, message))
+    use position <- result.try(position_of(message))
+    let #(line, character) = position
+    Ok(build(analysis, line, character))
+  }
 
-      respond(
-        id,
-        json.object([
-          #(
-            "contents",
-            json.object([
-              #("kind", json.string("markdown")),
-              #(
-                "value",
-                json.string(
-                  "```benzene\n"
-                  <> signature
-                  <> "\n```\n\n"
-                  <> describe_kind(entry.kind),
-                ),
-              ),
-            ]),
-          ),
-          #("range", span(entry.line, entry.column, entry.length)),
-        ]),
+  respond(id, result.unwrap(answer, json.null()))
+  state
+}
+
+fn rename(state: State, id: Id, message: Dynamic) -> State {
+  let new_name =
+    decode.run(message, decode.at(["params", "newName"], decode.string))
+    |> result.unwrap("")
+
+  let outcome = {
+    use analysis <- result.try(
+      analysis_for(state, message)
+      |> result.replace_error("this document has not been analysed yet"),
+    )
+    use position <- result.try(
+      position_of(message)
+      |> result.replace_error("the request carried no cursor position"),
+    )
+    let #(line, character) = position
+    feature.rename(uri_of(message), analysis, line, character, new_name)
+  }
+
+  case outcome {
+    Ok(edit) -> respond(id, edit)
+    // A refused rename is reported as a request error so the editor shows the
+    // reason, rather than silently applying nothing.
+    Error(reason) -> respond_error(id, -32_602, reason)
+  }
+
+  state
+}
+
+fn inlay_hints(state: State, id: Id, message: Dynamic) -> State {
+  let range =
+    decode.run(message, {
+      use from <- decode.subfield(
+        ["params", "range", "start", "line"],
+        decode.int,
       )
-    }
-  }
+      use to <- decode.subfield(["params", "range", "end", "line"], decode.int)
+      decode.success(#(from, to))
+    })
+
+  respond(id, case analysis_for(state, message), range {
+    Ok(analysis), Ok(#(from, to)) -> feature.inlay_hints(analysis, from, to)
+    Ok(analysis), Error(_) -> feature.inlay_hints(analysis, 0, 1_000_000)
+    Error(_), _ -> json.preprocessed_array([])
+  })
 
   state
 }
 
-fn definition(state: State, id: Id, message: Dynamic) -> State {
-  let target = {
-    use entry <- result.try(lookup_entry(state, message))
-    use uri <- result.try(document_uri(message) |> result.replace_error(Nil))
-    case entry.def_line {
-      0 -> Error(Nil)
-      line -> Ok(#(uri, line, entry.def_column, entry.length))
-    }
-  }
-
-  case target {
-    Error(_) -> respond(id, json.null())
-    Ok(#(uri, line, column, length)) ->
-      respond(
-        id,
-        json.object([
-          #("uri", json.string(uri)),
-          #("range", span(line, column, length)),
-        ]),
-      )
-  }
-
-  state
-}
-
-fn document_symbols(state: State, id: Id, message: Dynamic) -> State {
-  case analysis_for(state, message) {
-    Error(_) -> respond(id, json.preprocessed_array([]))
-    Ok(analysis) -> {
-      let symbols =
-        analysis.index
-        |> list.filter(fn(entry) { entry.is_definition })
-        |> list.filter(fn(entry) { symbol_kind(entry.kind) != 0 })
-        |> list.map(fn(entry) {
-          json.object([
-            #("name", json.string(entry.name)),
-            #("detail", json.string(entry.inferred)),
-            #("kind", json.int(symbol_kind(entry.kind))),
-            #("range", span(entry.line, entry.column, entry.length)),
-            #("selectionRange", span(entry.line, entry.column, entry.length)),
-          ])
-        })
-
-      respond(id, json.preprocessed_array(symbols))
-    }
-  }
-
-  state
-}
-
-fn semantic_tokens(state: State, id: Id, message: Dynamic) -> State {
-  case analysis_for(state, message) {
-    Error(_) -> respond(id, json.object([#("data", json.array([], json.int))]))
-    Ok(analysis) ->
-      respond(
-        id,
-        json.object([
-          #("data", semantic.encode(analysis.tokens, analysis.index)),
-        ]),
-      )
-  }
-
-  state
-}
-
-// --- shared lookups ---------------------------------------------------------
-
-fn document_uri(message: Dynamic) -> Result(String, List(decode.DecodeError)) {
+fn document_uri(message: Dynamic) -> Result(String, Nil) {
   decode.run(
     message,
     decode.at(["params", "textDocument", "uri"], decode.string),
   )
+  |> result.replace_error(Nil)
+}
+
+fn uri_of(message: Dynamic) -> String {
+  result.unwrap(document_uri(message), "")
+}
+
+fn document(state: State, message: Dynamic) -> Result(Document, Nil) {
+  use uri <- result.try(document_uri(message))
+  dict.get(state.documents, uri)
 }
 
 fn analysis_for(state: State, message: Dynamic) -> Result(scan.Scan, Nil) {
-  use uri <- result.try(document_uri(message) |> result.replace_error(Nil))
-  use document <- result.try(dict.get(state.documents, uri))
-  option.to_result(document.analysis, Nil)
+  use found <- result.try(document(state, message))
+  option.to_result(found.analysis, Nil)
 }
 
-/// Finds the identifier under the cursor in the most recent analysis.
-fn lookup_entry(state: State, message: Dynamic) -> Result(scan.Entry, Nil) {
-  use analysis <- result.try(analysis_for(state, message))
-  use position <- result.try(
-    decode.run(message, {
-      use line <- decode.subfield(["params", "position", "line"], decode.int)
-      use character <- decode.subfield(
-        ["params", "position", "character"],
-        decode.int,
-      )
-      decode.success(#(line, character))
-    })
-    |> result.replace_error(Nil),
-  )
-
-  let #(line, character) = position
-  analysis.index
-  |> list.find(fn(entry) { scan.entry_covers(entry, line, character) })
+fn position_of(message: Dynamic) -> Result(#(Int, Int), Nil) {
+  decode.run(message, {
+    use line <- decode.subfield(["params", "position", "line"], decode.int)
+    use character <- decode.subfield(
+      ["params", "position", "character"],
+      decode.int,
+    )
+    decode.success(#(line, character))
+  })
+  |> result.replace_error(Nil)
 }
 
-// --- encoding ---------------------------------------------------------------
-
-/// Builds an LSP range from the lexer's 1-based line/column plus a length.
-fn span(line: Int, column: Int, length: Int) -> json.Json {
-  let line = int.max(line - 1, 0)
-  let character = int.max(column - 1, 0)
-
-  json.object([
-    #(
-      "start",
-      json.object([
-        #("line", json.int(line)),
-        #("character", json.int(character)),
-      ]),
-    ),
-    #(
-      "end",
-      json.object([
-        #("line", json.int(line)),
-        #("character", json.int(character + length)),
-      ]),
-    ),
-  ])
-}
-
-fn encode_diagnostic(diagnostic: scan.Diagnostic) -> json.Json {
-  json.object([
-    #("range", span(diagnostic.line, diagnostic.column, diagnostic.length)),
-    #("severity", json.int(severity(diagnostic.severity))),
-    #("source", json.string("ether/" <> diagnostic.phase)),
-    #("message", json.string(diagnostic.message)),
-  ])
-}
-
-/// Reported when `ether` itself could not be run, so the problem shows up in
-/// the editor instead of only in the log.
-fn tooling_diagnostic(reason: String) -> json.Json {
-  json.object([
-    #("range", span(1, 1, 1)),
-    #("severity", json.int(1)),
-    #("source", json.string("ether-lsp")),
-    #("message", json.string("could not run the ether compiler: " <> reason)),
-  ])
-}
+// --- wire -------------------------------------------------------------------
 
 fn publish(uri: String, diagnostics: List(json.Json)) -> Nil {
-  notify(
+  send_notification(
     "textDocument/publishDiagnostics",
     json.object([
       #("uri", json.string(uri)),
       #("diagnostics", json.preprocessed_array(diagnostics)),
     ]),
   )
-}
-
-fn severity(level: String) -> Int {
-  case level {
-    "error" -> 1
-    "warning" -> 2
-    _ -> 3
-  }
-}
-
-/// LSP SymbolKind. Zero means "leave it out of the outline".
-fn symbol_kind(kind: String) -> Int {
-  case kind {
-    "Function" -> 12
-    "Constant" -> 14
-    "Binding" -> 13
-    "Type" -> 5
-    "Module" -> 2
-    _ -> 0
-  }
-}
-
-fn describe_kind(kind: String) -> String {
-  case kind {
-    "Function" -> "function"
-    "FuncParam" -> "function parameter"
-    "Binding" -> "let binding"
-    "Constant" -> "module constant"
-    "Type" -> "type"
-    "Module" -> "module"
-    _ -> "unresolved - the compiler could not bind this name"
-  }
 }
 
 fn id_decoder() -> decode.Decoder(Id) {
@@ -544,7 +675,7 @@ fn respond_error(id: Id, code: Int, reason: String) -> Nil {
   )
 }
 
-fn notify(method: String, params: json.Json) -> Nil {
+fn send_notification(method: String, params: json.Json) -> Nil {
   rpc.write_message(
     json.object([
       #("jsonrpc", json.string("2.0")),
@@ -552,4 +683,9 @@ fn notify(method: String, params: json.Json) -> Nil {
       #("params", params),
     ]),
   )
+}
+
+/// Re-exported so the entry point can describe what it is serving.
+pub fn version() -> String {
+  server_version
 }
