@@ -316,6 +316,25 @@ fix, not the editor's. The server reports what it is told.
   better to report. Giving `Constraint` a `SourceLocation`, filled in where
   the constraint is generated, is what would put the squiggle on the offending
   line.
+- **Type aliases are never expanded when unifying.** A `type X = T` declaration
+  creates the name, but the unifier compares `X` as an opaque constructor and
+  refuses to match it against `T`:
+
+  ```
+  type Count = Int
+
+  func f()
+    let x: Count = 1   -- "These types are incompatible: expected Count,
+    x                  --  but found Int"
+  end
+  ```
+
+  Dropping the alias makes it compile. Sum types are unaffected -- they are
+  nominal, so comparing them by name is right. What is missing is an alias
+  table, filled from `NDTypeDecl::alias_target`, consulted before two types are
+  compared. This is what makes an aliased function type (`type Handler =
+  Fn(Int) :> String`) unusable as an annotation.
+
 - **A scoped expression containing a `let` does not propagate its type.**
 
   ```
