@@ -2,6 +2,14 @@
 #include "ether/ast_passes/type_check/type_check.hpp"
 #include "ether/types/types.hpp"
 
+namespace {
+// Where a constraint came from, so a failure to satisfy it can be reported
+// against the code that asked for it rather than against line 1.
+auto at(const Token& token) -> SourceLocation {
+  return {.line = token.line_number, .column = token.column_number};
+}
+}  // namespace
+
 void TCModule_Constrain::visit(NDLiteral& expr) {
   Constraint constraint({
     .lhs=expr.inferred_type,
@@ -29,7 +37,8 @@ void TCModule_Constrain::visit(NDLetBindExpr& expr) {
   expr.bound_value->accept(*this);
   Constraint constraint({
     .lhs=expr.identifier->inferred_type,
-    .rhs=expr.bound_value->inferred_type
+    .rhs=expr.bound_value->inferred_type,
+    .location=at(expr.identifier->identifier)
   });
   this->constraints.push_back(constraint);
   context.generalize_binding(expr);
@@ -39,7 +48,8 @@ void TCModule_Constrain::visit(NDConstExpr& expr) {
   expr.bound_value->accept(*this);
   Constraint constraint({
     .lhs=expr.identifier->inferred_type,
-    .rhs=expr.bound_value->inferred_type
+    .rhs=expr.bound_value->inferred_type,
+    .location=at(expr.identifier->identifier)
   });
   this->constraints.push_back(constraint);
 }
@@ -58,9 +68,13 @@ void TCModule_Constrain::visit(NDCallExpr& expr) {
     return;
   }
 
+  // Blamed on the callee's name. Calling a function with arguments it cannot
+  // accept is a mistake at the call, not at the declaration -- the declaration
+  // may be correct and used correctly everywhere else.
   Constraint constraint({
     .lhs = expr.identifier->inferred_type,
-    .rhs = makeFunc(std::move(call_args), expr.inferred_type)
+    .rhs = makeFunc(std::move(call_args), expr.inferred_type),
+    .location = at(expr.identifier->identifier)
   });
 
   this->constraints.push_back(constraint);
@@ -97,15 +111,19 @@ void TCModule_Constrain::visit(NDFuncDeclExpr& expr) {
   }
 
   if (expr.return_type && !expr.func_body.empty()) {
+    // A body that does not produce the declared return type is the
+    // declaration's problem, so it is blamed on the name.
     constraints.push_back({
       .lhs = expr.return_type->inferred_type,
-      .rhs = expr.func_body.back()->inferred_type
+      .rhs = expr.func_body.back()->inferred_type,
+      .location = at(expr.func_identifier)
     });
   }
 
   constraints.push_back({
     .lhs = expr.inferred_type,
-    .rhs = makeFunc(param_types, expr.return_type.value().inferred_type)
+    .rhs = makeFunc(param_types, expr.return_type.value().inferred_type),
+    .location = at(expr.func_identifier)
   });
   context.pop_type_scope();
 }
@@ -123,7 +141,8 @@ void TCModule_Constrain::visit(NDCaseExpr& expr) {
       if (i < expr.conditions.size()) {
         constraints.push_back({
           .lhs = expr.conditions[i]->inferred_type,
-          .rhs = branch.pattern[i]->inferred_type
+          .rhs = branch.pattern[i]->inferred_type,
+          .location = at(expr.case_keyword)
         });
       }
     }
@@ -131,7 +150,8 @@ void TCModule_Constrain::visit(NDCaseExpr& expr) {
     branch.result->accept(*this);
     constraints.push_back({
       .lhs = expr.inferred_type,
-      .rhs = branch.result->inferred_type
+      .rhs = branch.result->inferred_type,
+      .location = at(expr.case_keyword)
     });
   }
 }
@@ -140,8 +160,12 @@ void TCModule_Constrain::visit(NDBinaryExpr& expr) {
   expr.lhs->accept(*this);
   expr.rhs->accept(*this);
 
-  const auto add_constraint = [this](TypePtr lhs, TypePtr rhs) -> void {
-    constraints.push_back({.lhs = std::move(lhs), .rhs = std::move(rhs)});
+  const auto add_constraint = [this, &expr](TypePtr lhs, TypePtr rhs) -> void {
+    constraints.push_back({
+      .lhs = std::move(lhs),
+      .rhs = std::move(rhs),
+      .location = at(expr.op)
+    });
   };
 
   using Op = TokenType;
@@ -268,15 +292,19 @@ void TCModule_Constrain::visit(NDLambdaExpr& expr) {
   }
 
   if (expr.return_type && !expr.func_body.empty()) {
+    // A body that does not produce the declared return type is the
+    // lambda's problem, so it is blamed on the `Fn` that opened it.
     constraints.push_back({
       .lhs = expr.return_type->inferred_type,
-      .rhs = expr.func_body.back()->inferred_type
+      .rhs = expr.func_body.back()->inferred_type,
+      .location = at(expr.lambda_start)
     });
   }
 
   constraints.push_back({
     .lhs = expr.inferred_type,
-    .rhs = makeFunc(param_types, expr.return_type.value().inferred_type)
+    .rhs = makeFunc(param_types, expr.return_type.value().inferred_type),
+    .location = at(expr.lambda_start)
   });
   context.pop_type_scope();
 }

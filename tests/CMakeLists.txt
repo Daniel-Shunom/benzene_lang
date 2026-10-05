@@ -22,6 +22,7 @@ set(ETHER_TEST_SOURCES
   unit/test_sym_resolver.cpp
   unit/test_import_res.cpp
   unit/test_lsp_index.cpp
+  unit/test_diagnostics.cpp
   integration/test_module_pipeline.cpp
 )
 

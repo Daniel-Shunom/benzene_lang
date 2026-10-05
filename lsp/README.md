@@ -262,7 +262,7 @@ covers the half that only exists inside the editor.
 
 Verified by those tests:
 
-- 151 compiler tests, 71 Gleam unit tests
+- 162 compiler tests, 71 Gleam unit tests
 - every feature above, driven over the wire by a scripted LSP client, including
   that the annotate action is withheld where the inferred type has no spelling
   the grammar accepts
@@ -295,9 +295,9 @@ Not done, and worth knowing before relying on this:
   so there are no quick fixes to offer.
 - **No formatter.** The compiler has none.
 - **Diagnostic ranges are one token wide.** The compiler reports a point, not a
-  span, so the underline covers the token starting there and nothing more.
-  Adding an end position to `SourceLocation` in the compiler would be picked up
-  here for free.
+  span. The point is now the right token -- a bad call underlines the callee --
+  but a range covering a whole expression would need an end position on
+  `SourceLocation`, which the editor would pick up for free.
 - **Completion scope is a heuristic.** The index records points, not body
   extents, so "which function am I in" is derived from the nearest declaration
   above the cursor. It is right wherever anything is declared.
@@ -317,35 +317,6 @@ Not done, and worth knowing before relying on this:
 Found while testing this, and left alone because they are the front-end's to
 fix, not the editor's. The server reports what it is told.
 
-- **The parser gives up silently inside a function body.** It stops at the
-  first thing it cannot parse, discards the rest of the body, and reports
-  nothing:
-
-  ```
-  func g()
-    a = 5      -- `let` omitted
-    f(a)       -- parsed? no. indexed? no. reported? no.
-  end
-  ```
-
-  The index holds `g` and `a` and stops. `f(a)` is simply absent, so it has no
-  hover, no go-to-definition and no semantic colour -- and because no
-  diagnostic is emitted, nothing says why. This is the single biggest cause of
-  "the editor stopped resolving things": one syntax slip silently removes
-  everything below it in that function. Any `let`-less binding, or a stray
-  token, does it.
-
-  The editor cannot tell "the parser finished" from "the parser gave up"
-  without the parser saying so, so this one has to be fixed by error recovery
-  -- a diagnostic at the offending token, and a skip to the next statement
-  boundary, rather than an early return.
-
-- **Type errors land on line 1.** `Unifier::report_failure` hardcodes
-  `location = {1, 1}` (`core/src/ast_passes/type_check/modules/unify.cpp`),
-  and `Constraint` carries no source location at all, so there is nothing
-  better to report. Giving `Constraint` a `SourceLocation`, filled in where
-  the constraint is generated, is what would put the squiggle on the offending
-  line.
 - **Type aliases are never expanded when unifying.** A `type X = T` declaration
   creates the name, but the unifier compares `X` as an opaque constructor and
   refuses to match it against `T`:
@@ -360,10 +331,11 @@ fix, not the editor's. The server reports what it is told.
   ```
 
   Dropping the alias makes it compile. Sum types are unaffected -- they are
-  nominal, so comparing them by name is right. What is missing is an alias
-  table, filled from `NDTypeDecl::alias_target`, consulted before two types are
-  compared. This is what makes an aliased function type (`type Handler =
-  Fn(Int) :> String`) unusable as an annotation.
+  nominal, so comparing them by name is right. `TypeAliasTable` now records the
+  targets, and the index reads it so hovering `Count` says `Int`; what remains
+  is for the unifier to consult it before comparing two types. This is what
+  makes an aliased function type (`type Handler = Fn(Int) :> String`) unusable
+  as an annotation.
 
 - **A scoped expression containing a `let` does not propagate its type.**
 

@@ -13,6 +13,11 @@ class Unifier {
   DiagnosticEngine& diag_engine;
   size_t solved_constraints{0};
 
+  // The constraint currently being solved. Unification recurses, so the
+  // failure that surfaces is often several levels below the constraint that
+  // caused it; this is what lets the diagnostic still name the right place.
+  SourceLocation current_location{};
+
   auto report_failure(std::string message, TypePtr lhs = nullptr,
                       TypePtr rhs = nullptr) -> void;
   auto occurs(TypeVarId id, TypePtr type,

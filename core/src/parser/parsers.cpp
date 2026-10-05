@@ -39,6 +39,65 @@ auto run_parser(ParserState& state) -> PResult<Parent> {
   return parent;
 }
 
+
+// Benzene has no assignment. A binding is introduced with `let` inside a body,
+// or `const` at module scope, and is never rebound.
+//
+// Without this, `a = 5` parses as the bare expression `a`, the `=` is left
+// over, and the next round of body parsing fails on it -- taking the rest of
+// the function down silently. Recognising the shape here turns that into one
+// diagnostic that names the missing keyword.
+//
+// An annotation is picked up too, because `a: Count = 5` is the same mistake
+// wearing a type: annotations belong to declarations and parameters, never to
+// an expression.
+static auto parse_assignment_without_binder() -> Parser<NDPtr> {
+  static Parser<NDPtr> parser = [](ParserState& state) -> PResult<NDPtr> {
+    size_t start = state.pos;
+
+    auto name = match(TokenType::Identifier)(state);
+    if (!name) {
+      state.reset_pos(start);
+      return std::nullopt;
+    }
+
+    bool annotated = false;
+    if (match(TokenType::Colon)(state)) {
+      annotated = true;
+      // The annotation's type, if one was written. A missing one is still this
+      // same mistake, so it is not required here.
+      match(TokenType::Identifier)(state);
+    }
+
+    if (!match(TokenType::Eq)(state)) {
+      state.reset_pos(start);
+      return std::nullopt;
+    }
+
+    Diagnostic diag;
+    diag.level = DiagnosticLevel::Fail;
+    diag.phase = DiagnosticPhase::Parser;
+    diag.location.line = name->line_number;
+    diag.location.column = name->column_number;
+    diag.message = "`" + name->token_value
+      + "` is assigned without a binder. Benzene has no assignment: write `let "
+      + name->token_value + (annotated ? ": <type>" : "")
+      + " = ...` to introduce a binding, or `const` at module scope.";
+    state.diag_eng.report(diag);
+
+    // Consume the value that was being assigned, so the statements after this
+    // one still parse and still resolve. Returning it keeps the body
+    // well-formed; the diagnostic above is what reports the mistake.
+    if (auto value = parse_value_expression()(state)) {
+      return value;
+    }
+
+    state.reset_pos(start);
+    return std::nullopt;
+  };
+  return parser;
+}
+
 auto parse_expression() -> Parser<NDPtr> {
   static Parser<NDPtr> parser = [](ParserState& state) -> PResult<NDPtr> {
 
@@ -62,6 +121,10 @@ auto parse_expression() -> Parser<NDPtr> {
       return std::make_unique<NDTypeDecl>(std::move(type_decl.value()));
     }
 
+    if (auto assigned = parse_assignment_without_binder()(state)) {
+      return assigned;
+    }
+
     if (auto value_expr = parse_value_expression()(state)) {
       return value_expr;
     }
@@ -79,6 +142,10 @@ auto parse_body_expression() -> Parser<NDPtr> {
 
     if (auto let_expr = parse_let_expression()(state)) {
       return std::make_unique<NDLetBindExpr>(std::move(let_expr.value()));
+    }
+
+    if (auto assigned = parse_assignment_without_binder()(state)) {
+      return assigned;
     }
 
     if (auto chain = parse_call_exprs()(state)) {

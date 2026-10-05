@@ -16,7 +16,11 @@ auto Unifier::report_failure(std::string message, TypePtr lhs,
   Diagnostic diagnostic;
   diagnostic.level = DiagnosticLevel::Fail;
   diagnostic.phase = DiagnosticPhase::TypeChecker;
-  diagnostic.location = {.line = 1, .column = 1};
+  // Fall back to the top of the file only when the constraint carried no
+  // location, which means nothing in the tree could be blamed for it.
+  diagnostic.location = current_location.line != 0
+    ? current_location
+    : SourceLocation{.line = 1, .column = 1};
   diagnostic.message = std::move(message);
   if (lhs || rhs) {
     diagnostic.related.push_back(Diagnostic{
@@ -79,8 +83,10 @@ void Unifier::solve(const Constraints& constraints) {
   if (solved_constraints > constraints.size()) solved_constraints = 0;
   for (size_t i = solved_constraints; i < constraints.size(); ++i) {
     const auto& constraint = constraints[i];
+    current_location = constraint.location;
     unify(constraint.lhs, constraint.rhs);
   }
+  current_location = {};
   solved_constraints = constraints.size();
 }
 
