@@ -8,6 +8,7 @@ not parse. None of them may take the server down.
 
 import os
 import shutil
+import time
 import subprocess
 import tempfile
 
@@ -127,6 +128,40 @@ def run():
         report.check("requests after close still reply",
                      client.request("textDocument/hover",
                                     Client.at(closing, 0, 6)) is not None)
+
+        report.section("closing mid-check")
+        # Closing while a check is still running must not bring the document
+        # back or republish diagnostics for a file nobody has open.
+        racing = "file:///C:/work/racing.bz"
+        big = "\n".join(
+            "func fn_%d(a_%d: Int) :> Int\n  let v_%d = a_%d\n  v_%d\nend\n"
+            % (i, i, i, i, i)
+            for i in range(600)
+        )
+        client.notify("textDocument/didOpen", {"textDocument": {
+            "uri": racing, "languageId": "benzene", "version": 1, "text": big}})
+        client.notify("textDocument/didClose", {"textDocument": {"uri": racing}})
+
+        # Closing publishes an empty list to clear the editor; wait for that to
+        # land before watching, so only what comes *after* the close counts.
+        time.sleep(1.5)
+        client.drain()
+        time.sleep(8.0)
+
+        report.check("nothing is published after it is closed",
+                     len(client.published(racing)) == 0,
+                     f"{len(client.published(racing))} late publish(es)")
+
+        # The direct statement of the property: the result of the check that
+        # was still running must not bring the document back.
+        symbols = client.result("textDocument/documentSymbol",
+                                {"textDocument": {"uri": racing}})
+        report.check("the closed document was not resurrected",
+                     symbols == [], f"{len(symbols or [])} symbols")
+
+        report.check("and the server is still healthy",
+                     client.request("textDocument/hover",
+                                    Client.at(URI, 0, 0)) is not None)
 
         report.section("malformed traffic")
         client.send({"jsonrpc": "2.0", "id": 9001, "method": "textDocument/hover",

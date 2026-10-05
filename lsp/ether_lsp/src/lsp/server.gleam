@@ -188,16 +188,18 @@ pub fn handle(state: State, message: Dynamic) -> State {
 
     // A request is the user waiting on an answer, so the document is brought
     // up to date first rather than replying from a debounced-stale analysis.
-    Ok(name), Some(request) -> {
-      let prepared = flush_document(state, message)
-      guard_with(fn() { answer(prepared, name, request, message) }, fn() {
-        // Every request must be answered. A handler that throws would
-        // otherwise leave the editor waiting on that id for the rest of the
-        // session, which looks like a hang rather than a bug.
-        respond_error(request, -32_603, "internal error handling " <> name)
-        prepared
-      })
-    }
+    Ok(name), Some(request) ->
+      // Every request must be answered. Anything that throws in here -- the
+      // flush as much as the handler -- would otherwise leave the editor
+      // waiting on that id for the rest of the session, which looks like a
+      // hang rather than a bug.
+      guard_with(
+        fn() { answer(flush_document(state, message), name, request, message) },
+        fn() {
+          respond_error(request, -32_603, "internal error handling " <> name)
+          state
+        },
+      )
 
     Ok(name), None -> notify(state, name, message)
   }
@@ -642,12 +644,22 @@ fn apply_scan(
   let elapsed = rpc.now_ms() - flight.started_ms
   let uri = flight.uri
 
-  let document = case dict.get(state.documents, uri) {
-    Ok(found) -> found
-    // Closed while the check was running; there is nothing left to update.
-    Error(_) ->
-      Document(text: "", analysis: None, attempted: None, failed: False)
+  case dict.get(state.documents, uri) {
+    // Closed while the check was running. Recording the result would bring the
+    // document back and republish diagnostics for a file nobody has open.
+    Error(_) -> State(..state, last_scan_ms: elapsed)
+    Ok(document) -> record_scan(state, flight, outcome, document, elapsed)
   }
+}
+
+fn record_scan(
+  state: State,
+  flight: InFlight,
+  outcome: Result(BitArray, String),
+  document: Document,
+  elapsed: Int,
+) -> State {
+  let uri = flight.uri
 
   case result.try(outcome, scan.decode) {
     Ok(analysis) -> {

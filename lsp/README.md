@@ -255,8 +255,9 @@ Verified by those tests:
 - a 10000-line file whose check takes 15s: requests stay under 300ms
   throughout, a second file still opens, and the check lands and publishes
 - fault injection: a compiler that exits non-zero, one that prints garbage, a
-  malformed request, an unknown method, and requests against unopened or closed
-  documents — in every case the server replies and stays up
+  malformed request, an unknown method, requests against unopened or closed
+  documents, and closing a file while its check is still running — in every case
+  the server replies and stays up
 - degenerate inputs: empty, whitespace-only, CRLF, unterminated strings and
   blocks, stray delimiters, 2000-term lines, 50-deep nesting, and multi-byte
   text
