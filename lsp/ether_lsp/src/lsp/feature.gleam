@@ -303,28 +303,33 @@ fn dedupe(candidates: List(Candidate)) -> List(Candidate) {
 
 // --- inlay hints ------------------------------------------------------------
 
-/// Shows what was inferred where the user did not write it: on `let` bindings,
-/// on unannotated parameters, and on a function's return type.
-pub fn inlay_hints(analysis: Scan, from_line: Int, to_line: Int) -> json.Json {
-  analysis.index
-  |> list.filter(fn(entry) {
-    entry.is_definition
-    && !entry.annotated
-    && entry.inferred != ""
-    && entry.line - 1 >= from_line
-    && entry.line - 1 <= to_line
-  })
-  |> list.filter_map(fn(entry) { hint(analysis, entry) })
-  |> json.preprocessed_array
+/// Where an inferred type would be written, and what it would say.
+///
+/// Shared by inlay hints and the "annotate" code action: a hint shows the text
+/// at that spot, the action inserts it there. Having one source for both is
+/// what guarantees that accepting the action produces the text the hint
+/// promised.
+type Annotation {
+  Annotation(
+    line: Int,
+    character: Int,
+    /// Exactly the characters to insert, punctuation included.
+    text: String,
+    /// The type on its own, for prose like a code-action title.
+    type_name: String,
+  )
 }
 
-fn hint(analysis: Scan, entry: Entry) -> Result(json.Json, Nil) {
+/// `None` when the entry is not a kind that takes an annotation, or when the
+/// position cannot be worked out from the tokens.
+fn annotation(analysis: Scan, entry: Entry) -> Result(Annotation, Nil) {
   case entry.kind {
     "Binding" | "FuncParam" ->
-      Ok(hint_at(
+      Ok(Annotation(
         entry.line - 1,
         entry.column - 1 + entry.length,
         ": " <> entry.inferred,
+        entry.inferred,
       ))
 
     // A return type belongs after the parameter list, not after the name, so
@@ -332,10 +337,11 @@ fn hint(analysis: Scan, entry: Entry) -> Result(json.Json, Nil) {
     "Function" ->
       case closing_paren(analysis, entry) {
         Ok(token) ->
-          Ok(hint_at(
+          Ok(Annotation(
             token.line - 1,
             token.column - 1 + token.length,
             " :> " <> return_of(entry.inferred),
+            return_of(entry.inferred),
           ))
         Error(_) -> Error(Nil)
       }
@@ -344,16 +350,73 @@ fn hint(analysis: Scan, entry: Entry) -> Result(json.Json, Nil) {
   }
 }
 
-fn hint_at(line: Int, character: Int, label: String) -> json.Json {
-  json.object([
-    #("position", encode.position(line, character)),
-    #("label", json.string(label)),
-    // 1 = Type. Parameter-name hints would need call sites, which this index
-    // does not record.
-    #("kind", json.int(1)),
-    #("paddingLeft", json.bool(False)),
-    #("paddingRight", json.bool(False)),
-  ])
+/// The declarations in `[from_line, to_line]` that the user left unannotated.
+fn unannotated(analysis: Scan, from_line: Int, to_line: Int) -> List(Entry) {
+  list.filter(analysis.index, fn(entry) {
+    entry.is_definition
+    && !entry.annotated
+    && entry.inferred != ""
+    && entry.line - 1 >= from_line
+    && entry.line - 1 <= to_line
+  })
+}
+
+/// Shows what was inferred where the user did not write it: on `let` bindings,
+/// on unannotated parameters, and on a function's return type.
+pub fn inlay_hints(analysis: Scan, from_line: Int, to_line: Int) -> json.Json {
+  unannotated(analysis, from_line, to_line)
+  |> list.filter_map(fn(entry) {
+    use found <- result.map(annotation(analysis, entry))
+    json.object([
+      #("position", encode.position(found.line, found.character)),
+      #("label", json.string(found.text)),
+      // 1 = Type. Parameter-name hints would need call sites, which this index
+      // does not record.
+      #("kind", json.int(1)),
+      #("paddingLeft", json.bool(False)),
+      #("paddingRight", json.bool(False)),
+    ])
+  })
+  |> json.preprocessed_array
+}
+
+/// Offers to write down the type the checker worked out.
+///
+/// This is the one refactor the compiler can supply on its own: it already
+/// knows the type, and it already knows the user did not write it.
+pub fn code_actions(
+  uri: String,
+  analysis: Scan,
+  from_line: Int,
+  to_line: Int,
+) -> json.Json {
+  unannotated(analysis, from_line, to_line)
+  |> list.filter_map(fn(entry) {
+    use found <- result.map(annotation(analysis, entry))
+
+    // A zero-width range is an insertion at that point.
+    let at = encode.position(found.line, found.character)
+    let edit =
+      json.object([
+        #("range", json.object([#("start", at), #("end", at)])),
+        #("newText", json.string(found.text)),
+      ])
+
+    json.object([
+      #(
+        "title",
+        json.string("Annotate `" <> entry.name <> "` as " <> found.type_name),
+      ),
+      #("kind", json.string("refactor.rewrite")),
+      #(
+        "edit",
+        json.object([
+          #("changes", json.object([#(uri, json.preprocessed_array([edit]))])),
+        ]),
+      ),
+    ])
+  })
+  |> json.preprocessed_array
 }
 
 fn closing_paren(analysis: Scan, entry: Entry) -> Result(Token, Nil) {

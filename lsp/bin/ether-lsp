@@ -8,6 +8,11 @@ set -eu
 HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 SHIP="$HERE/../ether_lsp/build/erlang-shipment"
 
+if ! command -v erl >/dev/null 2>&1; then
+  echo "ether-lsp: \`erl\` is not on PATH - install Erlang/OTP" >&2
+  exit 1
+fi
+
 if [ ! -d "$SHIP/ether_lsp/ebin" ]; then
   echo "ether-lsp: not built yet - run lsp/build.sh" >&2
   exit 1

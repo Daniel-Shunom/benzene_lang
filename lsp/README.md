@@ -145,10 +145,14 @@ Highlighting, diagnostics and inferred-type hints should all appear.
 | Document highlight    | the other uses of whatever the cursor rests on                     |
 | Rename                | `grn` — rewrites every occurrence; refuses illegal names           |
 | Inlay hints           | the inferred type, shown only where you did not write one          |
+| Code actions          | write the inferred type down — the one refactor the compiler can offer |
 | Signature help        | the signature of the call you are inside, with the active argument |
 | Document symbols      | nested: locals sit under the function that declares them           |
 | Folding               | `func`/`case`/`{}` paired from the token stream, not indentation   |
 | Semantic highlighting | identifiers coloured by what the compiler resolved them to         |
+
+`refactor.rewrite` is the only code-action kind, so `vim.lsp.buf.code_action()`
+on an unannotated binding offers to write its type down.
 
 Completion works through whatever completion plugin you already use
 (`nvim-cmp`, `blink.cmp`, or Neovim's built-in `vim.lsp.completion`).
@@ -208,7 +212,7 @@ analysis. If the file does not parse, that is whatever the parser recovered.
 
 Verified by automated tests, run against the real server and a real Neovim:
 
-- 136 compiler tests, 63 Gleam unit tests
+- 136 compiler tests, 67 Gleam unit tests
 - every feature above, driven over the wire by a scripted LSP client
 - Neovim 0.11.1: attach, `utf-8` encoding negotiation, inlay hints on attach,
   foldexpr wiring, and each feature through `vim.lsp`
@@ -221,14 +225,17 @@ Verified by automated tests, run against the real server and a real Neovim:
 - degenerate inputs: empty, whitespace-only, CRLF, unterminated strings and
   blocks, stray delimiters, 2000-term lines, 50-deep nesting, and multi-byte
   text
+- applying the annotate code action and confirming the result still type checks
+  and that its inlay hint then disappears
 
 Not done, and worth knowing before relying on this:
 
 - **No cross-file anything.** `Load` imports are not followed; every file is
   analysed alone. Go-to-definition and rename cannot leave the current buffer,
   and there is no `workspace/symbol`.
-- **No code actions or quick fixes.** The compiler reports problems but suggests
-  no edits, so there is nothing to offer.
+- **Only one code action.** "Annotate with the inferred type" is the one refactor
+  the compiler can supply on its own. It reports problems but suggests no fixes,
+  so there are no quick fixes to offer.
 - **No formatter.** The compiler has none.
 - **Diagnostic ranges are one token wide.** The compiler reports a point, not a
   span, so the underline covers the token starting there and nothing more.

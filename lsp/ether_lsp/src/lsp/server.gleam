@@ -252,7 +252,15 @@ fn answer(state: State, method: String, id: Id, message: Dynamic) -> State {
       state
     }
 
-    "textDocument/inlayHint" -> inlay_hints(state, id, message)
+    "textDocument/inlayHint" ->
+      with_line_range(state, id, message, fn(analysis, from, to) {
+        feature.inlay_hints(analysis, from, to)
+      })
+
+    "textDocument/codeAction" ->
+      with_line_range(state, id, message, fn(analysis, from, to) {
+        feature.code_actions(uri_of(message), analysis, from, to)
+      })
 
     // Unimplemented requests still owe a reply, or the client waits forever.
     _ -> {
@@ -321,6 +329,12 @@ fn capabilities(encoding: String) -> json.Json {
     #("documentSymbolProvider", json.bool(True)),
     #("foldingRangeProvider", json.bool(True)),
     #("inlayHintProvider", json.bool(True)),
+    #(
+      "codeActionProvider",
+      json.object([
+        #("codeActionKinds", json.array(["refactor.rewrite"], json.string)),
+      ]),
+    ),
     #("renameProvider", json.object([#("prepareProvider", json.bool(True))])),
     #(
       "completionProvider",
@@ -591,7 +605,17 @@ fn rename(state: State, id: Id, message: Dynamic) -> State {
   state
 }
 
-fn inlay_hints(state: State, id: Id, message: Dynamic) -> State {
+/// Replies using the analysis and the line range from `message`.
+///
+/// Both inlay hints and code actions are asked about a visible region rather
+/// than a point, and both answer with an empty list when there is nothing to
+/// say -- never `null`, which some clients treat as an error.
+fn with_line_range(
+  state: State,
+  id: Id,
+  message: Dynamic,
+  build: fn(scan.Scan, Int, Int) -> json.Json,
+) -> State {
   let range =
     decode.run(message, {
       use from <- decode.subfield(
@@ -603,8 +627,9 @@ fn inlay_hints(state: State, id: Id, message: Dynamic) -> State {
     })
 
   respond(id, case analysis_for(state, message), range {
-    Ok(analysis), Ok(#(from, to)) -> feature.inlay_hints(analysis, from, to)
-    Ok(analysis), Error(_) -> feature.inlay_hints(analysis, 0, 1_000_000)
+    Ok(analysis), Ok(#(from, to)) -> build(analysis, from, to)
+    // A client that sends no range is asking about the whole file.
+    Ok(analysis), Error(_) -> build(analysis, 0, 1_000_000)
     Error(_), _ -> json.preprocessed_array([])
   })
 

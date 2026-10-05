@@ -469,6 +469,47 @@ pub fn a_function_return_hint_lands_after_the_parameter_list_test() {
   string.contains(rendered, "\" :> Int\"") |> should.be_true
 }
 
+// --- code actions -----------------------------------------------------------
+
+pub fn an_unannotated_binding_offers_to_be_annotated_test() {
+  let bindings = analysis([], [entry("total", 3, 7, 5)])
+  let rendered =
+    json.to_string(feature.code_actions("file:///a.bz", bindings, 0, 100))
+
+  string.contains(rendered, "Annotate `total` as Int") |> should.be_true
+  string.contains(rendered, "\"newText\":\": Int\"") |> should.be_true
+  string.contains(rendered, "refactor.rewrite") |> should.be_true
+}
+
+pub fn the_annotation_edit_is_an_insertion_test() {
+  // A zero-width range inserts; anything wider would eat the name.
+  let bindings = analysis([], [entry("total", 3, 7, 5)])
+  json.to_string(feature.code_actions("file:///a.bz", bindings, 0, 100))
+  |> string.contains(
+    "\"range\":{\"start\":{\"line\":2,\"character\":11},\"end\":{\"line\":2,\"character\":11}}",
+  )
+  |> should.be_true
+}
+
+pub fn an_annotated_binding_offers_nothing_test() {
+  let bindings =
+    analysis([], [Entry(..entry("total", 3, 7, 5), annotated: True)])
+  json.to_string(feature.code_actions("file:///a.bz", bindings, 0, 100))
+  |> should.equal("[]")
+}
+
+pub fn a_code_action_matches_the_hint_it_replaces_test() {
+  // Accepting the action must write exactly what the hint showed, so both read
+  // the same annotation.
+  let bindings = analysis([], [entry("total", 3, 7, 5)])
+  let hint = json.to_string(feature.inlay_hints(bindings, 0, 100))
+  let action =
+    json.to_string(feature.code_actions("file:///a.bz", bindings, 0, 100))
+
+  string.contains(hint, "\"label\":\": Int\"") |> should.be_true
+  string.contains(action, "\"newText\":\": Int\"") |> should.be_true
+}
+
 // --- signature help ---------------------------------------------------------
 
 pub fn signature_help_reports_the_callee_test() {

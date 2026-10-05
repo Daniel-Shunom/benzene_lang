@@ -9,6 +9,12 @@ setlocal enabledelayedexpansion
 set "HERE=%~dp0"
 set "SHIP=%HERE%..\ether_lsp\build\erlang-shipment"
 
+where erl >nul 2>&1
+if errorlevel 1 (
+  echo ether-lsp: erl is not on PATH - install Erlang/OTP 1>&2
+  exit /b 1
+)
+
 if not exist "%SHIP%\ether_lsp\ebin" (
   echo ether-lsp: not built yet - run lsp\build.cmd 1>&2
   exit /b 1
