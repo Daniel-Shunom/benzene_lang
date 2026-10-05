@@ -54,4 +54,5 @@ private:
   DiagnosticEngine& diag_eng;
   SymbolTable sym_table;
   std::unordered_map<std::string, SymbolAttr*> exports;
+  std::unordered_map<std::string, size_t> constructor_arities;
 };

@@ -310,6 +310,6 @@ void TCModule_Populate::visit(NDLambdaExpr& expr) {
 void TCModule_Populate::visit(NDTypeExpr& expr) {
   // Type-expression semantics are not implemented in this pass yet.
   if (expr.parsed_type) {
-    expr.inferred_type = expr.parsed_type;
+    expr.inferred_type = context.resolve_alias(expr.parsed_type);
   }
 }
