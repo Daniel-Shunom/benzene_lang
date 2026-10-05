@@ -167,6 +167,13 @@ on an unannotated binding offers to write its type down.
 Completion works through whatever completion plugin you already use
 (`nvim-cmp`, `blink.cmp`, or Neovim's built-in `vim.lsp.completion`).
 
+Everything the compiler resolves, the editor resolves. Where a node's own type
+was left open by unification, the index falls back to the checker itself: the
+type environment, then the constructor table, then the alias table. So `Wrap` in
+`Wrap(1)` reads as `Box`, and `type Count = Int` reads as `Int`. Imports are the
+one thing deliberately left untyped, because the checker does not type them
+either.
+
 Opening a block writes its `end`. Pressing Enter after `func f()`, `case x:` or
 a `Fn(...)` lambda adds the closing `end` at the opener's indent and leaves the
 cursor inside. It does nothing when the block is already closed, on a `Cmt`
@@ -255,7 +262,7 @@ covers the half that only exists inside the editor.
 
 Verified by those tests:
 
-- 145 compiler tests, 70 Gleam unit tests
+- 151 compiler tests, 71 Gleam unit tests
 - every feature above, driven over the wire by a scripted LSP client, including
   that the annotate action is withheld where the inferred type has no spelling
   the grammar accepts
@@ -309,6 +316,29 @@ Not done, and worth knowing before relying on this:
 
 Found while testing this, and left alone because they are the front-end's to
 fix, not the editor's. The server reports what it is told.
+
+- **The parser gives up silently inside a function body.** It stops at the
+  first thing it cannot parse, discards the rest of the body, and reports
+  nothing:
+
+  ```
+  func g()
+    a = 5      -- `let` omitted
+    f(a)       -- parsed? no. indexed? no. reported? no.
+  end
+  ```
+
+  The index holds `g` and `a` and stops. `f(a)` is simply absent, so it has no
+  hover, no go-to-definition and no semantic colour -- and because no
+  diagnostic is emitted, nothing says why. This is the single biggest cause of
+  "the editor stopped resolving things": one syntax slip silently removes
+  everything below it in that function. Any `let`-less binding, or a stray
+  token, does it.
+
+  The editor cannot tell "the parser finished" from "the parser gave up"
+  without the parser saying so, so this one has to be fixed by error recovery
+  -- a diagnostic at the offending token, and a skip to the next statement
+  boundary, rather than an early return.
 
 - **Type errors land on line 1.** `Unifier::report_failure` hardcodes
   `location = {1, 1}` (`core/src/ast_passes/type_check/modules/unify.cpp`),
