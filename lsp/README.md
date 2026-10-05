@@ -4,15 +4,14 @@
 > **Highly experimental, and mostly AI-generated.**
 >
 > This whole directory (plus the `ether scan` subcommand that backs it) was
-> written in a single automated session and has not been reviewed line by line.
-> It works on the samples in this repository and under a real Neovim client —
-> see [Status](#status) for exactly what was verified — but treat it as a
-> starting point to read and rewrite, not as trusted code. Expect rough edges
-> on anything outside the happy path.
+> written by Claude across two automated sessions and has not been reviewed line
+> by line. It is tested — see [Status](#status) for exactly what is verified and
+> how — but treat it as a starting point to read and rewrite, not as trusted
+> code. Expect rough edges outside the paths the tests cover.
 
-A language server for Benzene, written in Gleam. It gives you live type
-checking, hover types, go-to-definition, a document outline, and semantic
-syntax highlighting in any LSP-capable editor.
+A language server for Benzene, written in Gleam. Live type checking, completion,
+hover types, go-to-definition, references, rename, inlay hints, signature help,
+folding, and semantic highlighting.
 
 ## How it works
 
@@ -20,33 +19,65 @@ The server owns no lexer, parser or type checker of its own. Every answer comes
 from the real compiler:
 
 ```
-  Neovim  ──LSP/stdio──▶  ether-lsp (Gleam/BEAM)  ──stdin──▶  ether scan (C++)
-          ◀─diagnostics─                          ◀──JSON───
+            ┌──────────────┐   LSP/stdio   ┌───────────────────────┐
+  Neovim ──▶│    reader    │──────────────▶│   server (main loop)  │
+            │   process    │               │   state, dispatch     │
+            └──────────────┘               └───────────┬───────────┘
+                                                       │ length-prefixed stdin
+                                                       ▼
+                                           ┌───────────────────────┐
+                                           │  ether scan  (C++)    │
+                                           │  lex → parse →        │
+                                           │  resolve → typecheck  │
+                                           └───────────────────────┘
 ```
 
 `ether scan` is a subcommand added for this purpose. It runs the same pipeline
-as `ether check` — lex, parse, resolve scopes, resolve symbols, type check,
-unify — and prints the result as JSON: tokens for highlighting, diagnostics,
-and an index of every identifier with its solved type and declaration site.
+as `ether check` and prints the result as JSON: tokens for highlighting,
+diagnostics, and an index of every identifier with its solved type, declaration
+site, enclosing scope, and whether the user annotated it.
 
 The buffer is passed to the compiler on **stdin**, length-prefixed, so what gets
-checked is what you are looking at. You do not have to save the file.
+checked is what you are looking at. You do not have to save.
 
 The point of the split is that there is exactly one type checker. Reimplementing
 inference in Gleam would mean the editor and the compiler could disagree about
 your program, which is worse than having no editor support at all.
 
+### Why reading is a separate process
+
+Analysis shells out to the compiler, and on a large file that takes a while. If
+the server read its own input, every keystroke during a check would queue
+another check behind it.
+
+Instead a reader process drains stdin into the server's mailbox. The server
+takes a `didChange`, marks the document dirty, and goes straight back to
+waiting. It only runs the compiler once the client has been quiet for the
+debounce interval — so a burst of edits *collapses* rather than queues.
+
+Measured on this repository: **40 edits sent back to back produce one compiler
+run**, and the server accepts all 40 in about 3ms.
+
+The debounce follows how slow the compiler actually is, between 120ms and
+600ms. A small file re-checks almost immediately; a file where checking costs
+half a second backs off rather than spending all its time on checks the next
+keystroke invalidates.
+
+A request never waits for that timer. Hover, completion and the rest flush
+their document first, so an answer always reflects the current buffer — hover
+during a burst of edits comes back in about 12ms with up-to-date types.
+
 ## Requirements
 
-| Tool    | Why                                  | Verified with  |
-| ------- | ------------------------------------ | -------------- |
-| Erlang  | runs the server                      | OTP 28         |
-| Gleam   | builds the server                    | 1.18.0         |
-| Neovim  | the client these docs cover          | 0.11.1         |
-| `ether` | does all the actual analysis         | this checkout  |
+| Tool    | Why                          | Verified with |
+| ------- | ---------------------------- | ------------- |
+| Erlang  | runs the server              | OTP 28        |
+| Gleam   | builds the server            | 1.18.0        |
+| Neovim  | the client these docs cover  | 0.11.1        |
+| `ether` | does all the actual analysis | this checkout |
 
-Neovim **0.11 or newer** is required: the config uses the native `vim.lsp.config`
-/ `vim.lsp.enable` API that landed in that release.
+Neovim **0.11 or newer** is required: the config uses the native
+`vim.lsp.config` / `vim.lsp.enable` API that landed in that release.
 
 ## Setup
 
@@ -55,8 +86,8 @@ Neovim **0.11 or newer** is required: the config uses the native `vim.lsp.config
 From the repository root:
 
 ```sh
-./build.bat          # Windows
-cmake -S . -B build -G Ninja && cmake --build build    # POSIX
+./build.bat                                           # Windows
+cmake -S . -B build -G Ninja && cmake --build build   # POSIX
 ```
 
 This produces `bin/ether.exe` (or `bin/ether`). The launcher scripts default to
@@ -87,8 +118,11 @@ fallback syntax file, the LSP client config and the autocommand that enables it.
 With `lazy.nvim`, point it at the same directory instead:
 
 ```lua
-{ dir = "/path/to/benzene_lang/lsp/editors/nvim", ft = "benzene" }
+{ dir = "/path/to/benzene_lang/lsp/editors/nvim", lazy = false }
 ```
+
+`lazy = false` matters: the rule that *defines* the `benzene` filetype ships
+inside the plugin, so lazy-loading on `ft = "benzene"` would never fire.
 
 ### 4. Open a file
 
@@ -96,34 +130,53 @@ With `lazy.nvim`, point it at the same directory instead:
 nvim tests/integration/samples/valid_program.bz
 ```
 
-The buffer should highlight immediately, and errors should appear as you type.
+Highlighting, diagnostics and inferred-type hints should all appear.
 `:BenzeneLspStatus` reports whether the server actually attached.
 
 ## What you get
 
-| Feature                    | Notes                                                       |
-| -------------------------- | ----------------------------------------------------------- |
-| Diagnostics                | every compiler phase: lexer, parser, resolver, type checker  |
-| Hover                      | the inferred type, e.g. `identity : Fn(Int) :> Int`          |
-| Go to definition           | `gd` — resolver-backed, so it follows real bindings          |
-| Document symbols           | functions, constants, bindings and types                     |
-| Semantic highlighting      | identifiers coloured by what the compiler resolved them to   |
+| Feature               | Notes                                                            |
+| --------------------- | ---------------------------------------------------------------- |
+| Diagnostics           | every compiler phase: lexer, parser, resolver, type checker       |
+| Completion            | names in scope, plus keywords; only types after `:` or `:>`        |
+| Hover                 | the full signature, e.g. `identity(x: Int) :> Int`                 |
+| Go to definition      | `gd` — resolver-backed, so it follows real bindings                |
+| References            | `gr` — every occurrence of the same binding                        |
+| Document highlight    | the other uses of whatever the cursor rests on                     |
+| Rename                | `grn` — rewrites every occurrence; refuses illegal names           |
+| Inlay hints           | the inferred type, shown only where you did not write one          |
+| Signature help        | the signature of the call you are inside, with the active argument |
+| Document symbols      | nested: locals sit under the function that declares them           |
+| Folding               | `func`/`case`/`{}` paired from the token stream, not indentation   |
+| Semantic highlighting | identifiers coloured by what the compiler resolved them to         |
+
+Completion works through whatever completion plugin you already use
+(`nvim-cmp`, `blink.cmp`, or Neovim's built-in `vim.lsp.completion`).
 
 Highlighting is layered. `syntax/benzene.vim` colours the buffer the instant it
 opens, using ordinary pattern rules. Once the server attaches, its semantic
 tokens take over for anything it knows better — a call to a function and a local
 binding are the same shape to a regex, but not to the resolver.
 
+## Commands
+
+| Command              | Does                                                     |
+| -------------------- | -------------------------------------------------------- |
+| `:BenzeneLspStatus`  | whether the server attached, and how it was launched      |
+| `:BenzeneInlayHints` | toggle inferred-type hints in this buffer                 |
+| `:BenzeneRestart`    | restart the server, to pick up a rebuilt one              |
+
 ## Configuration
 
-Both are optional; the defaults work for a normal checkout.
+All optional; the defaults work for a normal checkout. Set these before the
+plugin loads.
 
 ```lua
--- Use a different server launcher.
-vim.g.benzene_lsp_cmd = { "/path/to/ether-lsp" }
-
--- Use a different compiler binary.
-vim.g.benzene_compiler = "/path/to/ether"
+vim.g.benzene_lsp_cmd     = { "/path/to/ether-lsp" }  -- different launcher
+vim.g.benzene_compiler    = "/path/to/ether"          -- different compiler
+vim.g.benzene_inlay_hints = false                     -- no inline types
+vim.g.benzene_folding     = false                     -- leave 'foldexpr' alone
+vim.g.benzene_highlight   = false                     -- no cursor-hold highlight
 ```
 
 The server also reads `ETHER_BIN` from the environment, and falls back to
@@ -132,45 +185,66 @@ finding `ether` on `PATH`.
 ## Troubleshooting
 
 **Nothing highlights and no errors appear.** Run `:BenzeneLspStatus`. If no
-client is attached, check `:LspLog` — the server logs the compiler path it
-chose to stderr on startup, and Neovim collects that.
+client is attached, check `:LspLog` — the server logs the compiler path it chose
+to stderr on startup, and Neovim collects that.
 
 **`ether-lsp: not built yet`.** Step 2 has not been run, or was run before the
 last `.gleam` change.
 
 **`could not run the ether compiler`,** shown as a diagnostic on line 1. The
 server started but could not execute `ether`. Check that step 1 produced a
-binary, or set `vim.g.benzene_compiler`.
+binary, or set `vim.g.benzene_compiler`. Once you have fixed it, `:w` retries —
+a failed check is not repeated until the file changes or you save.
 
-**Highlighting is right but hover and go-to-definition are not.** These read the
-index from the last successful scan. If the file does not parse, the index is
-whatever the parser recovered.
+**Edits feel slow on a big file.** The compiler, not the server, is the cost:
+`ether scan` takes about 0.7s on a 2000-line file, and the server's own overhead
+on top of that is a few tens of milliseconds. The debounce backs off to match.
+`:LspLog` records any check over 250ms.
+
+**Highlighting is right but hover is not.** Hover reads the last successful
+analysis. If the file does not parse, that is whatever the parser recovered.
 
 ## Status
 
-Verified in this session, against Neovim 0.11.1 driving the real server:
+Verified by automated tests, run against the real server and a real Neovim:
 
-- filetype detection, attach, and `utf-8` position encoding negotiation
-- diagnostics on open, and on edit **without saving**
+- 136 compiler tests, 63 Gleam unit tests
+- every feature above, driven over the wire by a scripted LSP client
+- Neovim 0.11.1: attach, `utf-8` encoding negotiation, inlay hints on attach,
+  foldexpr wiring, and each feature through `vim.lsp`
+- diagnostics on open and on edit **without saving**
 - semantic tokens decoded back onto the source and checked span by span
-- hover, go-to-definition and document symbols on the repository's samples
-- clean `shutdown`/`exit`
+- debouncing, coalescing, request freshness during a burst, and idle silence
+- fault injection: a compiler that exits non-zero, one that prints garbage, a
+  malformed request, an unknown method, and requests against unopened or closed
+  documents — in every case the server replies and stays up
+- degenerate inputs: empty, whitespace-only, CRLF, unterminated strings and
+  blocks, stray delimiters, 2000-term lines, 50-deep nesting, and multi-byte
+  text
 
 Not done, and worth knowing before relying on this:
 
-- **No completion.** There is no `textDocument/completion` handler at all.
 - **No cross-file anything.** `Load` imports are not followed; every file is
-  analysed alone. Go-to-definition cannot leave the current buffer.
-- **A whole-file re-check on every keystroke.** Each edit spawns a compiler
-  process. Fine for the file sizes in this repo, and not debounced.
+  analysed alone. Go-to-definition and rename cannot leave the current buffer,
+  and there is no `workspace/symbol`.
+- **No code actions or quick fixes.** The compiler reports problems but suggests
+  no edits, so there is nothing to offer.
+- **No formatter.** The compiler has none.
 - **Diagnostic ranges are one token wide.** The compiler reports a point, not a
   span, so the underline covers the token starting there and nothing more.
+  Adding an end position to `SourceLocation` in the compiler would be picked up
+  here for free.
+- **Completion scope is a heuristic.** The index records points, not body
+  extents, so "which function am I in" is derived from the nearest declaration
+  above the cursor. It is right wherever anything is declared.
 - **`utf-16` positions drift on non-ASCII lines.** The lexer counts bytes. The
   server negotiates `utf-8` when the client offers it — Neovim does — but under
   a client that insists on `utf-16`, columns after a multi-byte character will
   be wrong.
 - **Comments produce no semantic tokens.** The lexer discards them, so comment
   highlighting comes from the syntax file alone.
+- **A whole-file re-check per edit.** There is no incremental analysis; the
+  debounce is what keeps that affordable.
 
 ## Layout
 
@@ -182,23 +256,32 @@ lsp/
   editors/nvim/   the Neovim plugin: ftdetect, syntax, ftplugin, lsp config
   ether_lsp/      the Gleam project
     src/
-      ether_lsp.gleam      entry point and read loop
-      ether_lsp_ffi.erl    raw stdio and subprocess control
-      lsp/rpc.gleam        Content-Length framing
+      ether_lsp.gleam      entry point and the message loop
+      ether_lsp_ffi.erl    stdio, the reader process, the compiler port
+      lsp/rpc.gleam        Content-Length framing, reader plumbing
       lsp/scan.gleam       runs `ether scan`, decodes its JSON
+      lsp/server.gleam     state, debouncing, dispatch
+      lsp/feature.gleam    the features, as pure functions over one analysis
+      lsp/encode.gleam     shared JSON shapes and position conversion
       lsp/semantic.gleam   tokens to the semantic-token legend
-      lsp/server.gleam     dispatch and the feature handlers
+      lsp/text.gleam       reading the buffer where the cursor is ahead of it
       lsp/uri.gleam        file:// URIs to paths
 ```
+
+`feature.gleam` holds no state and does no IO: each function takes one analysis
+and returns the JSON to reply with, which is why the unit tests need neither a
+client nor a compiler.
 
 ## Developing
 
 ```sh
 cd lsp/ether_lsp
-gleam test     # unit tests for the pure logic
-gleam build
+gleam test                   # unit tests for the pure logic
+gleam format src test
 cd ../.. && lsp\build.cmd    # re-export the shipment your editor runs
 ```
+
+Then `:BenzeneRestart` in Neovim to pick it up.
 
 `gleam run` is not useful on its own — the server expects an LSP client on
 stdin and will sit waiting for a `Content-Length` header.

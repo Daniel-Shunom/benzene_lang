@@ -1,8 +1,8 @@
 #include "scan.hpp"
-#include "indexer.hpp"
 #include "json.hpp"
 #include "files.hpp"
 
+#include <ether/ast_passes/lsp_index/lsp_index.hpp>
 #include <ether/ast_passes/scope_resolution/scope_res.hpp>
 #include <ether/ast_passes/symbol_resolver/symbol_resolver.hpp>
 #include <ether/ast_passes/type_check/type_check.hpp>

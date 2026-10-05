@@ -50,6 +50,10 @@ struct IndexEntry {
 // name. Run this *after* the type checker has unified, and hand it the
 // resulting substitution map so rendered types are solved rather than raw type
 // variables.
+//
+// This is what the language server is built on: `ether scan` serialises the
+// result, and the editor answers hover, go-to-definition, rename, completion
+// and inlay hints out of it without re-deriving anything.
 class LspIndexer final : public Visitor {
 public:
   explicit LspIndexer(const Subst* substitutions = nullptr)

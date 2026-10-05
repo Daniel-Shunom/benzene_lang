@@ -1,4 +1,4 @@
-#include "indexer.hpp"
+#include <ether/ast_passes/lsp_index/lsp_index.hpp>
 
 #include <ether/symbols/symbol_types.hpp>
 #include <ether/types/type_printer.hpp>

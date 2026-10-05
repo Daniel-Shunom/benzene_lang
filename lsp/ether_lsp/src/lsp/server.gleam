@@ -13,6 +13,7 @@
 import gleam/dict.{type Dict}
 import gleam/dynamic.{type Dynamic}
 import gleam/dynamic/decode
+import gleam/int
 import gleam/json
 import gleam/list
 import gleam/option.{type Option, None, Some}
@@ -30,10 +31,14 @@ fn guard_with(work: fn() -> State, recover: fn() -> State) -> State
 
 const server_version = "0.2.0"
 
-/// How long the client must be quiet before a changed document is re-checked.
-/// Long enough that ordinary typing produces one run, short enough that the
-/// pause between words already shows results.
-const debounce_ms = 120
+/// The shortest pause that triggers a re-check. Long enough that ordinary
+/// typing produces one run, short enough that the gap between words already
+/// shows results.
+const min_debounce_ms = 120
+
+/// The longest the server will make the user wait, however slow the compiler
+/// turns out to be.
+const max_debounce_ms = 600
 
 /// A scan slower than this is logged. Normal runs are a few milliseconds, so
 /// anything here means the file or the machine is worth looking at.
@@ -73,6 +78,10 @@ pub type State {
     running: Bool,
     /// Documents edited since their last analysis.
     dirty: Set(String),
+    /// How long the last compiler run took. The debounce follows it, so a
+    /// project where checking costs half a second is not re-checked every
+    /// 120ms while someone is still typing.
+    last_scan_ms: Int,
   )
 }
 
@@ -83,6 +92,7 @@ pub fn new(executable: String) -> State {
     position_encoding: "utf-16",
     running: True,
     dirty: set.new(),
+    last_scan_ms: 0,
   )
 }
 
@@ -91,8 +101,17 @@ pub fn new(executable: String) -> State {
 pub fn idle_timeout(state: State) -> Int {
   case set.is_empty(state.dirty) {
     True -> -1
-    False -> debounce_ms
+    False -> debounce(state)
   }
+}
+
+/// Waits roughly as long as the last check took, bounded at both ends.
+///
+/// On a small file that is the 120ms floor and feels immediate. On one where
+/// the compiler needs half a second, backing off keeps the server from
+/// spending all its time on checks that the next keystroke invalidates.
+fn debounce(state: State) -> Int {
+  int.clamp(state.last_scan_ms, min_debounce_ms, max_debounce_ms)
 }
 
 /// Analyses every document edited since the last flush.
@@ -485,6 +504,7 @@ fn run_scan(state: State, uri: String, document: Document) -> State {
       State(
         ..state,
         dirty: dirty,
+        last_scan_ms: elapsed,
         documents: dict.insert(
           state.documents,
           uri,
@@ -511,6 +531,7 @@ fn run_scan(state: State, uri: String, document: Document) -> State {
       State(
         ..state,
         dirty: dirty,
+        last_scan_ms: elapsed,
         documents: dict.insert(
           state.documents,
           uri,

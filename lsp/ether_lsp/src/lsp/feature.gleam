@@ -10,6 +10,7 @@ import gleam/json
 import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result
+import gleam/set
 import gleam/string
 import lsp/encode
 import lsp/scan.{type Entry, type Scan, type Token}
@@ -194,17 +195,25 @@ pub fn completion(
   ])
 }
 
+/// A proposed completion, before encoding. The label is kept apart so
+/// duplicates can be dropped by name rather than by rendered shape.
+type Candidate {
+  Candidate(label: String, kind: String, detail: String, rank: String)
+}
+
 fn type_completions(analysis: Scan) -> List(json.Json) {
   let declared =
     analysis.index
     |> list.filter(fn(entry) { entry.is_definition && entry.kind == "Type" })
-    |> list.map(fn(entry) { item(entry.name, entry.kind, entry.inferred, "0") })
+    |> list.map(fn(entry) {
+      Candidate(entry.name, entry.kind, entry.inferred, "0")
+    })
 
   let builtin =
     text.builtin_types
-    |> list.map(fn(name) { item(name, "Type", "built-in type", "1") })
+    |> list.map(fn(name) { Candidate(name, "Type", "built-in type", "1") })
 
-  dedupe(list.append(declared, builtin))
+  encode_candidates(dedupe(list.append(declared, builtin)))
 }
 
 fn value_completions(analysis: Scan, line: Int) -> List(json.Json) {
@@ -225,18 +234,18 @@ fn value_completions(analysis: Scan, line: Int) -> List(json.Json) {
         0 -> "1"
         _ -> "0"
       }
-      item(entry.name, entry.kind, detail, rank)
+      Candidate(entry.name, entry.kind, detail, rank)
     })
 
   let words =
     text.keywords
-    |> list.map(fn(word) { item(word, "Keyword", "keyword", "2") })
+    |> list.map(fn(word) { Candidate(word, "Keyword", "keyword", "2") })
 
   let types =
     text.builtin_types
-    |> list.map(fn(name) { item(name, "Type", "built-in type", "3") })
+    |> list.map(fn(name) { Candidate(name, "Type", "built-in type", "3") })
 
-  dedupe(list.flatten([visible, words, types]))
+  encode_candidates(dedupe(list.flatten([visible, words, types])))
 }
 
 /// Module-level declarations are visible everywhere; locals only inside the
@@ -264,30 +273,29 @@ fn enclosing_scope(analysis: Scan, line: Int) -> #(Int, Int) {
   |> result.unwrap(#(0, 0))
 }
 
-fn item(
-  label: String,
-  kind: String,
-  detail: String,
-  rank: String,
-) -> json.Json {
-  json.object([
-    #("label", json.string(label)),
-    #("kind", json.int(encode.completion_kind(kind))),
-    #("detail", json.string(detail)),
-    #("sortText", json.string(rank <> label)),
-  ])
+fn encode_candidates(candidates: List(Candidate)) -> List(json.Json) {
+  list.map(candidates, fn(candidate) {
+    json.object([
+      #("label", json.string(candidate.label)),
+      #("kind", json.int(encode.completion_kind(candidate.kind))),
+      #("detail", json.string(candidate.detail)),
+      #("sortText", json.string(candidate.rank <> candidate.label)),
+    ])
+  })
 }
 
-/// Keeps the first item for each label. Ordering puts declarations before
-/// keywords, so a name the user defined wins over a reserved word.
-fn dedupe(items: List(json.Json)) -> List(json.Json) {
+/// Keeps the first candidate for each label.
+///
+/// Ordering puts declarations before keywords, so a name the user defined wins
+/// over a reserved word -- and `Nil`, which is both a keyword and a built-in
+/// type, is offered once rather than twice.
+fn dedupe(candidates: List(Candidate)) -> List(Candidate) {
   let #(kept, _) =
-    list.fold(items, #([], []), fn(state, each) {
+    list.fold(candidates, #([], set.new()), fn(state, candidate) {
       let #(kept, seen) = state
-      let label = json.to_string(each)
-      case list.contains(seen, label) {
+      case set.contains(seen, candidate.label) {
         True -> state
-        False -> #([each, ..kept], [label, ..seen])
+        False -> #([candidate, ..kept], set.insert(seen, candidate.label))
       }
     })
   list.reverse(kept)

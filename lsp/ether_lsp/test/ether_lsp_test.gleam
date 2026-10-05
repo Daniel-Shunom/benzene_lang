@@ -1,4 +1,5 @@
 import gleam/json
+import gleam/list
 import gleam/string
 import gleeunit
 import gleeunit/should
@@ -398,6 +399,14 @@ pub fn completion_offers_values_and_keywords_elsewhere_test() {
   let rendered = json.to_string(feature.completion(program(), "let y = ", 0, 8))
   string.contains(rendered, "\"identity\"") |> should.be_true
   string.contains(rendered, "\"func\"") |> should.be_true
+}
+
+pub fn completion_offers_each_label_once_test() {
+  // `Nil` is both a keyword and a built-in type, so it reaches the dedupe from
+  // two directions.
+  let rendered = json.to_string(feature.completion(program(), "let y = ", 0, 8))
+  let occurrences = string.split(rendered, "\"label\":\"Nil\"") |> list.length
+  occurrences |> should.equal(2)
 }
 
 pub fn completion_hides_locals_from_other_functions_test() {
