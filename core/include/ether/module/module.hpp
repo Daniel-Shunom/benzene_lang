@@ -43,6 +43,14 @@ public:
   void set_exported_type_environment(TypeEnvironment environment) {
     exported_type_environment = std::move(environment);
   }
+  [[nodiscard]] auto get_type_aliases() const noexcept
+      -> const TypeAliasTable& { return type_aliases; }
+  [[nodiscard]] auto get_type_aliases() noexcept -> TypeAliasTable& {
+    return type_aliases;
+  }
+  void set_type_aliases(TypeAliasTable aliases) {
+    type_aliases = std::move(aliases);
+  }
 
 private:
   std::string module_path;
@@ -52,6 +60,7 @@ private:
   SymbolStorage arena;
   std::unordered_map<std::string, SymbolAttr*> exported_symbols;
   TypeEnvironment exported_type_environment;
+  TypeAliasTable type_aliases;
 
   Parent module_root;
 

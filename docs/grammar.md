@@ -99,6 +99,19 @@ module scope.
 
 ### 3.3 Let bindings
 
+Benzene has no assignment. A name is introduced by a binding and is never
+rebound, so `x = value` in expression position is rejected by the parser:
+
+```
+let x = 1      -- a binding
+x = 2          -- error: `x` is assigned without a binder
+x: Int = 2     -- the same error; an annotation belongs to the binding
+```
+
+The parser reports this and then continues from the assigned value, so the
+statements after it are still parsed rather than discarded.
+
+
 ```
 let-decl      ::= "let" <identifier> type-annot? "=" value-expr
 ```

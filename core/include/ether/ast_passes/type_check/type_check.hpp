@@ -36,6 +36,13 @@ public:
       -> TypePtr;
   [[nodiscard]] auto constructor_parent(const std::string& name) const
       -> TypePtr;
+  void register_type_alias(std::string name, TypePtr target) {
+    aliases.declare(std::move(name), std::move(target));
+  }
+  [[nodiscard]] auto type_aliases() const noexcept -> const TypeAliasTable& {
+    return aliases;
+  }
+  [[nodiscard]] auto resolve_alias(TypePtr) const -> TypePtr;
   void generalize_binding(NDLetBindExpr&);
   void push_type_scope() { type_environment.push_scope(); }
   void pop_type_scope() { type_environment.pop_scope(); }
@@ -71,4 +78,5 @@ private:
   DiagnosticEngine& diag_engine;
   struct ConstructorInfo { TypePtr parent; TypePtr fields; };
   std::unordered_map<std::string, ConstructorInfo> constructors;
+  TypeAliasTable aliases;
 };

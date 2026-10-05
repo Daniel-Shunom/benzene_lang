@@ -225,6 +225,24 @@ TEST_SUITE("lexer / imports") {
     CHECK(toks[1].token_value == "benzene.list");
     CHECK(toks[2].token_type == TokenType::LetKeyword);
   }
+
+  TEST_CASE("import module column points at the module name, not the space") {
+    // The separator after `Load` is consumed before the token start is marked.
+    // Editors underline from this column and diagnostics point at it, so an
+    // off-by-one here shifts every highlight on the line.
+    auto toks = lex_no_eof("Load benzene.list");
+    REQUIRE(toks.size() == 2);
+    CHECK(toks[1].token_type == TokenType::ImportModule);
+    CHECK(toks[1].line_number == 1);
+    CHECK(toks[1].column_number == 6);
+  }
+
+  TEST_CASE("extra spaces before the module name do not shift its column") {
+    auto toks = lex_no_eof("Load    benzene.set");
+    REQUIRE(toks.size() == 2);
+    CHECK(toks[1].token_value == "benzene.set");
+    CHECK(toks[1].column_number == 9);
+  }
 }
 
 TEST_SUITE("lexer / diagnostics") {

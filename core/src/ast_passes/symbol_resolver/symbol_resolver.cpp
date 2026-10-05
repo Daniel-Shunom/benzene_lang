@@ -208,6 +208,20 @@ void SymbolResolver::visit(NDCallExpr& expr) {
   // so resolve them without applying function-call rules.
   if (sym && sym->symbol_kind == SymbolKind::Type
       && this->sym_table.get_current_scope_type() == ScopeType::CaseExpression) {
+    if (auto arity = constructor_arities.find(ident);
+        arity != constructor_arities.end() && arity->second != expr.args.size()) {
+      expr.is_poisoned = true;
+      Diagnostic diagnostic;
+      diagnostic.level = DiagnosticLevel::Fail;
+      diagnostic.phase = DiagnosticPhase::Resolver;
+      diagnostic.location = {.line = expr.identifier->identifier.line_number,
+                             .column = expr.identifier->identifier.column_number};
+      diagnostic.message = std::format(
+        "Constructor `{}` expects {} field{}, but got {}",
+        ident, arity->second, arity->second == 1 ? "" : "s", expr.args.size());
+      this->diag_eng.report(std::move(diagnostic));
+      return;
+    }
     expr.identifier->identifier_symbol = sym;
     for (auto& arg : expr.args) {
       if (auto* identifier = dynamic_cast<NDIdentifier*>(arg.get())) {
@@ -420,6 +434,7 @@ void SymbolResolver::visit(NDTypeDecl& type_decl) {
           [[maybe_unused]] auto* constructor_symbol =
             sym_table.declare(token, SymbolKind::Type);
         }
+        constructor_arities[constructor.name()] = constructor.get_args().size();
       }
       member.accept(*this);
     }

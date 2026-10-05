@@ -7,6 +7,7 @@
 #include <iostream>
 #include <memory>
 #include <algorithm>
+#include <functional>
 #include <unordered_set>
 
 namespace {
@@ -137,6 +138,33 @@ auto TypeChecker::constructor_parent(const std::string& name) const -> TypePtr {
     return it->second.parent;
   }
   return nullptr;
+}
+
+auto TypeChecker::resolve_alias(TypePtr type) const -> TypePtr {
+  std::unordered_set<std::string> resolving;
+  std::function<TypePtr(TypePtr)> expand = [&](TypePtr current) -> TypePtr {
+    if (!current) return nullptr;
+    if (current->isTypeConstructor()) {
+      const auto& constructor = std::get<TypeConstructor>(current->value);
+      if (auto alias = aliases.lookup(constructor.name()); alias
+          && resolving.insert(constructor.name()).second) {
+        auto result = expand(alias);
+        resolving.erase(constructor.name());
+        return result;
+      }
+      std::vector<TypePtr> args;
+      for (const auto& arg : constructor.get_args()) args.push_back(expand(arg));
+      return makeTypeConstructor(constructor.name(), args);
+    }
+    if (current->isFunctionType()) {
+      const auto& function = std::get<FunctionType>(current->value);
+      std::vector<TypePtr> params;
+      for (const auto& param : function.get_param_types()) params.push_back(expand(param));
+      return makeFunc(std::move(params), expand(function.get_return_type()));
+    }
+    return current;
+  };
+  return expand(std::move(type));
 }
 
 void TypeChecker::visit(NDLiteral& node) { dispatch_to_modules(node); }

@@ -43,6 +43,7 @@ int HandleCheck(const ArgCheck& a) {
 
   mod.set_exports(resolver.take_exports());
   mod.set_exported_type_environment(type_checker.types());
+  mod.set_type_aliases(type_checker.type_aliases());
   if (a.show_constraints) {
     ConstraintPrinter{std::cout}.print(type_checker.constraints());
   }
