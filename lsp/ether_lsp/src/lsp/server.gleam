@@ -7,8 +7,13 @@
 //// backlog collapses rather than queues.
 ////
 //// A request never waits for that timer. Anything the user explicitly asked
-//// for -- hover, go to definition, completion -- flushes its document first,
-//// so answers are always computed from the buffer as it is now.
+//// for -- hover, go to definition, completion -- starts the check itself and
+//// waits a bounded moment for it. On a small file that lands in time and the
+//// answer is current; on one where the compiler needs seconds the request is
+//// answered from the previous analysis rather than stalling the editor.
+////
+//// Checks themselves run in a worker process, so however slow one is, the
+//// server keeps reading, replying and publishing throughout.
 
 import gleam/dict.{type Dict}
 import gleam/dynamic.{type Dynamic}
@@ -40,6 +45,17 @@ const min_debounce_ms = 120
 /// turns out to be.
 const max_debounce_ms = 600
 
+/// How long a request will wait for an in-flight check before answering from
+/// the previous one. On a small file the check lands well inside this and the
+/// answer is current; on a large one the budget runs out and the user gets a
+/// slightly stale answer now rather than a fresh one in several seconds.
+const request_budget_ms = 250
+
+/// A scan still unfinished after this is assumed lost, and the slot is freed so
+/// the document can be checked again. Nothing should ever reach it: the worker
+/// has its own, shorter timeout.
+const scan_watchdog_ms = 90_000
+
 /// A scan slower than this is logged. Normal runs are a few milliseconds, so
 /// anything here means the file or the machine is worth looking at.
 const slow_scan_ms = 250
@@ -68,6 +84,11 @@ pub type Document {
   )
 }
 
+/// A check running in the background.
+pub type InFlight {
+  InFlight(ref: scan.Ref, uri: String, text: String, started_ms: Int)
+}
+
 pub type State {
   State(
     documents: Dict(String, Document),
@@ -78,6 +99,10 @@ pub type State {
     running: Bool,
     /// Documents edited since their last analysis.
     dirty: Set(String),
+    /// The check currently running, if any. Only one runs at a time: the
+    /// compiler is the bottleneck, and queueing more would not make it finish
+    /// any sooner.
+    running_scan: Option(InFlight),
     /// How long the last compiler run took. The debounce follows it, so a
     /// project where checking costs half a second is not re-checked every
     /// 120ms while someone is still typing.
@@ -92,16 +117,19 @@ pub fn new(executable: String) -> State {
     position_encoding: "utf-16",
     running: True,
     dirty: set.new(),
+    running_scan: None,
     last_scan_ms: 0,
   )
 }
 
-/// How long the main loop should wait for the next message: the debounce
-/// interval when work is queued, otherwise indefinitely.
+/// How long the main loop should wait for the next message.
 pub fn idle_timeout(state: State) -> Int {
-  case set.is_empty(state.dirty) {
-    True -> -1
-    False -> debounce(state)
+  case state.running_scan, set.is_empty(state.dirty) {
+    // A check is running; its result will wake the loop. The timeout is only a
+    // watchdog against a worker that never reports.
+    Some(_), _ -> scan_watchdog_ms
+    None, False -> debounce(state)
+    None, True -> -1
   }
 }
 
@@ -114,9 +142,37 @@ fn debounce(state: State) -> Int {
   int.clamp(state.last_scan_ms, min_debounce_ms, max_debounce_ms)
 }
 
-/// Analyses every document edited since the last flush.
+/// Called when the loop has been idle: starts queued work, or gives up on a
+/// check that never reported.
 pub fn flush(state: State) -> State {
-  set.fold(state.dirty, state, fn(carried, uri) { analyze(carried, uri, False) })
+  case state.running_scan {
+    None -> start_next(state)
+
+    Some(flight) ->
+      case rpc.now_ms() - flight.started_ms >= scan_watchdog_ms {
+        False -> state
+        True -> {
+          rpc.log("ether-lsp: giving up on a check that never reported")
+          start_next(State(..state, running_scan: None))
+        }
+      }
+  }
+}
+
+/// Hands the result of a finished check back to the document it belongs to.
+///
+/// A result whose tag does not match the running check belongs to a buffer that
+/// has since moved on, and is dropped.
+pub fn scanned(
+  state: State,
+  ref: scan.Ref,
+  outcome: Result(BitArray, String),
+) -> State {
+  case state.running_scan {
+    Some(flight) if flight.ref == ref ->
+      start_next(apply_scan(State(..state, running_scan: None), flight, outcome))
+    _ -> state
+  }
 }
 
 // --- dispatch ---------------------------------------------------------------
@@ -389,7 +445,7 @@ fn did_open(state: State, message: Dynamic) -> State {
     Error(_) -> state
     // Opening is not typing: the user is looking at the file now, so it is
     // checked immediately rather than after the debounce.
-    Ok(#(uri, text)) -> analyze(store(state, uri, text), uri, False)
+    Ok(#(uri, text)) -> start_next(queue(store(state, uri, text), uri, False))
   }
 }
 
@@ -456,15 +512,21 @@ fn store(state: State, uri: String, text: String) -> State {
   )
 }
 
-/// Brings the document named in `message` up to date, if it is queued.
+/// Brings the document named in `message` up to date before a request is
+/// answered, within a bounded budget.
+///
+/// Starts a check if one is needed, then waits briefly for it. Small files
+/// finish well inside the budget, so the answer is current. Large ones do not,
+/// and the request is answered from the previous analysis rather than stalling
+/// the editor for seconds.
 fn flush_document(state: State, message: Dynamic) -> State {
   case document_uri(message) {
     Error(_) -> state
-    Ok(uri) -> analyze(state, uri, False)
+    Ok(uri) -> await_fresh(queue(state, uri, False), uri, request_budget_ms)
   }
 }
 
-/// Saving retries a failed run. It is the natural gesture after fixing
+/// Saving retries a failed check. It is the natural gesture after fixing
 /// whatever broke the compiler, and re-running an identical successful check
 /// would be pure waste.
 fn save(state: State, message: Dynamic) -> State {
@@ -476,35 +538,118 @@ fn save(state: State, message: Dynamic) -> State {
         |> result.map(fn(each) { each.failed })
         |> result.unwrap(False)
 
-      analyze(state, uri, retry)
+      start_next(queue(state, uri, retry))
     }
   }
 }
 
-/// Runs the compiler over a document and publishes what it says.
-///
-/// Skipped when this exact text has already been through the compiler, unless
-/// `force` says to try again regardless.
-fn analyze(state: State, uri: String, force: Bool) -> State {
+/// Marks a document as needing a check, unless this exact text has already
+/// been through the compiler and `force` does not override that.
+fn queue(state: State, uri: String, force: Bool) -> State {
   case dict.get(state.documents, uri) {
     Error(_) -> State(..state, dirty: set.delete(state.dirty, uri))
 
     Ok(document) ->
       case !force && document.attempted == Some(document.text) {
         True -> State(..state, dirty: set.delete(state.dirty, uri))
-        False -> run_scan(state, uri, document)
+        False -> State(..state, dirty: set.insert(state.dirty, uri))
       }
   }
 }
 
-fn run_scan(state: State, uri: String, document: Document) -> State {
-  let started = rpc.now_ms()
-  let outcome = scan.run(state.executable, file_uri.to_path(uri), document.text)
-  let elapsed = rpc.now_ms() - started
+/// Starts the next queued check, if nothing is already running.
+fn start_next(state: State) -> State {
+  case set.to_list(state.dirty) {
+    [] -> state
+    [uri, ..] -> start_for(state, uri)
+  }
+}
 
-  let dirty = set.delete(state.dirty, uri)
+/// Starts the check for one specific document, if nothing is already running.
+fn start_for(state: State, uri: String) -> State {
+  case state.running_scan, set.contains(state.dirty, uri) {
+    Some(_), _ -> state
+    _, False -> state
+    None, True ->
+      case dict.get(state.documents, uri) {
+        Error(_) -> State(..state, dirty: set.delete(state.dirty, uri))
+        Ok(document) ->
+          State(
+            ..state,
+            dirty: set.delete(state.dirty, uri),
+            running_scan: Some(InFlight(
+              ref: scan.start(
+                state.executable,
+                file_uri.to_path(uri),
+                document.text,
+              ),
+              uri: uri,
+              text: document.text,
+              started_ms: rpc.now_ms(),
+            )),
+          )
+      }
+  }
+}
 
-  case outcome {
+/// Whether the last check covered the text the buffer currently holds.
+fn is_current(state: State, uri: String) -> Bool {
+  case dict.get(state.documents, uri) {
+    // Nothing known about it, so nothing to wait for.
+    Error(_) -> True
+    Ok(document) -> document.attempted == Some(document.text)
+  }
+}
+
+/// Waits up to `budget` milliseconds for `uri` to be up to date.
+///
+/// Only scan results are taken from the mailbox; client messages stay queued
+/// for the main loop, so nothing is reordered or lost. Running out of budget is
+/// not a failure -- it means answering from the previous analysis, which is
+/// what keeps a slow compiler from stalling the editor.
+fn await_fresh(state: State, uri: String, budget: Int) -> State {
+  case is_current(state, uri) {
+    True -> state
+    False -> {
+      let state = start_for(state, uri)
+      case state.running_scan, budget <= 0 {
+        None, _ -> state
+        _, True -> state
+        Some(_), False -> {
+          let started = rpc.now_ms()
+          case rpc.await_scan(budget) {
+            rpc.Scanned(ref, outcome) ->
+              await_fresh(
+                scanned(state, ref, outcome),
+                uri,
+                budget - { rpc.now_ms() - started },
+              )
+            // The budget ran out. Whatever is running keeps running.
+            _ -> state
+          }
+        }
+      }
+    }
+  }
+}
+
+/// Records what a finished check said and publishes it.
+fn apply_scan(
+  state: State,
+  flight: InFlight,
+  outcome: Result(BitArray, String),
+) -> State {
+  let elapsed = rpc.now_ms() - flight.started_ms
+  let uri = flight.uri
+
+  let document = case dict.get(state.documents, uri) {
+    Ok(found) -> found
+    // Closed while the check was running; there is nothing left to update.
+    Error(_) ->
+      Document(text: "", analysis: None, attempted: None, failed: False)
+  }
+
+  case result.try(outcome, scan.decode) {
     Ok(analysis) -> {
       publish(uri, feature.diagnostics(analysis))
       case elapsed >= slow_scan_ms {
@@ -517,15 +662,14 @@ fn run_scan(state: State, uri: String, document: Document) -> State {
 
       State(
         ..state,
-        dirty: dirty,
         last_scan_ms: elapsed,
         documents: dict.insert(
           state.documents,
           uri,
           Document(
-            text: document.text,
+            ..document,
             analysis: Some(analysis),
-            attempted: Some(document.text),
+            attempted: Some(flight.text),
             failed: False,
           ),
         ),
@@ -533,23 +677,22 @@ fn run_scan(state: State, uri: String, document: Document) -> State {
     }
 
     Error(reason) -> {
-      // Failure here means the compiler could not be run at all -- a bad path,
-      // a crash, a timeout. Reporting it in the editor beats silently showing
-      // a clean file, which is what an empty diagnostic list would imply.
+      // Failure here means the compiler could not be run, or said something
+      // unreadable. Reporting it in the editor beats silently showing a clean
+      // file, which is what an empty diagnostic list would imply.
       rpc.log("ether-lsp: scan failed - " <> reason)
       publish(uri, [feature.tooling_diagnostic(reason)])
 
       // The previous analysis is kept -- stale navigation beats none -- but
-      // the attempt is recorded so the next hover does not spawn the same
+      // the attempt is recorded so the next request does not start the same
       // failing process again. An edit, or a save, is what retries.
       State(
         ..state,
-        dirty: dirty,
         last_scan_ms: elapsed,
         documents: dict.insert(
           state.documents,
           uri,
-          Document(..document, attempted: Some(document.text), failed: True),
+          Document(..document, attempted: Some(flight.text), failed: True),
         ),
       )
     }

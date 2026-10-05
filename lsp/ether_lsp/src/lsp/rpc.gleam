@@ -17,6 +17,7 @@ import gleam/int
 import gleam/json
 import gleam/result
 import gleam/string
+import lsp/scan
 
 /// An Erlang process identifier. Opaque here; it is only ever handed back to
 /// the FFI that produced it.
@@ -28,6 +29,8 @@ pub type Incoming {
   Frame(Dynamic)
   /// The connection ended. Normal shutdown looks like this.
   Closed(String)
+  /// A background scan finished, carrying the tag it was started with.
+  Scanned(scan.Ref, Result(BitArray, String))
   /// The timeout elapsed with nothing waiting, so queued work can be flushed.
   Idle
 }
@@ -73,6 +76,10 @@ fn send_closed(to: Pid, reason: String) -> Nil
 /// Waits for the next message. A negative timeout waits indefinitely.
 @external(erlang, "ether_lsp_ffi", "receive_frame")
 pub fn receive_frame(timeout_ms: Int) -> Incoming
+
+/// Waits only for a finished scan, leaving client messages queued.
+@external(erlang, "ether_lsp_ffi", "await_scan")
+pub fn await_scan(timeout_ms: Int) -> Incoming
 
 /// Starts the reader. Call once, from the process that will consume messages.
 pub fn start_reader() -> Nil {

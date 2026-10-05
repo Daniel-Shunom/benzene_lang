@@ -62,20 +62,19 @@ pub type Scan {
   )
 }
 
-@external(erlang, "ether_lsp_ffi", "run_scan")
-fn run_scan(
-  executable: String,
-  args: List(String),
-  payload: BitArray,
-) -> Result(BitArray, String)
+/// Identifies one scan, so a result that arrives after the buffer has moved on
+/// can be told apart from the one being waited for.
+pub type Ref
 
-/// Checks `source` as the contents of `path`, without touching the file on
-/// disk -- so an unsaved buffer is checked exactly as the user sees it.
-pub fn run(
-  executable: String,
-  path: String,
-  source: String,
-) -> Result(Scan, String) {
+@external(erlang, "ether_lsp_ffi", "start_scan")
+fn start_scan(executable: String, args: List(String), payload: BitArray) -> Ref
+
+/// Begins checking `source` as the contents of `path`, without touching the
+/// file on disk -- so an unsaved buffer is checked exactly as the user sees it.
+///
+/// Returns immediately. The result arrives as a message carrying the same
+/// `Ref`, and is turned back into a `Scan` by `decode`.
+pub fn start(executable: String, path: String, source: String) -> Ref {
   let body = bit_array.from_string(source)
 
   // Length-prefixed so the child knows where the payload ends without needing
@@ -86,11 +85,11 @@ pub fn run(
       body,
     )
 
-  use output <- result.try(run_scan(
-    executable,
-    ["scan", path, "-stdin"],
-    payload,
-  ))
+  start_scan(executable, ["scan", path, "-stdin"], payload)
+}
+
+/// Turns the bytes a finished scan produced into an analysis.
+pub fn decode(output: BitArray) -> Result(Scan, String) {
   use text <- result.try(
     bit_array.to_string(output)
     |> result.replace_error("ether produced output that was not valid utf-8"),

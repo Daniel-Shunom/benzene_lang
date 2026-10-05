@@ -44,28 +44,37 @@ The point of the split is that there is exactly one type checker. Reimplementing
 inference in Gleam would mean the editor and the compiler could disagree about
 your program, which is worse than having no editor support at all.
 
-### Why reading is a separate process
+### Nothing waits for the compiler
 
-Analysis shells out to the compiler, and on a large file that takes a while. If
-the server read its own input, every keystroke during a check would queue
-another check behind it.
+Checking shells out to `ether`, and that is not fast: about 0.7s on a
+2000-line file, and 15s on a 10000-line one. Three things keep that off the
+critical path.
 
-Instead a reader process drains stdin into the server's mailbox. The server
-takes a `didChange`, marks the document dirty, and goes straight back to
-waiting. It only runs the compiler once the client has been quiet for the
-debounce interval — so a burst of edits *collapses* rather than queues.
+**Reading is a separate process.** It drains stdin into the server's mailbox,
+so input is accepted no matter what the server is doing.
 
-Measured on this repository: **40 edits sent back to back produce one compiler
-run**, and the server accepts all 40 in about 3ms.
+**Checking is a separate process.** The server starts a check and goes back to
+its loop; the result arrives later as a message. However slow a check is, the
+server keeps reading, replying and publishing throughout.
 
-The debounce follows how slow the compiler actually is, between 120ms and
-600ms. A small file re-checks almost immediately; a file where checking costs
-half a second backs off rather than spending all its time on checks the next
-keystroke invalidates.
+**Edits debounce and collapse.** A `didChange` only marks the document dirty.
+The check runs once the client has been quiet, so a burst of edits costs one
+run rather than one per keystroke. The debounce follows how slow the compiler
+actually is, between 120ms and 600ms.
 
-A request never waits for that timer. Hover, completion and the rest flush
-their document first, so an answer always reflects the current buffer — hover
-during a burst of edits comes back in about 12ms with up-to-date types.
+A request does not wait for the debounce: it starts the check itself and waits
+up to 250ms for it. On a small file that lands in time and the answer is
+current; on a large one the budget runs out and the request is answered from
+the previous analysis rather than stalling the editor.
+
+Measured on this repository:
+
+| Situation                                   | Result                        |
+| ------------------------------------------- | ----------------------------- |
+| 40 edits sent back to back                  | one compiler run, accepted in 3ms |
+| hover during a burst of edits               | 12ms, with up-to-date types   |
+| hover during a 15s check on a 10k-line file | under 300ms, from the previous analysis |
+| opening a second file during that check     | immediate                     |
 
 ## Requirements
 
@@ -200,10 +209,11 @@ server started but could not execute `ether`. Check that step 1 produced a
 binary, or set `vim.g.benzene_compiler`. Once you have fixed it, `:w` retries —
 a failed check is not repeated until the file changes or you save.
 
-**Edits feel slow on a big file.** The compiler, not the server, is the cost:
-`ether scan` takes about 0.7s on a 2000-line file, and the server's own overhead
-on top of that is a few tens of milliseconds. The debounce backs off to match.
-`:LspLog` records any check over 250ms.
+**Diagnostics lag on a big file.** The compiler, not the server, is the cost:
+`ether scan` takes about 0.7s on a 2000-line file and 15s on a 10000-line one.
+Checks run in the background, so the editor stays responsive and hover keeps
+answering from the last completed analysis — but the red underlines will trail
+the cursor. `:LspLog` records any check over 250ms.
 
 **Highlighting is right but hover is not.** Hover reads the last successful
 analysis. If the file does not parse, that is whatever the parser recovered.
@@ -219,6 +229,8 @@ Verified by automated tests, run against the real server and a real Neovim:
 - diagnostics on open and on edit **without saving**
 - semantic tokens decoded back onto the source and checked span by span
 - debouncing, coalescing, request freshness during a burst, and idle silence
+- a 10000-line file whose check takes 15s: requests stay under 300ms
+  throughout, a second file still opens, and the check lands and publishes
 - fault injection: a compiler that exits non-zero, one that prints garbage, a
   malformed request, an unknown method, and requests against unopened or closed
   documents — in every case the server replies and stays up
@@ -251,7 +263,9 @@ Not done, and worth knowing before relying on this:
 - **Comments produce no semantic tokens.** The lexer discards them, so comment
   highlighting comes from the syntax file alone.
 - **A whole-file re-check per edit.** There is no incremental analysis; the
-  debounce is what keeps that affordable.
+  debounce and the background worker are what keep that affordable. The
+  compiler also scales badly — roughly quadratically — so very large files lag
+  noticeably even though the editor itself stays responsive.
 
 ## Layout
 
@@ -264,10 +278,10 @@ lsp/
   ether_lsp/      the Gleam project
     src/
       ether_lsp.gleam      entry point and the message loop
-      ether_lsp_ffi.erl    stdio, the reader process, the compiler port
+      ether_lsp_ffi.erl    stdio, the reader process, the scan worker
       lsp/rpc.gleam        Content-Length framing, reader plumbing
-      lsp/scan.gleam       runs `ether scan`, decodes its JSON
-      lsp/server.gleam     state, debouncing, dispatch
+      lsp/scan.gleam       starts `ether scan`, decodes its JSON
+      lsp/server.gleam     state, scheduling, dispatch
       lsp/feature.gleam    the features, as pure functions over one analysis
       lsp/encode.gleam     shared JSON shapes and position conversion
       lsp/semantic.gleam   tokens to the semantic-token legend

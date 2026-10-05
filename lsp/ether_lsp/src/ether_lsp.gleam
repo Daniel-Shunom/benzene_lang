@@ -48,6 +48,11 @@ fn loop(state: server.State) -> Nil {
   case rpc.receive_frame(server.idle_timeout(state)) {
     rpc.Idle -> loop(guard(fn() { server.flush(state) }, state))
 
+    // A background check finished. Publishing its diagnostics is the only work
+    // the loop does that no client message asked for.
+    rpc.Scanned(ref, outcome) ->
+      loop(guard(fn() { server.scanned(state, ref, outcome) }, state))
+
     rpc.Closed(reason) -> {
       // The editor closing the pipe is the normal way this process ends.
       rpc.log("ether-lsp: stopping (" <> reason <> ")")

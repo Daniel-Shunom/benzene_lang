@@ -5,9 +5,10 @@
 -module(ether_lsp_ffi).
 
 -export([configure_stdio/0, read_line/0, read_bytes/1, write_stdout/1,
-         log/1, run_scan/3, find_compiler/0, halt/0,
+         log/1, find_compiler/0, halt/0,
          spawn_reader/1, self_pid/0, send_frame/2, send_closed/2,
-         receive_frame/1, guard/2, guard_with/2, monotonic_ms/0]).
+         receive_frame/1, guard/2, guard_with/2, monotonic_ms/0,
+         start_scan/3, await_scan/1]).
 
 %% stdout is the LSP transport, so nothing else may write to it. The default
 %% logger handler logs to standard_io, which would corrupt the message stream
@@ -96,8 +97,22 @@ receive_frame(Timeout) ->
             end,
     receive
         {lsp_frame, Message} -> {frame, Message};
-        {lsp_closed, Reason} -> {closed, Reason}
+        {lsp_closed, Reason} -> {closed, Reason};
+        {scan_done, Ref, Result} -> {scanned, Ref, Result}
     after After ->
+        idle
+    end.
+
+%% Waits only for a finished scan, leaving any client messages queued.
+%%
+%% This is what a request uses to try for an up-to-date answer: on a small file
+%% the scan lands in a few milliseconds and the reply is current, and on one
+%% where the compiler needs seconds the budget runs out and the caller answers
+%% from the previous analysis rather than making the user wait.
+await_scan(Timeout) ->
+    receive
+        {scan_done, Ref, Result} -> {scanned, Ref, Result}
+    after Timeout ->
         idle
     end.
 
@@ -142,34 +157,35 @@ format(Term) ->
 
 %% --- compiler ---------------------------------------------------------------
 
-%% Runs `Exe` with `Args`, writes `Payload` to its stdin, and collects stdout
-%% until the child exits.
+%% Starts a scan in the background and returns a tag to match its result by.
+%%
+%% The result arrives later as `{scanned, Ref, Result}`, picked up by
+%% `receive_frame/1` or `await_scan/1`. Scanning off the main process is what
+%% keeps the server answering while the compiler works: on a large file a check
+%% takes seconds, and nothing else should stop for it.
 %%
 %% `ether scan -stdin` reads a length-prefixed payload, so it never waits for
 %% EOF on stdin -- which matters because an Erlang port cannot close the
 %% child's stdin without also killing the process.
-%%
-%% The port is opened inside a monitored worker rather than here. A port owner
-%% is linked to its port, so a child that dies mid-write (a half-built binary,
-%% a crash) delivers an asynchronous `epipe` exit signal that no try/catch in
-%% the owner can intercept -- it would take the whole server down. Isolating the
-%% port means that failure arrives as an ordinary `DOWN` message instead.
-run_scan(Exe, Args, Payload) ->
+start_scan(Exe, Args, Payload) ->
     Parent = self(),
-    {Worker, Ref} = spawn_monitor(fun() ->
-        Parent ! {scan_result, self(), do_run_scan(Exe, Args, Payload)}
+    Ref = make_ref(),
+    _ = spawn(fun() ->
+        %% A port owner is linked to its port, so a child that dies mid-write
+        %% (a half-built binary, a crash) would otherwise take this worker with
+        %% it and no reply would ever be sent. Trapping turns that signal into
+        %% an ordinary message that `collect/2` reports.
+        process_flag(trap_exit, true),
+        Result = try
+                     do_run_scan(Exe, Args, Payload)
+                 catch
+                     Class:Reason:Stack ->
+                         log(format_crash(Class, Reason, Stack)),
+                         {error, <<"the compiler could not be run">>}
+                 end,
+        Parent ! {scan_done, Ref, Result}
     end),
-    receive
-        {scan_result, Worker, Result} ->
-            erlang:demonitor(Ref, [flush]),
-            Result;
-        {'DOWN', Ref, process, Worker, Reason} ->
-            {error, explain(Reason)}
-    after 20000 ->
-        erlang:demonitor(Ref, [flush]),
-        exit(Worker, kill),
-        {error, <<"ether timed out">>}
-    end.
+    Ref.
 
 do_run_scan(Exe, Args, Payload) ->
     try
@@ -184,7 +200,7 @@ do_run_scan(Exe, Args, Payload) ->
         collect(Port, [])
     catch
         _:Reason ->
-            {error, format(Reason)}
+            {error, explain(Reason)}
     end.
 
 collect(Port, Acc) ->
@@ -195,12 +211,16 @@ collect(Port, Acc) ->
             {ok, iolist_to_binary(lists:reverse(Acc))};
         {Port, {exit_status, Code}} ->
             {error, list_to_binary("ether exited with status "
-                                   ++ integer_to_list(Code))}
-    after 15000 ->
+                                   ++ integer_to_list(Code))};
+        {'EXIT', Port, Reason} ->
+            {error, explain(Reason)}
+    after 60000 ->
         %% The child is wedged. Closing the port kills it, which is the only
-        %% way to stop a run that will never produce output.
+        %% way to stop a run that will never produce output. The budget is
+        %% generous because this is a background worker: nothing is waiting on
+        %% it, and a genuinely large file is slow rather than broken.
         _ = (catch erlang:port_close(Port)),
-        {error, <<"ether timed out">>}
+        {error, <<"the compiler timed out">>}
     end.
 
 %% Locates the `ether` binary. ETHER_BIN wins so a checkout can be pointed at
