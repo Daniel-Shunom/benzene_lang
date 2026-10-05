@@ -96,6 +96,24 @@ using Env = std::unordered_map<std::string, Scheme>;
 
 using Subst = std::unordered_map<TypeVarId, TypePtr>;
 
+class TypeAliasTable {
+public:
+  void declare(std::string name, TypePtr target) {
+    aliases[std::move(name)] = std::move(target);
+  }
+
+  [[nodiscard]] auto lookup(const std::string& name) const noexcept -> TypePtr {
+    if (auto it = aliases.find(name); it != aliases.end()) return it->second;
+    return nullptr;
+  }
+
+  [[nodiscard]] auto all() const noexcept
+      -> const std::unordered_map<std::string, TypePtr>& { return aliases; }
+
+private:
+  std::unordered_map<std::string, TypePtr> aliases;
+};
+
 class TypeTable{
 public:
   void new_type_scope();

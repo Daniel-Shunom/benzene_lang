@@ -12,6 +12,8 @@ void TCModule_Populate::visit(NDTypeDecl& expr) {
   const auto parent = makeTypeConstructor(expr.type_identifier.token_value, {});
   if (expr.alias_target) {
     expr.alias_target->accept(*this);
+    context.register_type_alias(expr.type_identifier.token_value,
+                                expr.alias_target->inferred_type);
   }
   if (expr.sub_types) {
     for (auto& member : *expr.sub_types) {
