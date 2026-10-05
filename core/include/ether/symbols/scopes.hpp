@@ -10,7 +10,7 @@ enum class ScopeType {
   ScopedExpression,
 };
 
-inline std::string scope_type_to_str(ScopeType& type) {
+inline auto scope_type_to_str(ScopeType& type) -> std::string {
   switch (type) {
     case ScopeType::Application: return "Application";
     case ScopeType::Module: return "Module";
@@ -25,7 +25,7 @@ struct Scope {
   ScopeType scope_type;
   SymTable scope_sym_table;
 
-  ScopeType get_scope_type() const {
+  [[nodiscard]] auto get_scope_type() const -> ScopeType {
     return this->scope_type;
   }
 };

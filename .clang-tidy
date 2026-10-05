@@ -1,0 +1,5 @@
+Checks: 'bugprone-*,modernize-*,readability-*,-readability-implicit-bool-conversion'
+
+WarningsAsErrors: '*'
+
+InheritParentConfig: true

@@ -15,6 +15,9 @@ enum class TokenType {
   LetKeyword,
   TypeKeyword,
 
+  TypeClass,
+  TypeVal,
+
   IntegerLiteral,
   FloatLiteral,
   StringLiteral,
@@ -76,7 +79,7 @@ struct Token {
 };
 
 
-inline std::string token_type_to_str(TokenType type) {
+inline auto token_type_to_str(TokenType type) -> std::string {
   using t = TokenType;
   switch (type) {
     case t::ImportKeyword: return "ImportKeyword";
@@ -85,6 +88,8 @@ inline std::string token_type_to_str(TokenType type) {
     case t::LetKeyword: return "LetKeyword";
     case t::ConstantKeyword: return "ConstantKeyword";
     case t::TypeKeyword: return "TypeKeyword";
+    case t::TypeClass: return "TypeClass";
+    case t::TypeVal: return "TypeVal";
     case t::IntegerLiteral: return "IntegerLiteral";
     case t::FloatLiteral: return "FloatLiteral";
     case t::StringLiteral: return "StringLiteral";

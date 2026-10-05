@@ -3,7 +3,7 @@
 #include <ether/symbols/symbol_types.hpp>
 #include <optional>
 
-SymbolAttr* SymbolTable::declare(const Token& token, SymbolKind kind) {
+auto SymbolTable::declare(const Token& token, SymbolKind kind) -> SymbolAttr* {
   const std::string& name = token.token_value;
 
   if (this->scopes.back().scope_sym_table.contains(name)) {
@@ -21,12 +21,14 @@ SymbolAttr* SymbolTable::declare(const Token& token, SymbolKind kind) {
   return ptr;
 }
 
-std::optional<ScopeType> SymbolTable::get_current_scope_type() const {
-  if (this->scopes.empty()) return std::nullopt;
+auto SymbolTable::get_current_scope_type() const -> std::optional<ScopeType> {
+  if (this->scopes.empty()) {
+    return std::nullopt;
+  }
   return this->scopes.back().scope_type;
 }
 
-SymbolAttr* SymbolTable::lookup(const std::string& name) {
+auto SymbolTable::lookup(const std::string& name) -> SymbolAttr* {
   for (auto it = this->scopes.rbegin(); it != scopes.rend(); ++it) {
     if (auto found = it->scope_sym_table.find(name); found != it->scope_sym_table.end()) {
       return found->second;

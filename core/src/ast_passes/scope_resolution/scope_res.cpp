@@ -24,6 +24,13 @@ void ScopeRes::visit(NDImportDirective& import) {
 
 void ScopeRes::visit(NDIdentifier& identifier) { }
 
+void ScopeRes::visit(NDFuncParam& expr) {
+  expr.identifier.accept(*this);
+  if (expr.param_type) {
+    expr.param_type->accept(*this);
+  }
+}
+
 void ScopeRes::visit(NDLetBindExpr& let_bind) {
   auto scope = this->sym_table.get_current_scope_type();
   if (
@@ -31,6 +38,7 @@ void ScopeRes::visit(NDLetBindExpr& let_bind) {
     && scope != ScopeType::FunctionExpression
     && scope != ScopeType::LambdaExpression
     && scope != ScopeType::ScopedExpression
+    && scope != ScopeType::CaseExpression
   ) {
     let_bind.is_poisoned = true;
 
@@ -147,6 +155,31 @@ void ScopeRes::visit(NDFuncDeclExpr& func_decl) {
   return;
 }
 
+void ScopeRes::visit(NDTypeDecl& type_decl) {
+  auto scope = this->sym_table.get_current_scope_type();
+  if (scope && scope!=ScopeType::Module) {
+    type_decl.is_poisoned = true;
+
+    auto diag = Diagnostic();
+    diag.level = DiagnosticLevel::Fail;
+    diag.phase = DiagnosticPhase::ScopeResolution;
+    diag.location.column = type_decl.type_identifier.column_number;
+    diag.location.line = type_decl.type_identifier.line_number;
+    diag.message = "Type declarations should only exist in the top module scope.";
+
+    this->diag_eng.report(diag);
+    return;
+  }
+  if (type_decl.alias_target) {
+    type_decl.alias_target->accept(*this);
+  }
+  if (type_decl.sub_types) {
+    for (auto& member : *type_decl.sub_types) {
+      member.accept(*this);
+    }
+  }
+}
+
 void ScopeRes::visit(NDLambdaExpr& lambda) {
   auto scope = this->sym_table.get_current_scope_type();
   if (
@@ -252,4 +285,8 @@ void ScopeRes::visit(NDListExpr& list) {
   for (auto& value: list.values) {
     value->accept(*this);
   }
+}
+
+void ScopeRes::visit(NDTypeExpr&) {
+  // Type-expression semantics are not implemented in this pass yet.
 }

@@ -53,7 +53,7 @@ using SymbolData = std::variant<
 >;
 
 struct TypeInfo {
-  std::string type_name{};
+  std::string type_name;
 };
 
 enum class SymbolErrorType {
@@ -73,7 +73,7 @@ struct SymbolAttr {
   TypeInfo type_info{};
   Token symbol_token;
   SymbolData symbol_data;
-  std::vector<SymbolError> symbol_errors{};
+  std::vector<SymbolError> symbol_errors;
 };
 
 // Scope visibility maps name -> non-owning pointer into the module's
@@ -88,14 +88,14 @@ using SymTable = std::unordered_map<std::string, SymbolAttr*>;
 // lifetime.
 class SymbolStorage {
 public:
-  SymbolAttr* allocate(SymbolAttr&& attr) {
+  auto allocate(SymbolAttr&& attr) -> SymbolAttr* {
     auto owned = std::make_unique<SymbolAttr>(std::move(attr));
     SymbolAttr* raw = owned.get();
     storage.push_back(std::move(owned));
     return raw;
   }
 
-  size_t size() const { return storage.size(); }
+  [[nodiscard]] auto size() const -> size_t { return storage.size(); }
 
 private:
   std::vector<std::unique_ptr<SymbolAttr>> storage;

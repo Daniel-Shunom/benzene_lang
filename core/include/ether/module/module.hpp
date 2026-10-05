@@ -2,6 +2,7 @@
 #include <ether/diagnostics/diagnostic_eng.hpp>
 #include <ether/nodes/node_expr.hpp>
 #include <ether/symbols/symbol_types.hpp>
+#include <ether/types/types.hpp>
 #include <iosfwd>
 #include <iostream>
 #include <string>
@@ -20,18 +21,27 @@ public:
   void attach_visitor(Visitor&);
   void generate_ast();
   void apply_visitors();
+  void apply_visitor(Visitor&);
   void print_errors(std::ostream& out = std::cout);
-  Parent get_ast();
+  auto get_ast() -> Parent;
 
-  SymbolStorage& get_symbol_storage() { return arena; }
-  DiagnosticEngine& get_diag_engine() { return diag; }
-  const std::string& get_path() const { return module_path; }
+  auto get_symbol_storage() -> SymbolStorage& { return arena; }
+  auto get_diag_engine() -> DiagnosticEngine& { return diag; }
+  [[nodiscard]] auto get_path() const -> const std::string& { return module_path; }
 
-  const std::unordered_map<std::string, SymbolAttr*>& get_exported_symbols() const {
+  [[nodiscard]] auto get_exported_symbols() const -> const std::unordered_map<std::string, SymbolAttr*>& {
     return exported_symbols;
   }
   void set_exports(std::unordered_map<std::string, SymbolAttr*> syms) {
     exported_symbols = std::move(syms);
+  }
+
+  [[nodiscard]] auto get_exported_type_environment() const noexcept
+      -> const TypeEnvironment& { return exported_type_environment; }
+  [[nodiscard]] auto get_exported_type_environment() noexcept
+      -> TypeEnvironment& { return exported_type_environment; }
+  void set_exported_type_environment(TypeEnvironment environment) {
+    exported_type_environment = std::move(environment);
   }
 
 private:
@@ -41,6 +51,7 @@ private:
 
   SymbolStorage arena;
   std::unordered_map<std::string, SymbolAttr*> exported_symbols;
+  TypeEnvironment exported_type_environment;
 
   Parent module_root;
 

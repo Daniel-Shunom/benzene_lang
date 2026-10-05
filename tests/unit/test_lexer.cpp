@@ -230,8 +230,7 @@ TEST_SUITE("lexer / imports") {
 TEST_SUITE("lexer / diagnostics") {
   TEST_CASE("unknown character generates a lexer warning") {
     DiagnosticEngine diag;
-    auto toks = lex_all("@", diag);
-    // Expect: [Unknown('@'), EoF]
+    auto toks = lex_all("?", diag);
     REQUIRE(toks.size() == 2);
     CHECK(toks[0].token_type == TokenType::Unknown);
     // The diagnostic engine collected at least one diagnostic; it's a Warn,

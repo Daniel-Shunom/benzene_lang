@@ -1,55 +1,14 @@
 #pragma once
-#include <ether/parser/parser_types.hpp>
-#include <ether/nodes/node_expr.hpp>
 
-Parser<NDLiteral> parse_literal();
+// Umbrella header: existing callers can include all parser declarations here.
+#include <ether/parser/calls.hpp>
+#include <ether/parser/collections.hpp>
+#include <ether/parser/control_flow.hpp>
+#include <ether/parser/declarations.hpp>
+#include <ether/parser/expressions.hpp>
+#include <ether/parser/functions.hpp>
+#include <ether/parser/operators.hpp>
+#include <ether/parser/tokens.hpp>
+#include <ether/parser/types.hpp>
 
-Parser<NDIdentifier> parse_identifier();
-
-Parser<NDConstExpr> parse_const_expression();
-
-Parser<NDLetBindExpr> parse_let_expression();
-
-Parser<NDScopeExpr> parse_scoped_expression();
-
-Parser<NDListExpr> parse_list_expression();
-
-Parser<NDTupleExpr> parse_tuple_expression();
-
-Parser<NDImportDirective> parse_import_stmt();
-
-Parser<NDFuncDeclExpr> parse_function_declaration();
-
-Parser<NDPtr> parse_call_exprs();
-
-Parser<NDCallExpr> parse_call_expression();
-
-Parser<NDCaseExpr> parse_case_expression();
-
-Parser<NDPtr> parse_expression();
-
-Parser<NDPtr> parse_primary_expression();
-
-Parser<NDPtr> parse_value_expression();
-
-Parser<NDPtr> m_parse_chain_left(Parser<NDPtr>, Parser<Token>);
-
-Parser<NDPtr> m_parse_unary_expression();
-
-Parser<NDPtr> m_parse_additive_op();
-
-Parser<NDPtr> m_parse_multiplicative_op();
-
-Parser<NDPtr> m_parse_comparision_op();
-
-Parser<NDPtr> m_parser_equality_op();
-
-Parser<NDPtr> m_parse_logical_and();
-
-Parser<NDPtr> parse_binary_expression();
-
-Parser<Token> match(TokenType);
-
-Parser<Token> parse_type_annotation();
-
-PResult<Parent> run_parser(ParserState& state);
+auto run_parser(ParserState& state) -> PResult<Parent>;

@@ -1,4 +1,13 @@
+#include "ether/nodes/node_expr.hpp"
 #include <ether/ast_passes/symbol_resolver/symbol_resolver.hpp>
+#include <ether/types/type_printer.hpp>
+
+void SymbolResolver::visit(NDFuncParam& expr) {
+  expr.identifier.accept(*this);
+  if (expr.param_type) {
+    expr.param_type->accept(*this);
+  }
+}
 
 void SymbolResolver::visit(NDImportDirective& expr) {
   auto cscope_type = this->sym_table.get_current_scope_type();
@@ -24,6 +33,8 @@ void SymbolResolver::visit(NDLiteral& expr) {
     cscope_type
     && cscope_type != ScopeType::ScopedExpression
     && cscope_type != ScopeType::FunctionExpression
+    && cscope_type != ScopeType::LambdaExpression
+    && cscope_type != ScopeType::CaseExpression
     && cscope_type != ScopeType::Module
   ) {
     expr.is_poisoned = true;
@@ -49,6 +60,8 @@ void SymbolResolver::visit(NDIdentifier& expr) {
     cscope_type
     && cscope_type != ScopeType::ScopedExpression
     && cscope_type != ScopeType::FunctionExpression
+    && cscope_type != ScopeType::LambdaExpression
+    && cscope_type != ScopeType::CaseExpression
     && cscope_type != ScopeType::Module
   ) {
     expr.is_poisoned = true;
@@ -67,7 +80,7 @@ void SymbolResolver::visit(NDIdentifier& expr) {
     return;
   }
 
-  auto ident_sym = this->sym_table.lookup(expr.identifier.token_value);
+  auto *ident_sym = this->sym_table.lookup(expr.identifier.token_value);
   if (!ident_sym) return;
   expr.identifier_symbol = ident_sym;
 }
@@ -78,6 +91,8 @@ void SymbolResolver::visit(NDLetBindExpr& expr) {
     cscope_type
     && cscope_type != ScopeType::FunctionExpression
     && cscope_type != ScopeType::ScopedExpression
+    && cscope_type != ScopeType::LambdaExpression
+    && cscope_type != ScopeType::CaseExpression
   ) {
     expr.is_poisoned = true;
 
@@ -120,8 +135,8 @@ void SymbolResolver::visit(NDLetBindExpr& expr) {
 
   BindingData binding_data;
 
-  if (expr.type) {
-    binding_data.binding_type.type_name = expr.type->token_value;
+  if (expr.identifier->type) {
+    binding_data.binding_type.type_name = TypePrinter{}.print(expr.identifier->type->parsed_type);
   }
 
   expr.bound_value->accept(*this);
@@ -188,6 +203,24 @@ void SymbolResolver::visit(NDCallExpr& expr) {
   auto ident  = expr.identifier->identifier.token_value;
   auto sym = this->sym_table.lookup(ident);
 
+  // A constructor pattern is represented by the existing call-shaped AST
+  // node. Constructors are introduced by type declarations, not functions,
+  // so resolve them without applying function-call rules.
+  if (sym && sym->symbol_kind == SymbolKind::Type
+      && this->sym_table.get_current_scope_type() == ScopeType::CaseExpression) {
+    expr.identifier->identifier_symbol = sym;
+    for (auto& arg : expr.args) {
+      if (auto* identifier = dynamic_cast<NDIdentifier*>(arg.get())) {
+        auto* binding = this->sym_table.declare(identifier->identifier,
+                                                SymbolKind::Binding);
+        identifier->identifier_symbol = binding;
+      } else {
+        arg->accept(*this);
+      }
+    }
+    return;
+  }
+
   if (!sym) {
     expr.is_poisoned = true;
 
@@ -196,7 +229,10 @@ void SymbolResolver::visit(NDCallExpr& expr) {
     diag.phase = DiagnosticPhase::Resolver;
     diag.location.column = expr.identifier->identifier.column_number;
     diag.location.line = expr.identifier->identifier.line_number;
-    diag.message = "`Call` expression is not in valid scope";
+    diag.message = std::format(
+      "Unable to resolve called function `{}`",
+      ident
+    );
 
     this->diag_eng.report(diag);
     return;
@@ -208,6 +244,7 @@ void SymbolResolver::visit(NDCallExpr& expr) {
     && cscope_type != ScopeType::CaseExpression
     && cscope_type != ScopeType::ScopedExpression
     && cscope_type != ScopeType::FunctionExpression
+    && cscope_type != ScopeType::LambdaExpression
   ) {
     expr.is_poisoned = true;
 
@@ -238,6 +275,7 @@ void SymbolResolver::visit(NDCallChain& expr) {
     && cscope_type != ScopeType::ScopedExpression
     && cscope_type != ScopeType::FunctionExpression
     && cscope_type != ScopeType::CaseExpression
+    && cscope_type != ScopeType::LambdaExpression
   ) {
     expr.is_poisoned = true;
 
@@ -257,12 +295,7 @@ void SymbolResolver::visit(NDCallChain& expr) {
 
 void SymbolResolver::visit(NDFuncDeclExpr& expr) {
   auto cscope_type = this->sym_table.get_current_scope_type();
-  if (
-    cscope_type
-    && cscope_type != ScopeType::ScopedExpression
-    && cscope_type != ScopeType::FunctionExpression
-    && cscope_type != ScopeType::Module
-  ) {
+  if (cscope_type && cscope_type != ScopeType::Module) {
     expr.is_poisoned = true;
 
     auto diag = Diagnostic();
@@ -308,13 +341,13 @@ void SymbolResolver::visit(NDFuncDeclExpr& expr) {
   ScopeGuard guard(this->sym_table, ScopeType::FunctionExpression);
 
   for (auto& arg: expr.func_params) {
-    auto ptr = sym_table.declare(arg.param_token, SymbolKind::FuncParam);
+    auto ptr = sym_table.declare(arg.identifier.identifier, SymbolKind::FuncParam);
     if (!ptr) {
-      auto lkp = sym_table.lookup(arg.param_token.token_value);
+      auto lkp = sym_table.lookup(arg.identifier.identifier.token_value);
       if (!lkp) continue;
       auto dup_msg = std::format(
         "Duplicate function parameter name `{}` (see Ln {}, Col {} for previous declaration)",
-        arg.param_token.token_value,
+        arg.identifier.identifier.token_value,
         lkp->symbol_token.line_number,
         lkp->symbol_token.column_number
       );
@@ -322,27 +355,75 @@ void SymbolResolver::visit(NDFuncDeclExpr& expr) {
       auto diag = Diagnostic();
       diag.level = DiagnosticLevel::Fail;
       diag.phase = DiagnosticPhase::Resolver;
-      diag.location.column = arg.param_token.column_number;
-      diag.location.line = arg.param_token.line_number;
+      diag.location.column = arg.identifier.identifier.column_number;
+      diag.location.line = arg.identifier.identifier.line_number;
       diag.message = dup_msg;
 
       this->diag_eng.report(diag);
     };
 
-    if (!arg.param_sym) arg.param_sym = ptr;
+    if (!arg.param_sym) {
+      arg.param_sym = ptr;
+    }
   }
 
-  for (auto& body_expr: expr.func_body) body_expr->accept(*this);
+  for (auto& body_expr: expr.func_body) {
+    body_expr->accept(*this);
+  }
 
   FunctionData func_data;
 
   if (expr.return_type) {
-    func_data.function_return_type.type_name = expr.return_type->token_value;
+    func_data.function_return_type.type_name = TypePrinter{}.print(expr.return_type->parsed_type);
   }
 
   func_sym->symbol_data = func_data;
   expr.func_sym = func_sym;
   return;
+}
+
+void SymbolResolver::visit(NDTypeDecl& type_decl) {
+  auto cscope_type = this->sym_table.get_current_scope_type();
+  if (cscope_type && cscope_type != ScopeType::Module) {
+    type_decl.is_poisoned = true;
+    auto diag = Diagnostic();
+    diag.level = DiagnosticLevel::Fail;
+    diag.phase = DiagnosticPhase::ScopeResolution;
+    diag.location.column = type_decl.type_identifier.column_number;
+    diag.location.line = type_decl.type_identifier.line_number;
+    diag.message = "Type declarations should only exist in the top module scope.";
+
+    this->diag_eng.report(diag);
+    return;
+  }
+  if (type_decl.alias_target) {
+    type_decl.alias_target->accept(*this);
+  }
+  // Make the declared type and each of its constructors visible to later
+  // case-pattern resolution. Type expressions retain their full structure;
+  // this only creates the symbol records.
+  if (!sym_table.lookup(type_decl.type_identifier.token_value)) {
+    [[maybe_unused]] auto* type_symbol =
+      sym_table.declare(type_decl.type_identifier, SymbolKind::Type);
+  }
+  if (type_decl.sub_types) {
+    for (auto& member : *type_decl.sub_types) {
+      if (member.parsed_type && member.parsed_type->isTypeConstructor()) {
+        const auto& constructor = std::get<TypeConstructor>(member.parsed_type->value);
+        Token token{
+          .token_type = TokenType::Identifier,
+          .token_value = constructor.name(),
+          .line_number = type_decl.type_identifier.line_number,
+          .column_number = type_decl.type_identifier.column_number
+        };
+        if (!sym_table.lookup(constructor.name())) {
+          [[maybe_unused]] auto* constructor_symbol =
+            sym_table.declare(token, SymbolKind::Type);
+        }
+      }
+      member.accept(*this);
+    }
+  }
 }
 
 void SymbolResolver::visit(NDLambdaExpr& lambda) {
@@ -351,6 +432,8 @@ void SymbolResolver::visit(NDLambdaExpr& lambda) {
     cscope_type
     && cscope_type != ScopeType::ScopedExpression
     && cscope_type != ScopeType::FunctionExpression
+    && cscope_type != ScopeType::LambdaExpression
+    && cscope_type != ScopeType::CaseExpression
   ) {
     lambda.is_poisoned = true;
 
@@ -368,13 +451,13 @@ void SymbolResolver::visit(NDLambdaExpr& lambda) {
   ScopeGuard guard(this->sym_table, ScopeType::FunctionExpression);
 
   for (auto& arg: lambda.func_params) {
-    auto ptr = sym_table.declare(arg.param_token, SymbolKind::FuncParam);
+    auto ptr = sym_table.declare(arg.identifier.identifier, SymbolKind::FuncParam);
     if (!ptr) {
-      auto lkp = sym_table.lookup(arg.param_token.token_value);
+      auto lkp = sym_table.lookup(arg.identifier.identifier.token_value);
       if (!lkp) continue;
       auto dup_msg = std::format(
         "Duplicate function parameter name `{}` (see Ln {}, Col {} for previous declaration)",
-        arg.param_token.token_value,
+        arg.identifier.identifier.token_value,
         lkp->symbol_token.line_number,
         lkp->symbol_token.column_number
       );
@@ -382,8 +465,8 @@ void SymbolResolver::visit(NDLambdaExpr& lambda) {
       auto diag = Diagnostic();
       diag.level = DiagnosticLevel::Fail;
       diag.phase = DiagnosticPhase::Resolver;
-      diag.location.column = arg.param_token.column_number;
-      diag.location.line = arg.param_token.line_number;
+      diag.location.column = arg.identifier.identifier.column_number;
+      diag.location.line = arg.identifier.identifier.line_number;
       diag.message = dup_msg;
 
       this->diag_eng.report(diag);
@@ -402,6 +485,8 @@ void SymbolResolver::visit(NDScopeExpr& expr) {
     cscope_type
     && cscope_type != ScopeType::FunctionExpression
     && cscope_type != ScopeType::ScopedExpression
+    && cscope_type != ScopeType::LambdaExpression
+    && cscope_type != ScopeType::CaseExpression
   ) {
     expr.is_poisoned = true;
 
@@ -434,6 +519,8 @@ void SymbolResolver::visit(NDCaseExpr& expr) {
     cscope_type
     && cscope_type != ScopeType::FunctionExpression
     && cscope_type != ScopeType::ScopedExpression
+    && cscope_type != ScopeType::LambdaExpression
+    && cscope_type != ScopeType::CaseExpression
   ) {
     expr.is_poisoned = true;
 
@@ -465,3 +552,6 @@ void SymbolResolver::visit(NDUnaryExpr& expr) {
   expr.rhs->accept(*this);
 }
 
+void SymbolResolver::visit(NDTypeExpr&) {
+  // Type-expression semantics are not implemented in this pass yet.
+}

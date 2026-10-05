@@ -18,6 +18,7 @@ set(ETHER_TEST_SOURCES
   unit/test_diagnostic_engine.cpp
   unit/test_symbol_table.cpp
   unit/test_parser.cpp
+  unit/test_type_printer.cpp
   unit/test_sym_resolver.cpp
   unit/test_import_res.cpp
   integration/test_module_pipeline.cpp
