@@ -51,6 +51,7 @@ public:
   }
 
 private:
+  void resolve_pattern(Node&);
   DiagnosticEngine& diag_eng;
   SymbolTable sym_table;
   std::unordered_map<std::string, SymbolAttr*> exports;

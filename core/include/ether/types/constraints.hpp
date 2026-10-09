@@ -3,6 +3,7 @@
 #include <ether/diagnostics/diagnostic.hpp>
 #include <ether/types/types.hpp>
 #include <vector>
+#include <optional>
 
 struct Constraint {
   TypePtr lhs;
@@ -14,6 +15,10 @@ struct Constraint {
   //
   // Zero means the constraint was generated without a token to blame.
   SourceLocation location{};
+  // Preserve the source annotation and polymorphic scheme through recursive
+  // unification, which otherwise reports only the mismatching inner types.
+  TypePtr expected_declared;
+  std::optional<Scheme> expected_scheme;
 };
 
 using Constraints = std::vector<Constraint>;

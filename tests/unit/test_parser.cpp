@@ -593,6 +593,48 @@ TEST_SUITE("parser / expression annotations") {
 
 
 TEST_SUITE("parser / multivariate declarations") {
+  TEST_CASE("declaration parameters are retained with optional trailing commas") {
+    for (const auto* source : {"type Pair(T, U) { First(value: T) Second(value: U) }",
+                               "type Pair(T, U,)"}) {
+      DiagnosticEngine diag;
+      auto state = make_state(lex_all(source, diag), diag);
+      auto result = parse_type_declaration()(state);
+      REQUIRE(result);
+      REQUIRE(result->params.size() == 2);
+      CHECK(dynamic_cast<NDIdentifier*>(result->params[0].get())->identifier.token_value == "T");
+      CHECK(dynamic_cast<NDIdentifier*>(result->params[1].get())->identifier.token_value == "U");
+      REQUIRE(state.type_collections.size() == 1);
+      CHECK(std::get<TypeConstructor>(state.type_collections[0]->value).get_args().size() == 2);
+      CHECK(state.peek()->token_type == TokenType::EoF);
+      CHECK_FALSE(diag.has_errors());
+    }
+  }
+
+  TEST_CASE("parameterized aliases consume their declaration and retain parameters") {
+    DiagnosticEngine diag;
+    auto state = make_state(lex_all("type Mapping(T) = List(T) type Next", diag), diag);
+    auto alias = parse_type_declaration()(state);
+    REQUIRE(alias);
+    REQUIRE(alias->params.size() == 1);
+    REQUIRE(alias->alias_target);
+    CHECK(std::get<TypeConstructor>(alias->alias_target->parsed_type->value).name() == "List");
+    CHECK(state.peek()->token_type == TokenType::TypeKeyword);
+    REQUIRE(parse_type_declaration()(state));
+    CHECK(state.peek()->token_type == TokenType::EoF);
+    CHECK_FALSE(diag.has_errors());
+  }
+
+  TEST_CASE("malformed declaration parameters fail without partial registration") {
+    for (const auto* source : {"type Bad(T U)", "type Bad(T,,)", "type Bad(T", "type Bad(1)"}) {
+      DiagnosticEngine diag;
+      auto state = make_state(lex_all(source, diag), diag);
+      CHECK_FALSE(parse_type_declaration()(state));
+      CHECK(state.pos == 0);
+      CHECK(state.type_collections.empty());
+      REQUIRE(diag.all().size() == 1);
+    }
+  }
+
   TEST_CASE("declarations retain ordered subtype expressions and consume their braces") {
     DiagnosticEngine diag;
     auto state = make_state(lex_all(

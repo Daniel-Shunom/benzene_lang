@@ -6,6 +6,8 @@
 #include <vector>
 #include <ether/tokens/token_types.hpp>
 
+struct Type;
+
 enum class SymbolKind {
   UnResolved,
   Function,
@@ -14,6 +16,7 @@ enum class SymbolKind {
   Constant,
   Module,
   Type,
+  TypeParam,
 };
 
 /* Symbol Data structs. Used in storing information about certain symbols*/
@@ -74,6 +77,7 @@ struct SymbolAttr {
   Token symbol_token;
   SymbolData symbol_data;
   std::vector<SymbolError> symbol_errors;
+  std::shared_ptr<Type> declared_type;
 };
 
 // Scope visibility maps name -> non-owning pointer into the module's

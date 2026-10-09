@@ -32,7 +32,8 @@ void Lexer::scan_tokens() {
       continue;
     }
 
-    if (std::isalpha(c)) {
+    if (std::isalpha(c) || (c == '_' &&
+        (position + 1 >= input.size() || !is_identifier_char(input[position + 1])))) {
       this->scan_keyword_or_identifier();
       continue;
     }

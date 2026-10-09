@@ -13,6 +13,29 @@ auto Unifier::report_failure(std::string message, TypePtr lhs,
     message += ": expected " + rendered_lhs + ", but found " + rendered_rhs;
   }
 
+  if (current_constraint) {
+    TypePrinter printer;
+    const auto& constraint = *current_constraint;
+    if (constraint.expected_declared) {
+      const auto declared = printer.print(constraint.expected_declared);
+      const auto expanded = printer.print(apply(constraint.lhs));
+      if (declared != rendered_lhs || declared != expanded) {
+        message += ". Expected declared type " + declared;
+        if (declared != expanded) message += " (expands to " + expanded + ")";
+      }
+    }
+    if (constraint.expected_scheme && !constraint.expected_scheme->quantified.empty()) {
+      message += ". Expected generalized type forall ";
+      const auto& scheme = *constraint.expected_scheme;
+      for (size_t i = 0; i < scheme.quantified.size(); ++i) {
+        if (i) message += ", ";
+        message += printer.print(std::make_shared<Type>(TypeVar{scheme.quantified[i]}));
+      }
+      message += ". " + printer.print(scheme.type)
+          + " (instantiated as " + printer.print(apply(constraint.lhs)) + ")";
+    }
+  }
+
   Diagnostic diagnostic;
   diagnostic.level = DiagnosticLevel::Fail;
   diagnostic.phase = DiagnosticPhase::TypeChecker;
@@ -84,9 +107,11 @@ void Unifier::solve(const Constraints& constraints) {
   for (size_t i = solved_constraints; i < constraints.size(); ++i) {
     const auto& constraint = constraints[i];
     current_location = constraint.location;
+    current_constraint = &constraint;
     unify(constraint.lhs, constraint.rhs);
   }
   current_location = {};
+  current_constraint = nullptr;
   solved_constraints = constraints.size();
 }
 

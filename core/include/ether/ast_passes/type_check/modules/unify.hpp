@@ -17,6 +17,7 @@ class Unifier {
   // failure that surfaces is often several levels below the constraint that
   // caused it; this is what lets the diagnostic still name the right place.
   SourceLocation current_location{};
+  const Constraint* current_constraint = nullptr;
 
   auto report_failure(std::string message, TypePtr lhs = nullptr,
                       TypePtr rhs = nullptr) -> void;

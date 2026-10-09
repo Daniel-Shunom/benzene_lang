@@ -44,13 +44,13 @@ TEST_SUITE("symbols / SymbolTable") {
     auto* outer = table.declare(tok_outer, SymbolKind::Binding);
     REQUIRE(outer);
 
-    table.new_scope(ScopeType::FunctionExpression);
+    table.new_scope(ScopeType::FunctionDeclaration);
     auto tok_inner = make_tok(TokenType::Identifier, "n", 5, 1);
     auto* inner = table.declare(tok_inner, SymbolKind::Binding);
     REQUIRE(inner);
     CHECK(inner != outer);
     CHECK(table.lookup("n") == inner);
-    CHECK(*table.get_current_scope_type() == ScopeType::FunctionExpression);
+    CHECK(*table.get_current_scope_type() == ScopeType::FunctionDeclaration);
 
     table.pop_scope();
     CHECK(table.lookup("n") == outer);

@@ -5,16 +5,18 @@ enum class ScopeType {
   Application,
   Module,
   CaseExpression,
-  FunctionExpression,
+  TypeDeclaration,
+  FunctionDeclaration,
   LambdaExpression,
   ScopedExpression,
 };
 
 inline auto scope_type_to_str(ScopeType& type) -> std::string {
   switch (type) {
+    case ScopeType::TypeDeclaration: return "TypeDeclaration";
     case ScopeType::Application: return "Application";
     case ScopeType::Module: return "Module";
-    case ScopeType::FunctionExpression: return "FunctionExpression";
+    case ScopeType::FunctionDeclaration: return "FunctionDeclaration";
     case ScopeType::ScopedExpression: return "ScopedExpression";
     case ScopeType::CaseExpression: return "CaseExpression";
     case ScopeType::LambdaExpression: return "LambdaExpression";

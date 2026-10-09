@@ -71,6 +71,7 @@ prefixes (`>=` before `>`, `==` before `=`, etc.).
 program       ::= top-expr*
 
 top-expr      ::= import-stmt
+                | type-decl
                 | const-decl
                 | let-decl
                 | func-decl
@@ -122,11 +123,44 @@ is itself nested in a function body).
 ### 3.4 Type annotations
 
 ```
-type-annot    ::= ":" <identifier>
+type-annot    ::= ":" type-expr
 ```
 
-Type identifiers are not interpreted by the parser; they are stored verbatim
-and surfaced to later passes (type-checker).
+Type expressions retain their structure for later type checking.
+
+```
+type-decl     ::= "type" <identifier> type-params? ("=" type-expr | "{" type-expr* "}")?
+type-params   ::= "(" (<identifier> ("," <identifier>)* ","?)? ")"
+type-expr     ::= <identifier> type-args?
+                | "Fn" "(" type-list? ")" ":>" type-expr
+                | "Nil"
+type-args     ::= "(" (type-list | labelled-list)? ")"
+type-list     ::= type-expr ("," type-expr)* ","?
+labelled-list ::= <identifier> ":" type-expr ("," <identifier> ":" type-expr)* ","?
+```
+
+Declaration parameters are names. Type arguments are recursive expressions;
+an argument list uses either labelled or unlabelled arguments throughout.
+Subtype bodies contain consecutive type expressions without commas.
+
+Generic constructor fields refer to the parameters declared by their parent:
+
+```benzene
+type Result(a, b) { Ok(a) Error(b) }
+```
+
+For `Result(Int, String)`, `Ok` carries an `Int` and `Error` carries a
+`String`. Each constructor use gets fresh parameters, so separate uses may
+have different types. Fields can also use concrete declared types and nested
+applications such as `List(a)`. An undeclared parameter such as `c` in
+`Ok(c)`, a duplicate parameter name, or applying a parameter as `a(Int)` is
+an error. Parameters are visible only within their type declaration.
+
+Parameterized aliases substitute their arguments into the complete target
+type. For example, `type Handler(data) = Fn(data) :> String` makes
+`Handler(Int)` equivalent to `Fn(Int) :> String`. An annotated binding can
+hold a function with that signature. Alias applications must supply exactly
+the declared number of arguments.
 
 ### 3.5 Function declarations
 
@@ -136,7 +170,7 @@ func-decl     ::= "func" <identifier> "(" param-list? ")" return-type? body "end
 param-list    ::= param ("," param)*
 param         ::= <identifier> type-annot?
 
-return-type   ::= ":>" <identifier>
+return-type   ::= ":>" type-expr
 
 body          ::= top-expr*       ; same shapes as top-expr; resolver applies
                                   ; function-scope rules
@@ -195,13 +229,19 @@ inside other scoped expressions.
 ### 4.4 Case expressions
 
 ```
-case-expr     ::= "case" value-expr ":" case-branch+ "end"
+case-expr     ::= "case" value-expr ("," value-expr)* ":" case-branch+ "end"
 
-case-branch   ::= value-expr ":>" value-expr
+case-branch   ::= value-expr ("," value-expr)* ":>" value-expr
 ```
 
-Currently only the first pattern in a branch is collected; multi-pattern
-branches are reserved for a future revision.
+Each branch has one pattern per condition. Constructor patterns validate
+their fields recursively against the declared constructor signature;
+nullary constructors can be written as bare names. A pattern identifier binds
+a value within that branch, and `_` ignores a value without introducing a
+binding. Duplicate binders within a branch are errors. Names may be reused
+in other branches. Literal patterns must match the corresponding condition's
+type, and all branch results must have compatible types. Calls in branch
+results are ordinary expressions, including calls to constructors.
 
 ## 5. Comments
 
