@@ -6,7 +6,7 @@
 -- Everything here can be turned off before the plugin loads:
 --   vim.g.benzene_lsp_cmd      command list to launch the server
 --   vim.g.benzene_compiler     path to the `ether` binary
---   vim.g.benzene_inlay_hints  false to stop showing inferred types inline
+--   vim.g.benzene_inlay_hints  true to show inferred types inline (default: off)
 --   vim.g.benzene_folding      false to leave 'foldexpr' alone
 --   vim.g.benzene_highlight    false to stop highlighting the word under the cursor
 
@@ -24,14 +24,9 @@ local function default_cmd()
   return { launcher }
 end
 
---- Inferred types shown inline. Worth having on by default in a language where
---- almost nothing is annotated, and where the server only emits a hint exactly
---- where the user did not write one.
+--- Keep inline types opt-in; hover remains available without visual clutter.
 local function enable_inlay_hints(bufnr)
-  if vim.g.benzene_inlay_hints == false then
-    return
-  end
-  pcall(vim.lsp.inlay_hint.enable, true, { bufnr = bufnr })
+  pcall(vim.lsp.inlay_hint.enable, vim.g.benzene_inlay_hints == true, { bufnr = bufnr })
 end
 
 --- Folding driven by the server's token pairing rather than by indentation.

@@ -60,13 +60,15 @@ pub fn is_identifier(name: String) -> Bool {
 
 /// Whether `rendered` can be written where the grammar expects a type.
 ///
-/// Annotations are `":" <identifier>` and nothing more, so a solved type like
-/// `Int` can be written down but a type variable (`'t0`) or a constructed type
-/// (`Fn(Int) :> Int`) cannot -- inserting either would produce source that no
-/// longer parses. Reserved words are allowed here, unlike in `is_identifier`:
-/// `Nil` is both a keyword and a perfectly good type name.
+/// The compiler prints concrete types using the annotation grammar, including
+/// nested applications and function signatures. Unsolved variables (`'t0`)
+/// and placeholders (`<unset>`) have no source spelling and must stay hints.
 pub fn is_writable_type(rendered: String) -> Bool {
-  has_identifier_shape(rendered)
+  rendered != ""
+  && list.all(string.to_graphemes(rendered), fn(character) {
+    is_identifier_char(character)
+    || list.contains(["(", ")", ",", ":", ">", " "], character)
+  })
 }
 
 fn has_identifier_shape(name: String) -> Bool {

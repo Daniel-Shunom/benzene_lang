@@ -17,7 +17,7 @@ import lsp/scan.{type Entry, type Token}
 /// order is part of the protocol -- it must match what `initialize` advertises.
 pub const token_types = [
   "namespace", "type", "function", "parameter", "variable", "keyword", "comment",
-  "string", "number", "operator",
+  "string", "number", "operator", "typeParameter",
 ]
 
 pub const token_modifiers = ["declaration", "readonly"]
@@ -41,6 +41,8 @@ const type_string = 7
 const type_number = 8
 
 const type_operator = 9
+
+const type_type_parameter = 10
 
 const modifier_declaration = 1
 
@@ -173,6 +175,7 @@ fn identifier_kind(
         )
         "Binding" -> #(type_variable, modifiers)
         "Type" -> #(type_type, modifiers)
+        "TypeParam" -> #(type_type_parameter, modifiers)
         "Module" -> #(type_namespace, modifiers)
         _ -> #(type_variable, modifiers)
       }

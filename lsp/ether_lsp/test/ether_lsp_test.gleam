@@ -16,6 +16,25 @@ pub fn main() -> Nil {
   gleeunit.main()
 }
 
+pub fn generic_parameters_have_hover_and_completion_kinds_test() {
+  encode.describe_kind("TypeParam") |> should.equal("type parameter")
+  encode.completion_kind("TypeParam") |> should.equal(25)
+  encode.symbol_kind("TypeParam") |> should.equal(26)
+}
+
+pub fn generic_parameter_completions_stay_in_their_type_scope_test() {
+  let indexed = analysis([], [
+    Entry(..entry("Box", 1, 6, 3), kind: "Type"),
+    Entry(..entry("a", 1, 10, 1), kind: "TypeParam", scope_line: 1, scope_column: 6),
+    Entry(..entry("Wrap", 2, 3, 4), kind: "Type", scope_line: 1, scope_column: 6),
+    Entry(..entry("outside", 4, 6, 7), kind: "Function"),
+  ])
+  let inside = json.to_string(feature.completion(indexed, "type Box(a) {\n  Wrap(value: ", 1, 14))
+  string.contains(inside, "\"label\":\"a\"") |> should.be_true
+  let outside = json.to_string(feature.completion(indexed, "\n\n\nfunc outside(x: ", 3, 16))
+  string.contains(outside, "\"label\":\"a\"") |> should.be_false
+}
+
 // --- fixtures ---------------------------------------------------------------
 
 /// A binding entry with everything defaulted, so each test states only the
@@ -223,7 +242,7 @@ pub fn identifiers_must_start_with_a_letter_test() {
   text.is_identifier("has-dash") |> should.be_false
 }
 
-pub fn writable_types_are_bare_names_test() {
+pub fn writable_types_include_concrete_constructed_types_test() {
   text.is_writable_type("Int") |> should.be_true
   text.is_writable_type("MyType") |> should.be_true
   // A keyword is fine as a type name even though it is not a valid binding
@@ -231,8 +250,10 @@ pub fn writable_types_are_bare_names_test() {
   text.is_writable_type("Nil") |> should.be_true
 
   text.is_writable_type("'t0") |> should.be_false
-  text.is_writable_type("Fn(Int) :> Int") |> should.be_false
-  text.is_writable_type("List(Int)") |> should.be_false
+  text.is_writable_type("Fn(Int) :> Int") |> should.be_true
+  text.is_writable_type("List(Int)") |> should.be_true
+  text.is_writable_type("Fn(List('t0)) :> Int") |> should.be_false
+  text.is_writable_type("<unset>") |> should.be_false
   text.is_writable_type("") |> should.be_false
 }
 
@@ -540,12 +561,22 @@ pub fn an_unsolved_type_is_not_offered_as_an_edit_test() {
   |> should.be_true
 }
 
-pub fn a_constructed_type_is_not_offered_as_an_edit_test() {
+pub fn a_concrete_function_type_is_offered_as_an_edit_test() {
   let higher_order =
     analysis([], [Entry(..entry("f", 2, 7, 1), inferred: "Fn(Int) :> Int")])
 
   json.to_string(feature.code_actions("file:///a.bz", higher_order, 0, 100))
-  |> should.equal("[]")
+  |> string.contains("\"newText\":\": Fn(Int) :> Int\"")
+  |> should.be_true
+}
+
+pub fn return_annotations_follow_the_outer_parameter_list_test() {
+  let indexed = analysis([
+    token(1, 7, 1, "LParen"), token(1, 14, 1, "LParen"),
+    token(1, 18, 1, "RParen"), token(1, 30, 1, "RParen"),
+  ], [Entry(..entry("f", 1, 6, 1), kind: "Function", returns: "String")])
+  json.to_string(feature.code_actions("file:///a.bz", indexed, 0, 0))
+  |> string.contains("\"character\":30") |> should.be_true
 }
 
 pub fn an_annotated_binding_offers_nothing_test() {
@@ -553,6 +584,31 @@ pub fn an_annotated_binding_offers_nothing_test() {
     analysis([], [Entry(..entry("total", 3, 7, 5), annotated: True)])
   json.to_string(feature.code_actions("file:///a.bz", bindings, 0, 100))
   |> should.equal("[]")
+}
+
+pub fn an_explicit_binding_annotation_can_be_removed_test() {
+  let binding = Entry(..entry("b", 2, 7, 1), annotated: True)
+  let indexed = analysis([
+    token(2, 8, 1, "Colon"), token(2, 10, 3, "Identifier"),
+    token(2, 14, 1, "Eq"), token(2, 16, 1, "IntegerLiteral"),
+  ], [binding])
+  let rendered = json.to_string(feature.code_actions("file:///a.bz", indexed, 1, 1))
+  string.contains(rendered, "Remove type annotation") |> should.be_true
+  string.contains(rendered, "\"newText\":\"\"") |> should.be_true
+  string.contains(rendered, "\"character\":7") |> should.be_true
+  string.contains(rendered, "\"character\":12") |> should.be_true
+}
+
+pub fn removing_a_mismatched_annotation_is_a_quickfix_test() {
+  let indexed = analysis([
+    token(2, 8, 1, "Colon"), token(2, 10, 3, "Identifier"), token(2, 14, 1, "Eq"),
+  ], [Entry(..entry("b", 2, 7, 1), annotated: True)])
+  let indexed = Scan(..indexed, diagnostics: [Diagnostic(
+    line: 2, column: 7, length: 1, severity: "error", phase: "types",
+    message: "These types are incompatible", related: [],
+  )])
+  json.to_string(feature.code_actions("file:///a.bz", indexed, 1, 1))
+  |> string.contains("\"kind\":\"quickfix\"") |> should.be_true
 }
 
 pub fn a_code_action_matches_the_hint_it_replaces_test() {

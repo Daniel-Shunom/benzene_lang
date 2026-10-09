@@ -65,12 +65,13 @@ out("  attach")
 check("filetype is benzene", vim.bo.filetype == "benzene", vim.bo.filetype)
 check("utf-8 position encoding", client.offset_encoding == "utf-8",
   client.offset_encoding)
-check("inlay hints enabled", vim.lsp.inlay_hint.is_enabled({ bufnr = 0 }))
+check("inlay hints disabled by default", not vim.lsp.inlay_hint.is_enabled({ bufnr = 0 }))
 check("foldexpr wired to the server",
   vim.wo.foldexpr:find("foldexpr") ~= nil, vim.wo.foldexpr)
 check("commands registered",
   vim.fn.exists(":BenzeneLspStatus") == 2
   and vim.fn.exists(":BenzeneInlayHints") == 2
+  and vim.fn.exists(":BenzeneCodeActions") == 2
   and vim.fn.exists(":BenzeneRestart") == 2)
 
 out("  features through vim.lsp")
@@ -149,11 +150,34 @@ vim.api.nvim_buf_set_lines(0, 0, -1, false, { "const a = 1", "const b = 2" })
 vim.wait(10000, function() return #vim.diagnostic.get(0) == 0 end, 100)
 check("fixing the error clears them", #vim.diagnostic.get(0) == 0)
 
+out("  annotation quickfix")
+vim.api.nvim_buf_set_lines(0, 0, -1, false, {
+  "func use()", '  let b: Int = "text"', "  b", "end",
+})
+vim.wait(10000, function() return #vim.diagnostic.get(0) > 0 end, 100)
+local fixes = request("textDocument/codeAction", {
+  textDocument = document(),
+  range = { start = { line = 1, character = 0 }, ["end"] = { line = 1, character = 30 } },
+  context = { diagnostics = {} },
+})
+local fix
+for _, action in ipairs(fixes or {}) do
+  if action.kind == "quickfix" then fix = action end
+end
+check("incompatible annotations offer a quickfix", fix ~= nil, vim.inspect(fixes))
+if fix then
+  vim.lsp.util.apply_workspace_edit(fix.edit, client.offset_encoding)
+  check("the quickfix removes the explicit annotation",
+    vim.api.nvim_buf_get_lines(0, 1, 2, false)[1] == '  let b = "text"')
+  vim.wait(10000, function() return #vim.diagnostic.get(0) == 0 end, 100)
+  check("the quickfix clears the type error", #vim.diagnostic.get(0) == 0)
+end
+
 out("  commands")
 vim.cmd("BenzeneInlayHints")
-check("inlay hints toggle off", not vim.lsp.inlay_hint.is_enabled({ bufnr = 0 }))
+check("inlay hints toggle on", vim.lsp.inlay_hint.is_enabled({ bufnr = 0 }))
 vim.cmd("BenzeneInlayHints")
-check("and back on", vim.lsp.inlay_hint.is_enabled({ bufnr = 0 }))
+check("and back off", not vim.lsp.inlay_hint.is_enabled({ bufnr = 0 }))
 
 if failures == 0 then
   out("\nneovim suite passed")

@@ -37,6 +37,19 @@ CAPABILITIES = [
 ]
 
 
+def apply_action(source, action, uri):
+    """Apply the server's edits exactly as an editor would (ASCII fixtures)."""
+    lines = source.splitlines(keepends=True)
+    def offset(position):
+        return sum(len(line) for line in lines[:position["line"]]) + position["character"]
+    edits = action["edit"]["changes"][uri]
+    for edit in sorted(edits, key=lambda e: offset(e["range"]["start"]), reverse=True):
+        start = offset(edit["range"]["start"])
+        end = offset(edit["range"]["end"])
+        source = source[:start] + edit["newText"] + source[end:]
+    return source
+
+
 def run():
     report = Report("features")
     client = Client()
@@ -167,6 +180,143 @@ def run():
         report.check("returns a well-formed token array",
                      tokens and len(tokens["data"]) % 5 == 0 and tokens["data"],
                      str(len(tokens["data"]) if tokens else None))
+
+        report.section("generic type parameters")
+        generic_uri = "file:///C:/work/generic-types.bz"
+        generic_source = (
+            "type Result(a, b) {\n  Ok(a)\n  Error(b)\n}\n"
+            "func get(r: Result(Int, String)) :> Int\n"
+            "  case r:\n    Ok(x) :> x\n  end\nend\n"
+        )
+        published = client.open(generic_uri, generic_source)
+        report.check("generic constructor fields type check",
+                     published["params"]["diagnostics"] == [], str(published))
+        hover = client.result("textDocument/hover", Client.at(generic_uri, 1, 5))
+        report.check("hover identifies a generic parameter",
+                     hover and "type parameter" in hover["contents"]["value"], str(hover))
+        definition = client.result("textDocument/definition", Client.at(generic_uri, 1, 5))
+        report.check("field parameter navigates to the parent parameter",
+                     definition and definition["range"]["start"] == {"line": 0, "character": 12},
+                     str(definition))
+        renamed = client.result("textDocument/rename",
+                                dict(Client.at(generic_uri, 1, 5), newName="value"))
+        report.check("rename updates the declaration and its field reference",
+                     renamed and len(renamed["changes"][generic_uri]) == 2, str(renamed))
+        hover = client.result("textDocument/hover", Client.at(generic_uri, 6, 13))
+        report.check("pattern-bound values show the instantiated field type",
+                     hover and "Int" in hover["contents"]["value"], str(hover))
+        tokens = client.result("textDocument/semanticTokens/full",
+                               {"textDocument": {"uri": generic_uri}})
+        parameter_kind = caps["semanticTokensProvider"]["legend"]["tokenTypes"].index("typeParameter")
+        report.check("generic parameters receive typeParameter highlighting",
+                     tokens and tokens["data"][3::5].count(parameter_kind) == 4, str(tokens))
+        invalid_uri = "file:///C:/work/invalid-generic.bz"
+        published = client.open(invalid_uri, "type Box(a) {\n  Wrap(c)\n}\n")
+        report.check("undeclared parameters produce editor diagnostics",
+                     any("Type `c` is not defined" in d["message"]
+                         for d in published["params"]["diagnostics"]), str(published))
+
+        report.section("generic function aliases")
+        alias_uri = "file:///C:/work/generic-alias.bz"
+        published = client.open(alias_uri,
+            "type Handler(data) = Fn(data) :> String\n"
+            "func foo(x: Int) :> String\n  \"ok\"\nend\n"
+            "func use() :> String\n  let b: Handler(Int) = foo\n  b(1)\nend\n")
+        report.check("function signature aliases accept matching functions",
+                     published["params"]["diagnostics"] == [], str(published))
+        hover = client.result("textDocument/hover", Client.at(alias_uri, 5, 6))
+        report.check("alias bindings show the substituted function signature",
+                     hover and "Int" in hover["contents"]["value"]
+                     and "String" in hover["contents"]["value"], str(hover))
+        hover = client.result("textDocument/hover", Client.at(alias_uri, 5, 10))
+        report.check("alias application hover shows its substituted signature",
+                     hover and "Int" in hover["contents"]["value"]
+                     and "String" in hover["contents"]["value"], str(hover))
+
+        report.section("case pattern validation")
+        case_uri = "file:///C:/work/case-patterns.bz"
+        published = client.open(case_uri,
+            "type Result(a, b) { Ok(a) Error(b) }\n"
+            "func copy(r: Result(Int, String)) :> Result(Int, String)\n"
+            "  case r:\n    Ok(x) :> Ok(x)\n    Error(x) :> Error(x)\n  end\nend\n")
+        report.check("branch-local names and constructor results type check",
+                     published["params"]["diagnostics"] == [], str(published))
+        case_error_uri = "file:///C:/work/invalid-case-patterns.bz"
+        published = client.open(case_error_uri,
+            "func wrong(x: Int)\n  case x:\n    \"text\" :> 1\n  end\nend\n")
+        report.check("incompatible case patterns produce diagnostics",
+                     bool(published["params"]["diagnostics"]), str(published))
+
+        report.section("annotation code actions")
+        mismatch_uri = "file:///C:/work/mismatched-annotation.bz"
+        mismatch_source = "func use()\n  let b: Int = \"text\"\n  b\nend\n"
+        published = client.open(mismatch_uri, mismatch_source)
+        actions = client.result("textDocument/codeAction", {
+            "textDocument": {"uri": mismatch_uri},
+            "range": {"start": {"line": 1, "character": 0}, "end": {"line": 1, "character": 30}},
+            "context": {"diagnostics": published["params"]["diagnostics"]}})
+        remove = next((a for a in actions if a["kind"] == "quickfix"), None)
+        report.check("an incompatible annotation offers inference as a quickfix", remove is not None, str(actions))
+        if remove:
+            client.drain()
+            client.change(mismatch_uri, apply_action(mismatch_source, remove, mismatch_uri))
+            published = client.await_diagnostics(mismatch_uri)
+            report.check("the annotation quickfix clears the mismatch",
+                         published["params"]["diagnostics"] == [], str(published))
+
+        alias_source = (
+            "type Handler(data) = Fn(data) :> String\n"
+            "func foo(x: Int) :> String\n  \"ok\"\nend\n"
+            "func use()\n  let b: Handler(Int) = foo\n  b(1)\nend\n")
+        expand_uri = "file:///C:/work/expand-alias.bz"
+        client.open(expand_uri, alias_source)
+        actions = client.result("textDocument/codeAction", {
+            "textDocument": {"uri": expand_uri},
+            "range": {"start": {"line": 5, "character": 0}, "end": {"line": 5, "character": 40}},
+            "context": {"diagnostics": []}})
+        expand = next((a for a in actions if a["title"].startswith("Expand type alias")), None)
+        report.check("a generic alias annotation offers expansion", expand is not None, str(actions))
+        if expand:
+            client.drain()
+            expanded = apply_action(alias_source, expand, expand_uri)
+            client.change(expand_uri, expanded)
+            published = client.await_diagnostics(expand_uri)
+            report.check("expanded aliases produce valid matching function annotations",
+                         "let b: Fn(Int) :> String = foo" in expanded
+                         and published["params"]["diagnostics"] == [], str(published))
+
+        inferred_uri = "file:///C:/work/annotate-function.bz"
+        inferred_source = "func foo(x: Int) :> String\n  \"ok\"\nend\nfunc use()\n  let b = foo\n  b(1)\nend\n"
+        client.open(inferred_uri, inferred_source)
+        actions = client.result("textDocument/codeAction", {
+            "textDocument": {"uri": inferred_uri},
+            "range": {"start": {"line": 4, "character": 0}, "end": {"line": 4, "character": 20}},
+            "context": {"diagnostics": []}})
+        annotate_fn = next((a for a in actions if "Fn(Int) :> String" in a["title"]), None)
+        report.check("function-valued bindings offer concrete signature annotations", annotate_fn is not None, str(actions))
+        if annotate_fn:
+            client.drain()
+            client.change(inferred_uri, apply_action(inferred_source, annotate_fn, inferred_uri))
+            published = client.await_diagnostics(inferred_uri)
+            report.check("function annotation edits re-check cleanly",
+                         published["params"]["diagnostics"] == [], str(published))
+
+        report.section("diagnostic wording")
+        undefined_uri = "file:///C:/work/undefined-names.bz"
+        published = client.open(undefined_uri,
+            "func use()\n  missing()\n  let b = absent\nend\n")
+        messages = [d["message"] for d in published["params"]["diagnostics"]]
+        report.check("undefined functions and identifiers are named clearly",
+                     "Function `missing` is not defined" in messages
+                     and "Identifier `absent` is not defined" in messages, str(messages))
+        generic_error_uri = "file:///C:/work/alias-mismatch.bz"
+        published = client.open(generic_error_uri,
+            "type Handler(data) = Fn(data) :> String\n"
+            "func foo(x: String) :> String\n  x\nend\n"
+            "func use()\n  let b: Handler(Int) = foo\nend\n")
+        report.check("alias mismatches identify the declared and expanded types",
+                     any("Handler(Int)" in d["message"] and "expands to Fn(Int) :> String" in d["message"]
+                         for d in published["params"]["diagnostics"]), str(published))
 
         report.section("shutdown")
         report.check("exits cleanly", client.shutdown() == 0)
