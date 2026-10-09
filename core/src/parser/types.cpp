@@ -63,13 +63,47 @@ auto parse_type_declaration() -> Parser<NDTypeDecl> {
     }
 
     NDTypeDecl type_decl;
+
+    std::vector<TypePtr> parameter_types;
+    if (match(TokenType::LParen)(state)) {
+      while(!match(TokenType::RParen)(state)) {
+        auto token = match(TokenType::Identifier)(state);
+        if (!token) {
+          report_type_error(state, "Expected a type parameter name or ')'");
+          return std::nullopt;
+        }
+
+        auto ident = std::make_unique<NDIdentifier>();
+        ident->identifier = token.value();
+        parameter_types.push_back(makeTypeConstructor(token->token_value, {}));
+        type_decl.params.push_back(std::move(ident));
+
+        if (match(TokenType::RParen)(state)) {
+          break;
+        }
+
+        if (!require_type_token(
+          state,
+          TokenType::Delim,
+          "Expected ',' or ')' after type parameter")
+        ) {
+          return std::nullopt;
+        }
+      }
+    }
+
     if (match(TokenType::Eq)(state)) {
       auto target = require_type_expression(state, "Expected a type expression after '='");
       if (!target) {
         return std::nullopt;
       }
       type_decl.alias_target = std::move(*target);
-    } else if (match(TokenType::LBrace)(state)) {
+      type_decl.type_identifier = type_ident.value();
+      checkpoint.commit();
+      return type_decl;
+    }
+
+    if (match(TokenType::LBrace)(state)) {
       type_decl.sub_types.emplace();
       while (true) {
         auto next = state.peek();
@@ -97,10 +131,8 @@ auto parse_type_declaration() -> Parser<NDTypeDecl> {
       }
     }
 
-    if (!type_decl.alias_target) {
-      auto type = makeTypeConstructor(type_ident->token_value, {});
-      state.type_collections.push_back(std::move(type));
-    }
+    auto type = makeTypeConstructor(type_ident->token_value, std::move(parameter_types));
+    state.type_collections.push_back(std::move(type));
 
     type_decl.type_identifier = type_ident.value();
 
@@ -139,6 +171,7 @@ auto parse_type_expression() -> Parser<NDTypeExpr> {
     }
 
     NDTypeExpr type_expr;
+    const auto start = state.pos;
     if (tok->token_type == TokenType::Identifier) {
       auto texpr = h_parse_type_expr_ident()(state);
       if (!texpr) {
@@ -158,6 +191,13 @@ auto parse_type_expression() -> Parser<NDTypeExpr> {
       return std::nullopt;
     }
 
+    for (auto i = start; i < state.pos; ++i) {
+      const auto& token = state.tokens[i];
+      if (token.token_type != TokenType::Identifier) continue;
+      if (i + 1 < state.pos && state.tokens[i + 1].token_type == TokenType::Colon) continue;
+      type_expr.names.push_back({token, nullptr,
+          i + 1 < state.pos && state.tokens[i + 1].token_type == TokenType::LParen});
+    }
     checkpoint.commit();
     return type_expr;
   };
@@ -242,7 +282,8 @@ auto h_parse_type_expr_ident_wtagged_params(std::string ident_name) -> Parser<Ty
       }
 
       auto type_expr = std::move(typ->parsed_type);
-      auto tagged_type = makeTypeConstructor(ident->token_value, {type_expr});
+      auto tagged_type = std::make_shared<Type>(
+          TypeConstructor{ident->token_value, {type_expr}, true});
 
       types.push_back(std::move(tagged_type));
 

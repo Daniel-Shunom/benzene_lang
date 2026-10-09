@@ -35,7 +35,7 @@ void ScopeRes::visit(NDLetBindExpr& let_bind) {
   auto scope = this->sym_table.get_current_scope_type();
   if (
     scope
-    && scope != ScopeType::FunctionExpression
+    && scope != ScopeType::FunctionDeclaration
     && scope != ScopeType::LambdaExpression
     && scope != ScopeType::ScopedExpression
     && scope != ScopeType::CaseExpression
@@ -82,7 +82,7 @@ void ScopeRes::visit(NDCallExpr& func_call) {
   auto scope = this->sym_table.get_current_scope_type();
   if (
     scope
-    && scope != ScopeType::FunctionExpression
+    && scope != ScopeType::FunctionDeclaration
     && scope != ScopeType::ScopedExpression
     && scope != ScopeType::LambdaExpression
     && scope != ScopeType::CaseExpression
@@ -110,7 +110,7 @@ void ScopeRes::visit(NDCallChain& call_chain) {
   auto scope = this->sym_table.get_current_scope_type();
   if (
     scope
-    && scope != ScopeType::FunctionExpression
+    && scope != ScopeType::FunctionDeclaration
     && scope != ScopeType::ScopedExpression
     && scope != ScopeType::LambdaExpression
     && scope != ScopeType::CaseExpression
@@ -150,7 +150,7 @@ void ScopeRes::visit(NDFuncDeclExpr& func_decl) {
     return;
   }
 
-  ScopeGuard guard(this->sym_table, ScopeType::FunctionExpression);
+  ScopeGuard guard(this->sym_table, ScopeType::FunctionDeclaration);
   for (auto& expr: func_decl.func_body) expr->accept(*this);
   return;
 }
@@ -170,6 +170,8 @@ void ScopeRes::visit(NDTypeDecl& type_decl) {
     this->diag_eng.report(diag);
     return;
   }
+
+  ScopeGuard guard(sym_table, ScopeType::TypeDeclaration);
   if (type_decl.alias_target) {
     type_decl.alias_target->accept(*this);
   }
@@ -184,7 +186,7 @@ void ScopeRes::visit(NDLambdaExpr& lambda) {
   auto scope = this->sym_table.get_current_scope_type();
   if (
     scope
-    && scope != ScopeType::FunctionExpression
+    && scope != ScopeType::FunctionDeclaration
     && scope != ScopeType::LambdaExpression
     && scope != ScopeType::ScopedExpression
     && scope != ScopeType::CaseExpression
@@ -211,7 +213,7 @@ void ScopeRes::visit(NDCaseExpr& case_expr) {
   auto scope = this->sym_table.get_current_scope_type();
   if (
     scope
-    && scope != ScopeType::FunctionExpression
+    && scope != ScopeType::FunctionDeclaration
     && scope != ScopeType::ScopedExpression
     && scope != ScopeType::LambdaExpression
     && scope != ScopeType::CaseExpression
@@ -251,7 +253,7 @@ void ScopeRes::visit(NDScopeExpr& scope_expr) {
   auto scope = this->sym_table.get_current_scope_type();
   if (
     scope
-    && scope != ScopeType::FunctionExpression
+    && scope != ScopeType::FunctionDeclaration
     && scope != ScopeType::LambdaExpression
     && scope != ScopeType::ScopedExpression
     && scope != ScopeType::CaseExpression

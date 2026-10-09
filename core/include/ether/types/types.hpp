@@ -98,8 +98,16 @@ using Subst = std::unordered_map<TypeVarId, TypePtr>;
 
 class TypeAliasTable {
 public:
-  void declare(std::string name, TypePtr target) {
+  void declare(std::string name, TypePtr target, std::vector<TypeVarId> parameters = {}) {
+    alias_parameters[name] = std::move(parameters);
     aliases[std::move(name)] = std::move(target);
+  }
+
+  [[nodiscard]] auto parameters(const std::string& name) const noexcept
+      -> const std::vector<TypeVarId>& {
+    static const std::vector<TypeVarId> empty;
+    if (auto it = alias_parameters.find(name); it != alias_parameters.end()) return it->second;
+    return empty;
   }
 
   [[nodiscard]] auto lookup(const std::string& name) const noexcept -> TypePtr {
@@ -112,6 +120,7 @@ public:
 
 private:
   std::unordered_map<std::string, TypePtr> aliases;
+  std::unordered_map<std::string, std::vector<TypeVarId>> alias_parameters;
 };
 
 class TypeTable{
@@ -187,8 +196,8 @@ private:
 };
 
 struct TypeConstructor {
-  TypeConstructor(std::string type, const std::vector<TypePtr>& params = {}) noexcept
-  : type(std::move(type)), args(std::move(params)){};
+  TypeConstructor(std::string type, const std::vector<TypePtr>& params = {}, bool labelled = false) noexcept
+  : type(std::move(type)), args(std::move(params)), labelled(labelled){};
   TypeConstructor() = delete;
 
   auto operator == (const TypeConstructor& tconstr) const noexcept -> bool {
@@ -210,10 +219,12 @@ struct TypeConstructor {
   [[nodiscard]] auto name() const noexcept -> const std::string&;
 
   [[nodiscard]] auto get_args() const noexcept -> const std::vector<TypePtr>&;
+  [[nodiscard]] auto is_field_label() const noexcept -> bool { return labelled; }
 
 private:
   std::string type;
   std::vector<TypePtr> args;
+  bool labelled = false;
 };
 
 struct FunctionType {

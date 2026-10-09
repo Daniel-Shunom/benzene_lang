@@ -320,6 +320,42 @@ TEST_SUITE("lsp index / return types") {
 }
 
 TEST_SUITE("lsp index / type declarations") {
+  TEST_CASE("generic alias bindings show the expanded signature") {
+    auto indexed = index_source(
+      "type Handler(data) = Fn(data) :> String\n"
+      "func foo(x: Int) :> String\n  \"ok\"\nend\n"
+      "func use()\n  let b: Handler(Int) = foo\nend\n");
+    CHECK_FALSE(indexed.module->get_diag_engine().has_errors());
+    auto binding = declaration(indexed.entries, "b");
+    REQUIRE(binding);
+    CHECK(binding->type.find("Int") != std::string::npos);
+    CHECK(binding->type.find("String") != std::string::npos);
+    CHECK(binding->type.find("Handler") == std::string::npos);
+  }
+  TEST_CASE("generic parameter references navigate to their declaration") {
+    auto indexed = index_source("type Result(a, b) {\n  Ok(a)\n  Error(b)\n}\n");
+    CHECK_FALSE(indexed.module->get_diag_engine().has_errors());
+    auto parent = declaration(indexed.entries, "Result");
+    REQUIRE(parent);
+    CHECK(parent->detail.starts_with("Result(a, b) {"));
+    for (const auto& name : {"a", "b"}) {
+      auto parameter = declaration(indexed.entries, name);
+      REQUIRE(parameter);
+      CHECK(parameter->kind == "TypeParam");
+      CHECK(occurrences(indexed.entries, name) == 2);
+      for (const auto& entry : indexed.entries) {
+        if (entry.name != name || entry.is_definition) continue;
+        CHECK(entry.kind == "TypeParam");
+        CHECK(entry.def_line == parameter->line);
+        CHECK(entry.def_column == parameter->column);
+        CHECK(entry.type == parameter->type);
+      }
+    }
+    auto ok = declaration(indexed.entries, "Ok");
+    REQUIRE(ok);
+    CHECK(ok->line == 2);
+    CHECK(ok->column == 3);
+  }
   TEST_CASE("a declared type is recorded as a type") {
     // The resolver declares a symbol for the name but discards the pointer, so
     // the node cannot say what it is. Reporting it as unresolved would tell the

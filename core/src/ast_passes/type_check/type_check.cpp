@@ -49,30 +49,39 @@ namespace {
   auto clone_type(const TypePtr& type,
                   const std::unordered_map<TypeVarId, TypePtr>& replacements)
       -> TypePtr {
-    if (!type) return nullptr;
+    if (!type) {
+      return nullptr;
+    }
+
     if (type->isTypeVar()) {
       auto id = std::get<TypeVar>(type->value).get_id();
       if (auto it = replacements.find(id); it != replacements.end()) return it->second;
       return type;
     }
+
     if (type->isFunctionType()) {
       const auto& fn = std::get<FunctionType>(type->value);
       std::vector<TypePtr> ps;
-      for (const auto& p : fn.get_param_types()) ps.push_back(clone_type(p, replacements));
+      for (const auto& p : fn.get_param_types()) {
+        ps.push_back(clone_type(p, replacements));
+      }
       return makeFunc(std::move(ps), clone_type(fn.get_return_type(), replacements));
     }
+
     if (type->isTypeConstructor()) {
       const auto& c = std::get<TypeConstructor>(type->value);
       std::vector<TypePtr> args;
       for (const auto& a : c.get_args()) args.push_back(clone_type(a, replacements));
       return makeTypeConstructor(c.name(), args);
     }
+
     if (type->isPmtType()) {
       const auto& p = std::get<PmtType>(type->value);
       std::vector<TypeField> fields;
       for (const auto& f : p.get_fields()) fields.emplace_back(f.name(), clone_type(f.get_type(), replacements));
       return std::make_shared<Type>(PmtType{p.get_name(), std::move(fields)});
     }
+
     return type;
   }
 }
@@ -84,17 +93,28 @@ auto TypeChecker::instantiate(const Scheme& scheme) -> TypePtr {
 }
 
 auto TypeChecker::free_type_vars(TypePtr type, std::vector<TypeVarId>& out) const -> void {
-  if (!type) return;
-  if (type->isTypeVar()) { out.push_back(std::get<TypeVar>(type->value).get_id()); return; }
+  if (!type) {
+    return;
+  }
+
+  if (type->isTypeVar()) {
+    out.push_back(std::get<TypeVar>(type->value).get_id());
+    return;
+  }
+
   if (type->isFunctionType()) {
     const auto& f = std::get<FunctionType>(type->value);
     for (const auto& p : f.get_param_types()) free_type_vars(p, out);
     free_type_vars(f.get_return_type(), out); return;
   }
+
   if (type->isTypeConstructor()) {
-    for (const auto& a : std::get<TypeConstructor>(type->value).get_args()) free_type_vars(a, out);
+    for (const auto& a : std::get<TypeConstructor>(type->value).get_args()) {
+      free_type_vars(a, out);
+    }
     return;
   }
+
   if (type->isPmtType()) {
     for (const auto& f : std::get<PmtType>(type->value).get_fields()) free_type_vars(f.get_type(), out);
   }
@@ -102,8 +122,10 @@ auto TypeChecker::free_type_vars(TypePtr type, std::vector<TypeVarId>& out) cons
 
 auto TypeChecker::generalize(TypePtr type, SymbolAttr* excluded) -> Scheme {
   type = unifier ? unifier->apply(type) : type;
+
   std::vector<TypeVarId> vars, env_vars;
   free_type_vars(type, vars);
+
   for (const auto& [symbol, scheme] : type_environment.active_bindings()) {
     if (symbol == excluded) continue;
     std::vector<TypeVarId> present;
@@ -111,19 +133,39 @@ auto TypeChecker::generalize(TypePtr type, SymbolAttr* excluded) -> Scheme {
     for (auto q : scheme.quantified) present.erase(std::remove(present.begin(), present.end(), q), present.end());
     env_vars.insert(env_vars.end(), present.begin(), present.end());
   }
+
   std::sort(vars.begin(), vars.end());
+
   vars.erase(std::unique(vars.begin(), vars.end()), vars.end());
+
   std::sort(env_vars.begin(), env_vars.end());
+
   env_vars.erase(std::unique(env_vars.begin(), env_vars.end()), env_vars.end());
+
   vars.erase(std::remove_if(vars.begin(), vars.end(), [&](auto id) {
     return std::binary_search(env_vars.begin(), env_vars.end(), id);
   }), vars.end());
+
   return Scheme{std::move(vars), std::move(type)};
 }
 
 void TypeChecker::register_constructor_type(std::string name, TypePtr parent,
-                                            TypePtr fields) {
-  constructors[std::move(name)] = ConstructorInfo{std::move(parent), std::move(fields)};
+                                            TypePtr fields, std::vector<TypeVarId> quantified) {
+  const auto& constructor = std::get<TypeConstructor>(fields->value);
+  auto scheme = Scheme{std::move(quantified), makeFunc(constructor.get_args(), parent)};
+  constructors[std::move(name)] = ConstructorInfo{std::move(parent), std::move(fields), std::move(scheme)};
+}
+
+auto TypeChecker::instantiate_constructor(const std::string& name) -> TypePtr {
+  if (auto it = constructors.find(name); it != constructors.end()) {
+    return instantiate(it->second.scheme);
+  }
+  return nullptr;
+}
+
+auto TypeChecker::constructor_scheme(const std::string& name) const -> const Scheme* {
+  if (auto it = constructors.find(name); it != constructors.end()) return &it->second.scheme;
+  return nullptr;
 }
 
 auto TypeChecker::constructor_type(const std::string& name) const -> TypePtr {
@@ -140,20 +182,36 @@ auto TypeChecker::constructor_parent(const std::string& name) const -> TypePtr {
   return nullptr;
 }
 
-auto TypeChecker::resolve_alias(TypePtr type) const -> TypePtr {
+auto TypeChecker::resolve_alias(TypePtr type, SourceLocation location) const -> TypePtr {
   std::unordered_set<std::string> resolving;
   std::function<TypePtr(TypePtr)> expand = [&](TypePtr current) -> TypePtr {
     if (!current) return nullptr;
     if (current->isTypeConstructor()) {
       const auto& constructor = std::get<TypeConstructor>(current->value);
-      if (auto alias = aliases.lookup(constructor.name()); alias
-          && resolving.insert(constructor.name()).second) {
-        auto result = expand(alias);
+      std::vector<TypePtr> args;
+      for (const auto& arg : constructor.get_args()) args.push_back(expand(arg));
+      if (auto alias = aliases.lookup(constructor.name())) {
+        const auto& parameters = aliases.parameters(constructor.name());
+        const bool cyclic = resolving.contains(constructor.name());
+        if (parameters.size() != args.size() || cyclic) {
+          Diagnostic diagnostic;
+          diagnostic.level = DiagnosticLevel::Fail;
+          diagnostic.phase = DiagnosticPhase::TypeChecker;
+          diagnostic.location = location;
+          diagnostic.message = cyclic
+              ? std::format("Cyclic type alias `{}`", constructor.name())
+              : std::format("Type alias `{}` expects {} type arguments, but got {}",
+                            constructor.name(), parameters.size(), args.size());
+          diag_engine.report(std::move(diagnostic));
+          return current;
+        }
+        std::unordered_map<TypeVarId, TypePtr> replacements;
+        for (size_t i = 0; i < parameters.size(); ++i) replacements.emplace(parameters[i], args[i]);
+        resolving.insert(constructor.name());
+        auto result = expand(clone_type(alias, replacements));
         resolving.erase(constructor.name());
         return result;
       }
-      std::vector<TypePtr> args;
-      for (const auto& arg : constructor.get_args()) args.push_back(expand(arg));
       return makeTypeConstructor(constructor.name(), args);
     }
     if (current->isFunctionType()) {
@@ -161,6 +219,12 @@ auto TypeChecker::resolve_alias(TypePtr type) const -> TypePtr {
       std::vector<TypePtr> params;
       for (const auto& param : function.get_param_types()) params.push_back(expand(param));
       return makeFunc(std::move(params), expand(function.get_return_type()));
+    }
+    if (current->isPmtType()) {
+      const auto& product = std::get<PmtType>(current->value);
+      std::vector<TypeField> fields;
+      for (const auto& field : product.get_fields()) fields.emplace_back(field.name(), expand(field.get_type()));
+      return std::make_shared<Type>(PmtType{product.get_name(), std::move(fields)});
     }
     return current;
   };

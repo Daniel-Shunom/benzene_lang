@@ -18,6 +18,7 @@ auto kind_to_string(SymbolKind kind) -> std::string {
     case SymbolKind::Constant:   return "Constant";
     case SymbolKind::Module:     return "Module";
     case SymbolKind::Type:       return "Type";
+    case SymbolKind::TypeParam:  return "TypeParam";
     case SymbolKind::UnResolved: return "UnResolved";
   }
   return "UnResolved";
@@ -175,7 +176,16 @@ auto LspIndexer::signature(const Token& name,
 }
 
 auto LspIndexer::describe_type(const NDTypeDecl& decl) const -> std::string {
-  const std::string& name = decl.type_identifier.token_value;
+  std::string name = decl.type_identifier.token_value;
+  if (!decl.params.empty()) {
+    name += "(";
+    for (size_t i = 0; i < decl.params.size(); ++i) {
+      auto* identifier = dynamic_cast<NDIdentifier*>(decl.params[i].get());
+      if (i) name += ", ";
+      if (identifier) name += identifier->identifier.token_value;
+    }
+    name += ")";
+  }
 
   if (decl.alias_target) {
     return name + " = " + render(decl.alias_target->parsed_type);
@@ -255,6 +265,7 @@ void LspIndexer::record(const Token& token, const SymbolAttr* symbol,
 }
 
 void LspIndexer::visit(NDIdentifier& expr) {
+  if (expr.is_wildcard_pattern) return;
   record(expr.identifier, expr.identifier_symbol, expr.inferred_type, false,
          expr.type.has_value() && expr.type->parsed_type != nullptr);
   if (expr.type) {
@@ -276,15 +287,35 @@ void LspIndexer::visit(NDImportDirective& expr) {
   record(expr.import_directive, nullptr, nullptr, true, false, {}, "Module");
 }
 
-void LspIndexer::visit(NDTypeExpr&) {}
+void LspIndexer::visit(NDTypeExpr& expr) {
+  for (const auto& name : expr.names) {
+    TypePtr type;
+    if (name.symbol && checker) {
+      const auto& bindings = checker->types().all_bindings();
+      if (auto it = bindings.find(name.symbol); it != bindings.end()) type = it->second.type;
+    }
+    if (&name == &expr.names.front() && expr.parsed_type
+        && checker && checker->type_aliases().lookup(name.token.token_value)
+        && expr.parsed_type->isTypeConstructor()
+        && std::get<TypeConstructor>(expr.parsed_type->value).name() == name.token.token_value) {
+      type = expr.inferred_type;
+    }
+    record(name.token, name.symbol, type, false, true, {},
+           name.symbol ? "" : "Type");
+  }
+}
 
 void LspIndexer::visit(NDTypeDecl& expr) {
-  // The resolver declares a symbol for this name, but discards the pointer --
-  // `NDTypeDecl` has nowhere to keep it -- so the kind has to be stated here
-  // rather than read back off the node. Without this every declared type looks
-  // unresolved to the editor, even though the checker resolves it fine.
-  record(expr.type_identifier, nullptr, expr.inferred_type, true, false,
+  // Keep declaration identities so type uses and parameters can navigate here.
+  record(expr.type_identifier, expr.type_symbol, expr.inferred_type, true, false,
          describe_type(expr), "Type");
+  scopes.push_back(&expr.type_identifier);
+  for (auto& parameter : expr.params) {
+    if (auto* identifier = dynamic_cast<NDIdentifier*>(parameter.get())) {
+      record(identifier->identifier, identifier->identifier_symbol,
+             identifier->inferred_type, true, false);
+    }
+  }
   if (expr.alias_target) {
     expr.alias_target->accept(*this);
   }
@@ -293,6 +324,7 @@ void LspIndexer::visit(NDTypeDecl& expr) {
       sub.accept(*this);
     }
   }
+  scopes.pop_back();
 }
 
 void LspIndexer::visit(NDLetBindExpr& expr) {
@@ -338,6 +370,7 @@ void LspIndexer::visit(NDFuncParam& expr) {
   // declaration site.
   record(expr.identifier.identifier, expr.param_sym, expr.inferred_type, true,
          expr.param_type.has_value() && expr.param_type->parsed_type != nullptr);
+  if (expr.param_type) expr.param_type->accept(*this);
 }
 
 void LspIndexer::visit(NDFuncDeclExpr& expr) {
@@ -350,6 +383,7 @@ void LspIndexer::visit(NDFuncDeclExpr& expr) {
   // Pushed before the params and body so everything inside is attributed to
   // this function, and popped after so siblings are not.
   scopes.push_back(&expr.func_identifier);
+  if (expr.return_type) expr.return_type->accept(*this);
   for (auto& param : expr.func_params) {
     param.accept(*this);
   }

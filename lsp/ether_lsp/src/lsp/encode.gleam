@@ -63,6 +63,7 @@ pub fn describe_kind(kind: String) -> String {
   case kind {
     "Function" -> "function"
     "FuncParam" -> "function parameter"
+    "TypeParam" -> "type parameter"
     "Binding" -> "let binding"
     "Constant" -> "module constant"
     "Type" -> "type"
@@ -78,6 +79,7 @@ pub fn symbol_kind(kind: String) -> Int {
     "Constant" -> 14
     "Binding" -> 13
     "Type" -> 5
+    "TypeParam" -> 26
     "Module" -> 2
     _ -> 0
   }
@@ -91,6 +93,7 @@ pub fn completion_kind(kind: String) -> Int {
     "Binding" -> 6
     "FuncParam" -> 6
     "Type" -> 22
+    "TypeParam" -> 25
     "Module" -> 9
     "Keyword" -> 14
     _ -> 1

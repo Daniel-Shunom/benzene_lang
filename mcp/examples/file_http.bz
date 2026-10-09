@@ -1,0 +1,54 @@
+Cmt Hypothetical I/O: a host supplies readFile, writeFile, and serve callbacks.
+
+type Result(a, b) {
+  Ok(a)
+  Error(b)
+}
+
+type HttpRequest {
+  Request(method: String, path: String, body: String)
+}
+
+type HttpResponse {
+  Response(status: Int, body: String)
+}
+
+type Reader = Fn(String) :> Result(String, String)
+
+type Writer = Fn(String, String) :> Result(Nil, String)
+
+type HttpHandler = Fn(HttpRequest) :> HttpResponse
+
+type Server = Fn(Int, HttpHandler) :> Result(Nil, String)
+
+func copyFile(readFile: Reader, writeFile: Writer) :> Result(Nil, String)
+  case readFile("input.txt"):
+    Ok(contents) :> writeFile("output.txt", contents)
+    Error(reason) :> Error(reason)
+  end
+end
+
+func handleRequest(readFile: Reader, writeFile: Writer, request: HttpRequest) :> HttpResponse
+  case request:
+    Request(method, path, body) :> case method, path:
+      "GET", "/" :> case readFile("output.txt"):
+        Ok(contents) :> Response(200, contents)
+        Error(reason) :> Response(500, reason)
+      end
+      "POST", "/output" :> case writeFile("output.txt", body):
+        Ok(_) :> Response(200, "written")
+        Error(reason) :> Response(500, reason)
+      end
+      _, _ :> Response(404, "not found")
+    end
+  end
+end
+
+func app(readFile: Reader, writeFile: Writer, serve: Server) :> Result(Nil, String)
+  case copyFile(readFile, writeFile):
+    Ok(_) :> serve(8080, { Fn(request: HttpRequest) :> HttpResponse
+      handleRequest(readFile, writeFile, request)
+    end })
+    Error(reason) :> Error(reason)
+  end
+end

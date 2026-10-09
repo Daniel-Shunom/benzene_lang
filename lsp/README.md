@@ -95,6 +95,12 @@ Neovim **0.11 or newer** is required: the config uses the native
 
 ## Setup
 
+For an installed toolchain, run the top-level `install.ps1 -AddToPath` (Windows)
+or `sh install.sh` (POSIX), then configure your editor to launch `ether-lsp`.
+Gleam is only required to build the server. The Neovim plugin is installed under
+`<prefix>/share/benzene/editors/nvim`. See [installation](../docs/installation.md)
+for the full workflow. The source-checkout setup follows below.
+
 ### 1. Build the compiler
 
 From the repository root:
@@ -144,7 +150,8 @@ inside the plugin, so lazy-loading on `ft = "benzene"` would never fire.
 nvim tests/integration/samples/valid_program.bz
 ```
 
-Highlighting, diagnostics and inferred-type hints should all appear.
+Highlighting and diagnostics should appear. Inferred types are available on
+hover; inline hints are off by default. Use `:BenzeneInlayHints` to toggle them.
 `:BenzeneLspStatus` reports whether the server actually attached.
 
 ## What you get
@@ -159,7 +166,7 @@ Highlighting, diagnostics and inferred-type hints should all appear.
 | Document highlight    | the other uses of whatever the cursor rests on                     |
 | Rename                | `grn` — rewrites every occurrence; refuses illegal names           |
 | Inlay hints           | the inferred type, shown only where you did not write one          |
-| Code actions          | write the inferred type down — the one refactor the compiler can offer |
+| Code actions          | insert concrete annotations, expand aliases, or remove an incompatible binding annotation |
 | Signature help        | the signature of the call you are inside, with the active argument |
 | Document symbols      | nested: locals sit under the function that declares them           |
 | Folding               | `func`/`case`/`{}` paired from the token stream, not indentation   |
@@ -201,6 +208,7 @@ binding are the same shape to a regex, but not to the resolver.
 | -------------------- | -------------------------------------------------------- |
 | `:BenzeneLspStatus`  | whether the server attached, and how it was launched      |
 | `:BenzeneInlayHints` | toggle inferred-type hints in this buffer                 |
+| `:BenzeneCodeActions` | show code actions at the cursor                          |
 | `:BenzeneRestart`    | restart the server, to pick up a rebuilt one              |
 
 ## Configuration
@@ -211,7 +219,7 @@ plugin loads.
 ```lua
 vim.g.benzene_lsp_cmd     = { "/path/to/ether-lsp" }  -- different launcher
 vim.g.benzene_compiler    = "/path/to/ether"          -- different compiler
-vim.g.benzene_inlay_hints = false                     -- no inline types
+vim.g.benzene_inlay_hints = true                      -- opt in to inline types
 vim.g.benzene_folding     = false                     -- leave 'foldexpr' alone
 vim.g.benzene_highlight   = false                     -- no cursor-hold highlight
 ```
@@ -271,7 +279,7 @@ Verified by those tests:
 - every feature above, driven over the wire by a scripted LSP client, including
   that the annotate action is withheld where the inferred type has no spelling
   the grammar accepts
-- Neovim 0.11.1: attach, `utf-8` encoding negotiation, inlay hints on attach,
+- Neovim 0.11.1: attach, `utf-8` encoding negotiation, inlay hints off by default,
   foldexpr wiring, and each feature through `vim.lsp`
 - block closing driven by real keystrokes, and comment highlighting checked
   against the actual syntax groups
@@ -295,9 +303,10 @@ Not done, and worth knowing before relying on this:
 - **No cross-file anything.** `Load` imports are not followed; every file is
   analysed alone. Go-to-definition and rename cannot leave the current buffer,
   and there is no `workspace/symbol`.
-- **Only one code action.** "Annotate with the inferred type" is the one refactor
-  the compiler can supply on its own. It reports problems but suggests no fixes,
-  so there are no quick fixes to offer.
+- **Annotation actions have a limited scope.** Alias expansion and annotation
+  removal currently cover binding annotations written on one line. Removing an
+  incompatible annotation is offered as a quick fix; it lets inference choose
+  the type rather than changing the supplied value.
 - **No formatter.** The compiler has none.
 - **Diagnostic ranges are one token wide.** The compiler reports a point, not a
   span. The point is now the right token -- a bad call underlines the callee --
@@ -321,26 +330,6 @@ Not done, and worth knowing before relying on this:
 
 Found while testing this, and left alone because they are the front-end's to
 fix, not the editor's. The server reports what it is told.
-
-- **Type aliases are never expanded when unifying.** A `type X = T` declaration
-  creates the name, but the unifier compares `X` as an opaque constructor and
-  refuses to match it against `T`:
-
-  ```
-  type Count = Int
-
-  func f()
-    let x: Count = 1   -- "These types are incompatible: expected Count,
-    x                  --  but found Int"
-  end
-  ```
-
-  Dropping the alias makes it compile. Sum types are unaffected -- they are
-  nominal, so comparing them by name is right. `TypeAliasTable` now records the
-  targets, and the index reads it so hovering `Count` says `Int`; what remains
-  is for the unifier to consult it before comparing two types. This is what
-  makes an aliased function type (`type Handler = Fn(Int) :> String`) unusable
-  as an annotation.
 
 - **A scoped expression containing a `let` does not propagate its type.**
 

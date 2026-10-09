@@ -186,7 +186,7 @@ pub fn completion(
   character: Int,
 ) -> json.Json {
   let items = case text.in_type_position(source, line, character) {
-    True -> type_completions(analysis)
+    True -> type_completions(analysis, line)
     False -> value_completions(analysis, line)
   }
 
@@ -202,10 +202,15 @@ type Candidate {
   Candidate(label: String, kind: String, detail: String, rank: String)
 }
 
-fn type_completions(analysis: Scan) -> List(json.Json) {
+fn type_completions(analysis: Scan, line: Int) -> List(json.Json) {
+  let scope = enclosing_scope(analysis, line)
   let declared =
     analysis.index
-    |> list.filter(fn(entry) { entry.is_definition && entry.kind == "Type" })
+    |> list.filter(fn(entry) {
+      entry.is_definition
+      && { entry.kind == "Type" || entry.kind == "TypeParam" }
+      && in_scope(entry, scope)
+    })
     |> list.map(fn(entry) {
       Candidate(entry.name, entry.kind, entry.inferred, "0")
     })
@@ -386,22 +391,20 @@ pub fn inlay_hints(analysis: Scan, from_line: Int, to_line: Int) -> json.Json {
 
 /// Offers to write down the type the checker worked out.
 ///
-/// This is the one refactor the compiler can supply on its own: it already
-/// knows the type, and it already knows the user did not write it.
+/// Uses compiler types for annotation insertion and alias expansion. Removing
+/// an annotation lets inference recover from an incompatible declared type.
 pub fn code_actions(
   uri: String,
   analysis: Scan,
   from_line: Int,
   to_line: Int,
 ) -> json.Json {
-  unannotated(analysis, from_line, to_line)
+  let insertions = unannotated(analysis, from_line, to_line)
   |> list.filter_map(fn(entry) {
     use found <- result.try(annotation(analysis, entry))
 
     // An inlay hint may show anything -- seeing `'t0` tells you the binding is
-    // generic. An edit may not: the grammar accepts only a bare identifier
-    // after `:`, so inserting a type variable or a function type would leave
-    // the file unparseable.
+    // generic. An edit must have a concrete spelling in the source grammar.
     use <- bool.guard(!text.is_writable_type(found.type_name), Error(Nil))
 
     // A zero-width range is an insertion at that point.
@@ -428,7 +431,70 @@ pub fn code_actions(
       ]),
     )
   })
-  |> json.preprocessed_array
+  let replacements = analysis.index
+    |> list.filter(fn(entry) {
+      entry.is_definition && entry.annotated
+      && { entry.kind == "Binding" || entry.kind == "Constant" }
+      && entry.line - 1 >= from_line && entry.line - 1 <= to_line
+    })
+    |> list.flat_map(fn(entry) { annotation_actions(uri, analysis, entry) })
+  json.preprocessed_array(list.append(insertions, replacements))
+}
+
+fn annotation_actions(uri: String, analysis: Scan, entry: Entry) -> List(json.Json) {
+  let following = analysis.tokens
+    |> list.filter(fn(token) { token.line == entry.line && token.column > entry.column })
+  case following {
+    [colon, first, ..rest] if colon.kind == "Colon" -> {
+      let types = list.take_while([first, ..rest], fn(token) { token.kind != "Eq" })
+      case list.last(types), list.find(rest, fn(token) { token.kind == "Eq" }) {
+        Ok(last), Ok(_) -> {
+          let has_error = list.any(analysis.diagnostics, fn(diagnostic) {
+            diagnostic.phase == "types" && diagnostic.severity == "error"
+            && diagnostic.line == entry.line && diagnostic.column == entry.column
+          })
+          let kind = case has_error { True -> "quickfix" False -> "refactor.rewrite" }
+          let remove = edit_action(uri,
+            "Remove type annotation from `" <> entry.name <> "` and infer its type",
+            kind, colon, last, "")
+          let alias = list.any(analysis.index, fn(reference) {
+            reference.line == first.line && reference.column == first.column
+            && reference.kind == "Type" && list.any(analysis.index, fn(definition) {
+              definition.is_definition && definition.kind == "Type"
+              && definition.line == reference.def_line && definition.column == reference.def_column
+              && string.contains(definition.detail, " = ")
+            })
+          })
+          case alias && text.is_writable_type(entry.inferred) {
+            True -> [remove, edit_action(uri,
+              "Expand type alias for `" <> entry.name <> "` to " <> entry.inferred,
+              "refactor.rewrite", first, last, entry.inferred)]
+            False -> [remove]
+          }
+        }
+        _, _ -> []
+      }
+    }
+    _ -> []
+  }
+}
+
+fn edit_action(uri: String, title: String, kind: String,
+               first: Token, last: Token, replacement: String) -> json.Json {
+  let edit = json.object([
+    #("range", json.object([
+      #("start", encode.position(first.line - 1, first.column - 1)),
+      #("end", encode.position(last.line - 1, last.column - 1 + last.length)),
+    ])),
+    #("newText", json.string(replacement)),
+  ])
+  json.object([
+    #("title", json.string(title)),
+    #("kind", json.string(kind)),
+    #("edit", json.object([
+      #("changes", json.object([#(uri, json.preprocessed_array([edit]))])),
+    ])),
+  ])
 }
 
 fn closing_paren(analysis: Scan, entry: Entry) -> Result(Token, Nil) {
@@ -437,7 +503,20 @@ fn closing_paren(analysis: Scan, entry: Entry) -> Result(Token, Nil) {
     token.line < entry.line
     || { token.line == entry.line && token.column <= entry.column }
   })
-  |> list.find(fn(token) { token.kind == "RParen" })
+  |> list.drop_while(fn(token) { token.kind != "LParen" })
+  |> matching_paren(0)
+}
+
+fn matching_paren(tokens: List(Token), depth: Int) -> Result(Token, Nil) {
+  case tokens {
+    [] -> Error(Nil)
+    [token, ..rest] -> case token.kind {
+      "LParen" -> matching_paren(rest, depth + 1)
+      "RParen" if depth == 1 -> Ok(token)
+      "RParen" -> matching_paren(rest, depth - 1)
+      _ -> matching_paren(rest, depth)
+    }
+  }
 }
 
 // --- signature help ---------------------------------------------------------

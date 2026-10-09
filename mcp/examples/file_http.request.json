@@ -1,0 +1,746 @@
+{
+  "jsonrpc": "2.0",
+  "id": "example",
+  "method": "tools/call",
+  "params": {
+    "name": "generate_program",
+    "arguments": {
+      "construct": {
+        "kind": "Module",
+        "data": [
+          {
+            "kind": "Comment",
+            "comment_type": "SingleLine",
+            "data": "Hypothetical I/O: a host supplies readFile, writeFile, and serve callbacks."
+          },
+          {
+            "kind": "TypeDeclaration",
+            "identifier": "Result",
+            "parameters": [
+              "a",
+              "b"
+            ],
+            "members": [
+              {
+                "kind": "AppliedType",
+                "name": "Ok",
+                "arguments": [
+                  {
+                    "kind": "NamedType",
+                    "name": "a"
+                  }
+                ]
+              },
+              {
+                "kind": "AppliedType",
+                "name": "Error",
+                "arguments": [
+                  {
+                    "kind": "NamedType",
+                    "name": "b"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "TypeDeclaration",
+            "identifier": "HttpRequest",
+            "members": [
+              {
+                "kind": "LabelledType",
+                "name": "Request",
+                "fields": [
+                  {
+                    "name": "method",
+                    "data_type": {
+                      "kind": "NamedType",
+                      "name": "String"
+                    }
+                  },
+                  {
+                    "name": "path",
+                    "data_type": {
+                      "kind": "NamedType",
+                      "name": "String"
+                    }
+                  },
+                  {
+                    "name": "body",
+                    "data_type": {
+                      "kind": "NamedType",
+                      "name": "String"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "TypeDeclaration",
+            "identifier": "HttpResponse",
+            "members": [
+              {
+                "kind": "LabelledType",
+                "name": "Response",
+                "fields": [
+                  {
+                    "name": "status",
+                    "data_type": {
+                      "kind": "NamedType",
+                      "name": "Int"
+                    }
+                  },
+                  {
+                    "name": "body",
+                    "data_type": {
+                      "kind": "NamedType",
+                      "name": "String"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "TypeDeclaration",
+            "identifier": "Reader",
+            "alias_target": {
+              "kind": "FunctionType",
+              "parameters": [
+                {
+                  "kind": "NamedType",
+                  "name": "String"
+                }
+              ],
+              "returns": {
+                "kind": "AppliedType",
+                "name": "Result",
+                "arguments": [
+                  {
+                    "kind": "NamedType",
+                    "name": "String"
+                  },
+                  {
+                    "kind": "NamedType",
+                    "name": "String"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "kind": "TypeDeclaration",
+            "identifier": "Writer",
+            "alias_target": {
+              "kind": "FunctionType",
+              "parameters": [
+                {
+                  "kind": "NamedType",
+                  "name": "String"
+                },
+                {
+                  "kind": "NamedType",
+                  "name": "String"
+                }
+              ],
+              "returns": {
+                "kind": "AppliedType",
+                "name": "Result",
+                "arguments": [
+                  {
+                    "kind": "NamedType",
+                    "name": "Nil"
+                  },
+                  {
+                    "kind": "NamedType",
+                    "name": "String"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "kind": "TypeDeclaration",
+            "identifier": "HttpHandler",
+            "alias_target": {
+              "kind": "FunctionType",
+              "parameters": [
+                {
+                  "kind": "NamedType",
+                  "name": "HttpRequest"
+                }
+              ],
+              "returns": {
+                "kind": "NamedType",
+                "name": "HttpResponse"
+              }
+            }
+          },
+          {
+            "kind": "TypeDeclaration",
+            "identifier": "Server",
+            "alias_target": {
+              "kind": "FunctionType",
+              "parameters": [
+                {
+                  "kind": "NamedType",
+                  "name": "Int"
+                },
+                {
+                  "kind": "NamedType",
+                  "name": "HttpHandler"
+                }
+              ],
+              "returns": {
+                "kind": "AppliedType",
+                "name": "Result",
+                "arguments": [
+                  {
+                    "kind": "NamedType",
+                    "name": "Nil"
+                  },
+                  {
+                    "kind": "NamedType",
+                    "name": "String"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "kind": "Function",
+            "identifier": "copyFile",
+            "param_list": [
+              {
+                "param": "readFile",
+                "data_type": {
+                  "kind": "NamedType",
+                  "name": "Reader"
+                }
+              },
+              {
+                "param": "writeFile",
+                "data_type": {
+                  "kind": "NamedType",
+                  "name": "Writer"
+                }
+              }
+            ],
+            "return_type": {
+              "kind": "AppliedType",
+              "name": "Result",
+              "arguments": [
+                {
+                  "kind": "NamedType",
+                  "name": "Nil"
+                },
+                {
+                  "kind": "NamedType",
+                  "name": "String"
+                }
+              ]
+            },
+            "body": [
+              {
+                "kind": "CaseExpr",
+                "conditions": [
+                  {
+                    "kind": "Call",
+                    "identifier": "readFile",
+                    "arguments": [
+                      {
+                        "kind": "Text",
+                        "value": "input.txt"
+                      }
+                    ]
+                  }
+                ],
+                "case_evals": [
+                  {
+                    "cases": [
+                      {
+                        "kind": "Call",
+                        "identifier": "Ok",
+                        "arguments": [
+                          {
+                            "kind": "Identifier",
+                            "name": "contents"
+                          }
+                        ]
+                      }
+                    ],
+                    "return_value": {
+                      "kind": "Call",
+                      "identifier": "writeFile",
+                      "arguments": [
+                        {
+                          "kind": "Text",
+                          "value": "output.txt"
+                        },
+                        {
+                          "kind": "Identifier",
+                          "name": "contents"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "cases": [
+                      {
+                        "kind": "Call",
+                        "identifier": "Error",
+                        "arguments": [
+                          {
+                            "kind": "Identifier",
+                            "name": "reason"
+                          }
+                        ]
+                      }
+                    ],
+                    "return_value": {
+                      "kind": "Call",
+                      "identifier": "Error",
+                      "arguments": [
+                        {
+                          "kind": "Identifier",
+                          "name": "reason"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "Function",
+            "identifier": "handleRequest",
+            "param_list": [
+              {
+                "param": "readFile",
+                "data_type": {
+                  "kind": "NamedType",
+                  "name": "Reader"
+                }
+              },
+              {
+                "param": "writeFile",
+                "data_type": {
+                  "kind": "NamedType",
+                  "name": "Writer"
+                }
+              },
+              {
+                "param": "request",
+                "data_type": {
+                  "kind": "NamedType",
+                  "name": "HttpRequest"
+                }
+              }
+            ],
+            "return_type": {
+              "kind": "NamedType",
+              "name": "HttpResponse"
+            },
+            "body": [
+              {
+                "kind": "CaseExpr",
+                "conditions": [
+                  {
+                    "kind": "Identifier",
+                    "name": "request"
+                  }
+                ],
+                "case_evals": [
+                  {
+                    "cases": [
+                      {
+                        "kind": "Call",
+                        "identifier": "Request",
+                        "arguments": [
+                          {
+                            "kind": "Identifier",
+                            "name": "method"
+                          },
+                          {
+                            "kind": "Identifier",
+                            "name": "path"
+                          },
+                          {
+                            "kind": "Identifier",
+                            "name": "body"
+                          }
+                        ]
+                      }
+                    ],
+                    "return_value": {
+                      "kind": "CaseExpr",
+                      "conditions": [
+                        {
+                          "kind": "Identifier",
+                          "name": "method"
+                        },
+                        {
+                          "kind": "Identifier",
+                          "name": "path"
+                        }
+                      ],
+                      "case_evals": [
+                        {
+                          "cases": [
+                            {
+                              "kind": "Text",
+                              "value": "GET"
+                            },
+                            {
+                              "kind": "Text",
+                              "value": "/"
+                            }
+                          ],
+                          "return_value": {
+                            "kind": "CaseExpr",
+                            "conditions": [
+                              {
+                                "kind": "Call",
+                                "identifier": "readFile",
+                                "arguments": [
+                                  {
+                                    "kind": "Text",
+                                    "value": "output.txt"
+                                  }
+                                ]
+                              }
+                            ],
+                            "case_evals": [
+                              {
+                                "cases": [
+                                  {
+                                    "kind": "Call",
+                                    "identifier": "Ok",
+                                    "arguments": [
+                                      {
+                                        "kind": "Identifier",
+                                        "name": "contents"
+                                      }
+                                    ]
+                                  }
+                                ],
+                                "return_value": {
+                                  "kind": "Call",
+                                  "identifier": "Response",
+                                  "arguments": [
+                                    {
+                                      "kind": "Integer",
+                                      "value": 200
+                                    },
+                                    {
+                                      "kind": "Identifier",
+                                      "name": "contents"
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "cases": [
+                                  {
+                                    "kind": "Call",
+                                    "identifier": "Error",
+                                    "arguments": [
+                                      {
+                                        "kind": "Identifier",
+                                        "name": "reason"
+                                      }
+                                    ]
+                                  }
+                                ],
+                                "return_value": {
+                                  "kind": "Call",
+                                  "identifier": "Response",
+                                  "arguments": [
+                                    {
+                                      "kind": "Integer",
+                                      "value": 500
+                                    },
+                                    {
+                                      "kind": "Identifier",
+                                      "name": "reason"
+                                    }
+                                  ]
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "cases": [
+                            {
+                              "kind": "Text",
+                              "value": "POST"
+                            },
+                            {
+                              "kind": "Text",
+                              "value": "/output"
+                            }
+                          ],
+                          "return_value": {
+                            "kind": "CaseExpr",
+                            "conditions": [
+                              {
+                                "kind": "Call",
+                                "identifier": "writeFile",
+                                "arguments": [
+                                  {
+                                    "kind": "Text",
+                                    "value": "output.txt"
+                                  },
+                                  {
+                                    "kind": "Identifier",
+                                    "name": "body"
+                                  }
+                                ]
+                              }
+                            ],
+                            "case_evals": [
+                              {
+                                "cases": [
+                                  {
+                                    "kind": "Call",
+                                    "identifier": "Ok",
+                                    "arguments": [
+                                      {
+                                        "kind": "Wildcard"
+                                      }
+                                    ]
+                                  }
+                                ],
+                                "return_value": {
+                                  "kind": "Call",
+                                  "identifier": "Response",
+                                  "arguments": [
+                                    {
+                                      "kind": "Integer",
+                                      "value": 200
+                                    },
+                                    {
+                                      "kind": "Text",
+                                      "value": "written"
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "cases": [
+                                  {
+                                    "kind": "Call",
+                                    "identifier": "Error",
+                                    "arguments": [
+                                      {
+                                        "kind": "Identifier",
+                                        "name": "reason"
+                                      }
+                                    ]
+                                  }
+                                ],
+                                "return_value": {
+                                  "kind": "Call",
+                                  "identifier": "Response",
+                                  "arguments": [
+                                    {
+                                      "kind": "Integer",
+                                      "value": 500
+                                    },
+                                    {
+                                      "kind": "Identifier",
+                                      "name": "reason"
+                                    }
+                                  ]
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "cases": [
+                            {
+                              "kind": "Wildcard"
+                            },
+                            {
+                              "kind": "Wildcard"
+                            }
+                          ],
+                          "return_value": {
+                            "kind": "Call",
+                            "identifier": "Response",
+                            "arguments": [
+                              {
+                                "kind": "Integer",
+                                "value": 404
+                              },
+                              {
+                                "kind": "Text",
+                                "value": "not found"
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "Function",
+            "identifier": "app",
+            "param_list": [
+              {
+                "param": "readFile",
+                "data_type": {
+                  "kind": "NamedType",
+                  "name": "Reader"
+                }
+              },
+              {
+                "param": "writeFile",
+                "data_type": {
+                  "kind": "NamedType",
+                  "name": "Writer"
+                }
+              },
+              {
+                "param": "serve",
+                "data_type": {
+                  "kind": "NamedType",
+                  "name": "Server"
+                }
+              }
+            ],
+            "return_type": {
+              "kind": "AppliedType",
+              "name": "Result",
+              "arguments": [
+                {
+                  "kind": "NamedType",
+                  "name": "Nil"
+                },
+                {
+                  "kind": "NamedType",
+                  "name": "String"
+                }
+              ]
+            },
+            "body": [
+              {
+                "kind": "CaseExpr",
+                "conditions": [
+                  {
+                    "kind": "Call",
+                    "identifier": "copyFile",
+                    "arguments": [
+                      {
+                        "kind": "Identifier",
+                        "name": "readFile"
+                      },
+                      {
+                        "kind": "Identifier",
+                        "name": "writeFile"
+                      }
+                    ]
+                  }
+                ],
+                "case_evals": [
+                  {
+                    "cases": [
+                      {
+                        "kind": "Call",
+                        "identifier": "Ok",
+                        "arguments": [
+                          {
+                            "kind": "Wildcard"
+                          }
+                        ]
+                      }
+                    ],
+                    "return_value": {
+                      "kind": "Call",
+                      "identifier": "serve",
+                      "arguments": [
+                        {
+                          "kind": "Integer",
+                          "value": 8080
+                        },
+                        {
+                          "kind": "Lambda",
+                          "param_list": [
+                            {
+                              "param": "request",
+                              "data_type": {
+                                "kind": "NamedType",
+                                "name": "HttpRequest"
+                              }
+                            }
+                          ],
+                          "return_type": {
+                            "kind": "NamedType",
+                            "name": "HttpResponse"
+                          },
+                          "body": [
+                            {
+                              "kind": "Call",
+                              "identifier": "handleRequest",
+                              "arguments": [
+                                {
+                                  "kind": "Identifier",
+                                  "name": "readFile"
+                                },
+                                {
+                                  "kind": "Identifier",
+                                  "name": "writeFile"
+                                },
+                                {
+                                  "kind": "Identifier",
+                                  "name": "request"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "cases": [
+                      {
+                        "kind": "Call",
+                        "identifier": "Error",
+                        "arguments": [
+                          {
+                            "kind": "Identifier",
+                            "name": "reason"
+                          }
+                        ]
+                      }
+                    ],
+                    "return_value": {
+                      "kind": "Call",
+                      "identifier": "Error",
+                      "arguments": [
+                        {
+                          "kind": "Identifier",
+                          "name": "reason"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "path": "file_http.bz"
+    }
+  }
+}

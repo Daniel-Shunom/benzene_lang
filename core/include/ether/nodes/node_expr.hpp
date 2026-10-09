@@ -7,6 +7,7 @@
 #include <vector>
 
 class Visitor;
+
 struct Node {
   TypePtr inferred_type;
   bool type_is_resolved;
@@ -25,11 +26,22 @@ struct NDExplicitTypeAnot: Node {
 
 struct NDTypeExpr: Node {
   TypePtr parsed_type;
+  struct NameReference {
+    Token token;
+    SymbolAttr* symbol = nullptr;
+    bool applied = false;
+  };
+  std::vector<NameReference> names;
   void accept(Visitor & visitor) override;
 };
 
 struct NDTypeDecl: Node {
   Token type_identifier;
+  SymbolAttr* type_symbol = nullptr;
+
+  // For paramterized types.
+  std::vector<NDPtr> params;
+
   std::optional<NDTypeExpr> alias_target;
   // A body is distinct from a bare declaration, even when it has no members.
   std::optional<std::vector<NDTypeExpr>> sub_types;
@@ -38,6 +50,7 @@ struct NDTypeDecl: Node {
 };
 
 struct NDIdentifier : Node {
+  bool is_wildcard_pattern = false;
   SymbolAttr *identifier_symbol = nullptr;
   Token identifier;
   std::optional<NDTypeExpr> type;

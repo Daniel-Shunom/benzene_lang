@@ -390,7 +390,7 @@ fn capabilities(encoding: String) -> json.Json {
     #(
       "codeActionProvider",
       json.object([
-        #("codeActionKinds", json.array(["refactor.rewrite"], json.string)),
+        #("codeActionKinds", json.array(["quickfix", "refactor.rewrite"], json.string)),
       ]),
     ),
     #("renameProvider", json.object([#("prepareProvider", json.bool(True))])),

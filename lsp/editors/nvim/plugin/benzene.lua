@@ -54,6 +54,10 @@ vim.api.nvim_create_user_command("BenzeneInlayHints", function()
   vim.notify("benzene: inlay hints " .. (shown and "off" or "on"))
 end, { desc = "Toggle inferred-type hints in this buffer" })
 
+vim.api.nvim_create_user_command("BenzeneCodeActions", function()
+  vim.lsp.buf.code_action()
+end, { desc = "Show Benzene code actions at the cursor" })
+
 vim.api.nvim_create_user_command("BenzeneRestart", function()
   -- Picks up a rebuilt server, which is otherwise only loaded at attach time.
   for _, client in ipairs(clients()) do

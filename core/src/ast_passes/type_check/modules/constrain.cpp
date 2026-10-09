@@ -38,7 +38,8 @@ void TCModule_Constrain::visit(NDLetBindExpr& expr) {
   Constraint constraint({
     .lhs=expr.identifier->inferred_type,
     .rhs=expr.bound_value->inferred_type,
-    .location=at(expr.identifier->identifier)
+    .location=at(expr.identifier->identifier),
+    .expected_declared=expr.identifier->type ? expr.identifier->type->parsed_type : nullptr
   });
   this->constraints.push_back(constraint);
   context.generalize_binding(expr);
@@ -49,7 +50,8 @@ void TCModule_Constrain::visit(NDConstExpr& expr) {
   Constraint constraint({
     .lhs=expr.identifier->inferred_type,
     .rhs=expr.bound_value->inferred_type,
-    .location=at(expr.identifier->identifier)
+    .location=at(expr.identifier->identifier),
+    .expected_declared=expr.identifier->type ? expr.identifier->type->parsed_type : nullptr
   });
   this->constraints.push_back(constraint);
 }
@@ -63,11 +65,6 @@ void TCModule_Constrain::visit(NDCallExpr& expr) {
     call_args.push_back(arg->inferred_type);
   }
 
-  if (expr.identifier->identifier_symbol
-      && expr.identifier->identifier_symbol->symbol_kind == SymbolKind::Type) {
-    return;
-  }
-
   // Blamed on the callee's name. Calling a function with arguments it cannot
   // accept is a mistake at the call, not at the declaration -- the declaration
   // may be correct and used correctly everywhere else.
@@ -76,6 +73,16 @@ void TCModule_Constrain::visit(NDCallExpr& expr) {
     .rhs = makeFunc(std::move(call_args), expr.inferred_type),
     .location = at(expr.identifier->identifier)
   });
+  if (auto* scheme = context.types().lookup(expr.identifier->identifier_symbol);
+      scheme && !scheme->quantified.empty()) constraint.expected_scheme = *scheme;
+  if (expr.identifier->identifier_symbol) {
+    constraint.expected_declared = expr.identifier->identifier_symbol->declared_type;
+    if (expr.identifier->identifier_symbol->symbol_kind == SymbolKind::Type) {
+      if (const auto* scheme = context.constructor_scheme(expr.identifier->identifier.token_value)) {
+        constraint.expected_scheme = *scheme;
+      }
+    }
+  }
 
   this->constraints.push_back(constraint);
 }
@@ -116,7 +123,8 @@ void TCModule_Constrain::visit(NDFuncDeclExpr& expr) {
     constraints.push_back({
       .lhs = expr.return_type->inferred_type,
       .rhs = expr.func_body.back()->inferred_type,
-      .location = at(expr.func_identifier)
+      .location = at(expr.func_identifier),
+      .expected_declared = expr.return_type->parsed_type
     });
   }
 
@@ -135,14 +143,18 @@ void TCModule_Constrain::visit(NDCaseExpr& expr) {
   }
 
   for (auto& branch : expr.branches) {
+    context.push_type_scope();
     for (size_t i = 0; i < branch.pattern.size(); ++i) {
       branch.pattern[i]->accept(*this);
 
       if (i < expr.conditions.size()) {
+        auto* identifier = dynamic_cast<NDIdentifier*>(expr.conditions[i].get());
         constraints.push_back({
           .lhs = expr.conditions[i]->inferred_type,
           .rhs = branch.pattern[i]->inferred_type,
-          .location = at(expr.case_keyword)
+          .location = at(expr.case_keyword),
+          .expected_declared = identifier && identifier->identifier_symbol
+              ? identifier->identifier_symbol->declared_type : nullptr
         });
       }
     }
@@ -153,6 +165,7 @@ void TCModule_Constrain::visit(NDCaseExpr& expr) {
       .rhs = branch.result->inferred_type,
       .location = at(expr.case_keyword)
     });
+    context.pop_type_scope();
   }
 }
 
@@ -297,7 +310,8 @@ void TCModule_Constrain::visit(NDLambdaExpr& expr) {
     constraints.push_back({
       .lhs = expr.return_type->inferred_type,
       .rhs = expr.func_body.back()->inferred_type,
-      .location = at(expr.lambda_start)
+      .location = at(expr.lambda_start),
+      .expected_declared = expr.return_type->parsed_type
     });
   }
 

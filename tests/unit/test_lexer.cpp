@@ -83,6 +83,14 @@ TEST_SUITE("lexer / string literals") {
 }
 
 TEST_SUITE("lexer / keywords and identifiers") {
+  TEST_CASE("a standalone underscore is a pattern identifier") {
+    auto toks = lex_no_eof("_, Wrap(_)");
+    REQUIRE(toks.size() == 6);
+    CHECK(toks[0].token_type == TokenType::Identifier);
+    CHECK(toks[0].token_value == "_");
+    CHECK(toks[4].token_type == TokenType::Identifier);
+    CHECK(toks[4].token_value == "_");
+  }
   TEST_CASE("identifiers vs keywords") {
     auto toks = lex_no_eof("let const func end case default True False Nil foo");
     REQUIRE(toks.size() == 10);
