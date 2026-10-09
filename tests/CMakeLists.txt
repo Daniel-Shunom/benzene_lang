@@ -49,6 +49,9 @@ doctest_discover_tests(ether_tests)
 # The project scaffold needs the real CLI and filesystem/Git behavior.
 find_package(Python3 COMPONENTS Interpreter QUIET)
 if (Python3_Interpreter_FOUND)
+  # test.sh/test.bat (and CI) build only ether_tests before running CTest.
+  # The scaffold test invokes the CLI, so that target must build it as well.
+  add_dependencies(ether_tests ether)
   add_test(NAME cli/project-generation
     COMMAND ${Python3_EXECUTABLE}
       ${CMAKE_CURRENT_SOURCE_DIR}/integration/test_project_generation.py
