@@ -113,8 +113,13 @@ generation alone as proof that a program type-checks.
 Read `.mcp.json` for the Benzene server URL. If your agent client does not load
 this configuration format, register the same HTTP endpoint in its MCP settings.
 The MCP server must already be running; this project does not install or start it.
-With a Benzene compiler checkout containing the MCP server, run from
-`mcp/ether_mcp`:
+With Benzene installed, run:
+
+```sh
+ether-mcp
+```
+
+For a source checkout, run from `mcp/ether_mcp` instead:
 
 ```sh
 gleam run -m mcp/server

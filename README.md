@@ -3,7 +3,21 @@
 A small statically-typed language and its compiler front-end (`ether`).
 
 Status: early. Lexer, parser, symbol resolver, and diagnostics are working.
-Type checker and codegen are stubs.
+Type inference/checking is implemented. Executable code generation is still a stub.
+
+## Install
+
+On Windows, install the compiler, LSP and MCP for your user account:
+
+```powershell
+.\install.ps1 -AddToPath
+```
+
+The default location is `%LOCALAPPDATA%\Programs\Benzene`. Open a new terminal
+and run `ether --version`, `ether new my_project`, or `ether-mcp`. Erlang/OTP is
+required for the servers; Gleam is only needed when building them. POSIX systems
+can use `sh install.sh`. See [installation](docs/installation.md) for prerequisites,
+custom prefixes, portable packages and editor configuration.
 
 ## Build
 
@@ -15,7 +29,33 @@ cmake -S . -B build -G Ninja
 cmake --build build
 ```
 
-The CLI lands at `bin/ether`.
+Builds default to one compiler/linker worker to limit memory use. To opt into
+parallel compilation with Ninja, set the pool size during configuration:
+
+```sh
+cmake -S . -B build -G Ninja -DETHER_BUILD_JOBS=2
+cmake --build build --parallel 2
+```
+
+On Windows, the build script defaults to release mode using one worker:
+
+```bat
+build.bat
+build.bat debug
+build.bat release 2
+build.bat debug 1
+```
+
+The script requires CMake and Ninja and keeps separate incremental build
+directories under `build/native-Debug` and `build/native-Release`. The worker
+count limits simultaneous compilation and linking jobs. Increase it gradually
+only if you have sufficient free RAM. `build.bat debug all` explicitly opts into
+one worker per logical processor, which can exhaust memory. For Ninja, the
+`ETHER_BUILD_JOBS` pool also limits plain `cmake --build build` and direct Ninja
+invocations; `--parallel` alone cannot exceed the configured pool size. Other
+generators should use `cmake --build build --parallel 1` for the same safe limit.
+
+The CLI lands at `bin/ether` (`bin/ether.exe` on Windows).
 
 ## Test
 
@@ -33,6 +73,17 @@ Extra arguments pass through to ctest, e.g. `./test.sh -R lexer`.
 ./bin/ether check tests/integration/samples/valid_program.bz -show-ast
 ./bin/ether help
 ```
+
+Create a Benzene project with a `Nil`-returning starter and an agent MCP entrypoint:
+
+```sh
+./bin/ether new my_project
+cd my_project
+ether check src/main.bz
+```
+
+See [project generation](docs/project-generation.md) for the generated layout,
+optional Git initialization, and agent configuration.
 
 ## Editor support
 

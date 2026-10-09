@@ -9,6 +9,7 @@
 #include "commands/scan/scan.hpp"
 
 #include <stdexcept>
+#include <cstdio>
 #include <string>
 #include <string_view>
 
@@ -18,6 +19,8 @@ auto GetArgs(int argc, char* argv[]) -> Args {
   }
 
   std::string_view sub = argv[1];
+
+  if (sub == "--version" || sub == "version") { return ArgVersion{}; }
 
   if (sub == "new" || sub == "create") {
 
@@ -100,6 +103,10 @@ struct Dispatcher {
   auto operator()(const ArgCheck&  arg) const -> int { return HandleCheck(arg);  }
   auto operator()(const ArgScan&   arg) const -> int { return HandleScan(arg);   }
   auto operator()(const ArgHelp&   arg) const -> int { return HandleHelp(arg);   }
+  auto operator()(const ArgVersion&) const -> int {
+    std::printf("ether %s\n", ETHER_VERSION);
+    return 0;
+  }
 };
 }
 

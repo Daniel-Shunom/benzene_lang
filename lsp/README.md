@@ -95,6 +95,12 @@ Neovim **0.11 or newer** is required: the config uses the native
 
 ## Setup
 
+For an installed toolchain, run the top-level `install.ps1 -AddToPath` (Windows)
+or `sh install.sh` (POSIX), then configure your editor to launch `ether-lsp`.
+Gleam is only required to build the server. The Neovim plugin is installed under
+`<prefix>/share/benzene/editors/nvim`. See [installation](../docs/installation.md)
+for the full workflow. The source-checkout setup follows below.
+
 ### 1. Build the compiler
 
 From the repository root:

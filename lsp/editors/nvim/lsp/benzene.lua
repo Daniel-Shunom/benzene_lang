@@ -17,6 +17,19 @@ local this_file = debug.getinfo(1, "S").source:sub(2)
 local repo_root = vim.fs.normalize(vim.fn.fnamemodify(this_file, ":p:h:h:h:h:h"))
 
 local function default_cmd()
+  local installed = vim.fn.exepath("ether-lsp")
+  if installed ~= "" then
+    return { installed }
+  end
+  -- Installed plugin: <prefix>/share/benzene/editors/nvim/lsp/benzene.lua.
+  local prefix = vim.fn.fnamemodify(this_file, ":p:h:h:h:h:h:h")
+  local native = prefix .. "/bin/ether-lsp"
+  if vim.fn.has("win32") == 1 then
+    native = native .. ".exe"
+  end
+  if vim.fn.executable(native) == 1 then
+    return { native }
+  end
   local launcher = repo_root .. "/lsp/bin/ether-lsp"
   if vim.fn.has("win32") == 1 then
     launcher = launcher .. ".cmd"

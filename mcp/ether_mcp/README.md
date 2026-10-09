@@ -91,6 +91,10 @@ comments, nested operations, lambdas, scopes, collections and pipelines.
 
 ## MCP server
 
+With Benzene installed, run `ether-mcp` from any directory. It uses the installed
+compiler and precompiled server modules; only Erlang/OTP is required at runtime.
+See [installation](../../docs/installation.md) for installation and PATH setup.
+
 From this directory, run:
 
 ```sh

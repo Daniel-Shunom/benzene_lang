@@ -52,9 +52,14 @@ how to handle diagnostics or an unavailable compiler/server.
 `.mcp.json` points to the local HTTP MCP server at
 `http://127.0.0.1:4000/mcp`. Whether that file is loaded automatically depends on
 the agent client; otherwise register the endpoint in its MCP settings. Edit the
-URL when using another port. The server is a separate service and is not bundled
-or started by `ether new`. From a compiler checkout containing the MCP work,
-start it with:
+URL when using another port. The server is a separate service and is not started
+by `ether new`. With the [toolchain installed](installation.md), start it with:
+
+```sh
+ether-mcp
+```
+
+From a compiler checkout, use:
 
 ```sh
 cd mcp/ether_mcp
@@ -62,7 +67,6 @@ gleam run -m mcp/server
 ```
 
 Set `ETHER_BIN` on the server to the desired compiler executable when needed.
-The MCP implementation currently lives on the `feat/mcp` branch until merged.
 The project can still be checked locally with `ether scan src/main.bz`; this
 returns JSON diagnostics and inferred symbol types. Always inspect diagnostics,
 rather than relying solely on the command's exit status.

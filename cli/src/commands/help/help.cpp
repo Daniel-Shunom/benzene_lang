@@ -29,7 +29,8 @@ int HandleHelp(const ArgHelp&) {
     "      -show-unification    print solved type substitutions\n"
     "  %sbuild%s            Compile the project %s(not yet implemented)%s\n"
     "  %srun%s              Build and execute %s(not yet implemented)%s\n"
-    "  %shelp%s             Show this help\n",
+    "  %shelp%s             Show this help\n"
+    "  --version         Show the installed version\n",
     BOLD, GREEN, RESET,
     BOLD, CYAN, RESET,
     GREEN, RESET, YELLOW, RESET, MAGENTA, RESET,

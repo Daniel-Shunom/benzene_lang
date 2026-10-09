@@ -1,51 +1,47 @@
 @echo off
-setlocal enabledelayedexpansion
+setlocal
 
-set "MODE=%~1"
-if /I "%MODE%"=="debug" (
-  set "FLAGS_FILE=compile_flags_debug.txt"
-) else (
-  set "FLAGS_FILE=compile_flags.txt"
+if /I "%~1"=="--help" (
+  echo Usage: build.bat [debug^|release] [all^|N]
+  echo Defaults: release, one worker to limit memory use.
+  echo Higher worker counts increase memory use; use all only if you have enough RAM.
+  exit /b 0
 )
 
-if not exist "%FLAGS_FILE%" (
-  echo ERROR: Could not find %FLAGS_FILE%
+set "MODE=%~1"
+if not defined MODE set "MODE=release"
+if /I "%MODE%"=="debug" (
+  set "BUILD_TYPE=Debug"
+) else if /I "%MODE%"=="release" (
+  set "BUILD_TYPE=Release"
+) else (
+  echo ERROR: Build mode must be debug or release.
   exit /b 1
 )
 
-set "FLAGS="
-for /F "usebackq delims=" %%f in ("%FLAGS_FILE%") do (
-  set "FLAGS=!FLAGS! %%f"
-)
-
-if not exist bin (
-  mkdir bin
-)
-
-set "SOURCES="
-for /R core\src %%f in (*.cpp) do (
-  set "SOURCES=!SOURCES! "%%f""
-)
-
-for /R cli\src %%f in (*.cpp) do (
-  if /I not "%%~nxf"=="main.cpp" (
-    set "SOURCES=!SOURCES! "%%f""
-  )
-)
-
-echo.
-echo Building %MODE% executable...
-echo Flags: %FLAGS%
-echo.
-
-g++ "cli\src\main.cpp" %SOURCES% %FLAGS% -o "bin\ether.exe" -lstdc++exp
-
+set "JOBS=%~2"
+if not defined JOBS set "JOBS=1"
+if /I "%JOBS%"=="all" set "JOBS=%NUMBER_OF_PROCESSORS%"
+echo(%JOBS%| findstr /R /X "[1-9][0-9]*" >nul
 if errorlevel 1 (
-  echo.
+  echo ERROR: Worker count must be all or a positive integer.
+  exit /b 1
+)
+if not "%~3"=="" (
+  echo ERROR: Usage: build.bat [debug^|release] [all^|N]
+  exit /b 1
+)
+
+set "BUILD_DIR=%~dp0build\native-%BUILD_TYPE%"
+cmake -S "%~dp0." -B "%BUILD_DIR%" -G Ninja -DCMAKE_BUILD_TYPE=%BUILD_TYPE% -DETHER_BUILD_TESTS=OFF -DETHER_BUILD_JOBS=%JOBS%
+if errorlevel 1 exit /b 1
+
+echo Building %BUILD_TYPE% with %JOBS% parallel workers...
+cmake --build "%BUILD_DIR%" --target ether --parallel %JOBS%
+if errorlevel 1 (
   echo Build FAILED.
   exit /b 1
 )
 
-echo.
-echo Build complete: bin\ether.exe
+echo Build complete: %~dp0bin\ether.exe
 endlocal

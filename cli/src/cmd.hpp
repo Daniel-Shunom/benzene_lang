@@ -21,6 +21,7 @@ struct ArgScan   {
   bool use_stdin = false;
 };
 struct ArgHelp   {};
+struct ArgVersion {};
 
 using Args = std::variant<
   ArgInit,
@@ -29,7 +30,8 @@ using Args = std::variant<
   ArgCheck,
   ArgScan,
   ArgCreate,
-  ArgHelp
+  ArgHelp,
+  ArgVersion
 >;
 
 Args GetArgs(int argc, char* argv[]);
