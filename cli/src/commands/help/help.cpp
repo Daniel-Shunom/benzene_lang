@@ -19,9 +19,10 @@ int HandleHelp(const ArgHelp&) {
     "  %sether%s %s<command>%s %s[args]%s\n"
     "\n"
     "%s%sCOMMANDS:%s\n"
-    "  %screate%s %s<name>%s    Scaffold a new project\n"
-    "  %sinit%s             Initialize a project in the current directory\n"
-    "  %scheck%s %s<file>%s     Parse and resolve a source file\n"
+    "  %snew%s %s<project_name>%s    Scaffold a project (create is an alias)\n"
+    "  %sinit%s             Initialize in the current directory (not yet implemented)\n"
+    "  %scheck%s %s<file>%s     Parse, resolve and type-check a source file\n"
+    "  scan <file>       Return JSON diagnostics and inferred types\n"
     "      %s-show-ast%s    also print the AST\n"
     "      %s-show-types%s  print inferred types during checking\n"
     "      -show-constraints    print generated type constraints\n"
@@ -35,11 +36,9 @@ int HandleHelp(const ArgHelp&) {
     BOLD, CYAN, RESET,
     YELLOW, RESET, MAGENTA, RESET,
     YELLOW, RESET,
-    YELLOW, RESET,
     YELLOW, RESET, MAGENTA, RESET,
     CYAN, RESET,
-    YELLOW, RESET, MAGENTA, RESET,
-    YELLOW, RESET,
+    CYAN, RESET,
     YELLOW, RESET, DIM, RESET,
     YELLOW, RESET, DIM, RESET,
     YELLOW, RESET

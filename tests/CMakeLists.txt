@@ -45,3 +45,13 @@ target_compile_definitions(ether_tests PRIVATE
 
 include(${doctest_SOURCE_DIR}/scripts/cmake/doctest.cmake)
 doctest_discover_tests(ether_tests)
+
+# The project scaffold needs the real CLI and filesystem/Git behavior.
+find_package(Python3 COMPONENTS Interpreter QUIET)
+if (Python3_Interpreter_FOUND)
+  add_test(NAME cli/project-generation
+    COMMAND ${Python3_EXECUTABLE}
+      ${CMAKE_CURRENT_SOURCE_DIR}/integration/test_project_generation.py
+      $<TARGET_FILE:ether>
+  )
+endif()

@@ -19,10 +19,10 @@ auto GetArgs(int argc, char* argv[]) -> Args {
 
   std::string_view sub = argv[1];
 
-  if (sub == "create") {
+  if (sub == "new" || sub == "create") {
 
-    if (argc < 3) {
-      throw std::invalid_argument("usage: ether create <name>");
+    if (argc != 3) {
+      throw std::invalid_argument("usage: ether " + std::string(sub) + " <project_name>");
     }
 
     return ArgCreate{ .project_name = argv[2] };
