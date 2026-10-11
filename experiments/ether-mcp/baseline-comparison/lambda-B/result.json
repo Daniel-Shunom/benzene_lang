@@ -1,0 +1,770 @@
+{
+  "task": "lambda",
+  "arm": "B",
+  "model": "gpt-6.1-sol",
+  "reasoning_effort": "low",
+  "compiler_accepted": true,
+  "first_attempt_accepted": true,
+  "repair_rounds": 0,
+  "model_completions": 2,
+  "acknowledged_final_feedback": true,
+  "usage": {
+    "input_tokens": 45013,
+    "cached_input_tokens": 25088,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 284,
+    "reasoning_output_tokens": 0,
+    "total_tokens": 45297
+  },
+  "elapsed_seconds": 14.288724000005459,
+  "attempts": [
+    {
+      "compiler_accepted": true,
+      "source": "func apply_twice(f: Fn(Int) :> Int, x: Int) :> Int\n  f(f(x))\nend\n\nfunc main() :> Int\n  let increment = Fn(n: Int) :> Int\n    n + 1\n  end\n  apply_twice(increment, 40)\nend",
+      "candidate": "{\"validate\":true,\"construct\":{\"kind\":\"Module\",\"data\":[{\"kind\":\"Function\",\"identifier\":\"apply_twice\",\"param_list\":[{\"param\":\"f\",\"data_type\":{\"kind\":\"FunctionType\",\"parameters\":[{\"kind\":\"NamedType\",\"name\":\"Int\"}],\"returns\":{\"kind\":\"NamedType\",\"name\":\"Int\"}}},{\"param\":\"x\",\"data_type\":{\"kind\":\"NamedType\",\"name\":\"Int\"}}],\"return_type\":{\"kind\":\"NamedType\",\"name\":\"Int\"},\"body\":[{\"kind\":\"Call\",\"identifier\":\"f\",\"arguments\":[{\"kind\":\"Call\",\"identifier\":\"f\",\"arguments\":[{\"kind\":\"Identifier\",\"name\":\"x\"}]}]}]},{\"kind\":\"Function\",\"identifier\":\"main\",\"param_list\":[],\"return_type\":{\"kind\":\"NamedType\",\"name\":\"Int\"},\"body\":[{\"kind\":\"Let\",\"identifier\":\"increment\",\"value\":{\"kind\":\"Lambda\",\"param_list\":[{\"param\":\"n\",\"data_type\":{\"kind\":\"NamedType\",\"name\":\"Int\"}}],\"return_type\":{\"kind\":\"NamedType\",\"name\":\"Int\"},\"body\":[{\"kind\":\"Binary\",\"operator\":\"Add\",\"left\":{\"kind\":\"Identifier\",\"name\":\"n\"},\"right\":{\"kind\":\"Integer\",\"value\":1}}]}},{\"kind\":\"Call\",\"identifier\":\"apply_twice\",\"arguments\":[{\"kind\":\"Identifier\",\"name\":\"increment\"},{\"kind\":\"Integer\",\"value\":40}]}]}]}}",
+      "tool_response": {
+        "jsonrpc": "2.0",
+        "id": "pilot",
+        "result": {
+          "isError": false,
+          "structuredContent": {
+            "source": "func apply_twice(f: Fn(Int) :> Int, x: Int) :> Int\n  f(f(x))\nend\n\nfunc main() :> Int\n  let increment = Fn(n: Int) :> Int\n    n + 1\n  end\n  apply_twice(increment, 40)\nend",
+            "validated": true,
+            "valid": true,
+            "analysis": {
+              "tokens": [
+                {
+                  "value": "func",
+                  "type": "FuncStart",
+                  "line": 1,
+                  "length": 4,
+                  "column": 1
+                },
+                {
+                  "value": "apply_twice",
+                  "type": "Identifier",
+                  "line": 1,
+                  "length": 11,
+                  "column": 6
+                },
+                {
+                  "value": "(",
+                  "type": "LParen",
+                  "line": 1,
+                  "length": 1,
+                  "column": 17
+                },
+                {
+                  "value": "f",
+                  "type": "Identifier",
+                  "line": 1,
+                  "length": 1,
+                  "column": 18
+                },
+                {
+                  "value": ":",
+                  "type": "Colon",
+                  "line": 1,
+                  "length": 1,
+                  "column": 19
+                },
+                {
+                  "value": "Fn",
+                  "type": "Lambda Expression",
+                  "line": 1,
+                  "length": 2,
+                  "column": 21
+                },
+                {
+                  "value": "(",
+                  "type": "LParen",
+                  "line": 1,
+                  "length": 1,
+                  "column": 23
+                },
+                {
+                  "value": "Int",
+                  "type": "Identifier",
+                  "line": 1,
+                  "length": 3,
+                  "column": 24
+                },
+                {
+                  "value": ")",
+                  "type": "RParen",
+                  "line": 1,
+                  "length": 1,
+                  "column": 27
+                },
+                {
+                  "value": ":>",
+                  "type": "RtnTypeOp",
+                  "line": 1,
+                  "length": 2,
+                  "column": 29
+                },
+                {
+                  "value": "Int",
+                  "type": "Identifier",
+                  "line": 1,
+                  "length": 3,
+                  "column": 32
+                },
+                {
+                  "value": ",",
+                  "type": "Delimitter",
+                  "line": 1,
+                  "length": 1,
+                  "column": 35
+                },
+                {
+                  "value": "x",
+                  "type": "Identifier",
+                  "line": 1,
+                  "length": 1,
+                  "column": 37
+                },
+                {
+                  "value": ":",
+                  "type": "Colon",
+                  "line": 1,
+                  "length": 1,
+                  "column": 38
+                },
+                {
+                  "value": "Int",
+                  "type": "Identifier",
+                  "line": 1,
+                  "length": 3,
+                  "column": 40
+                },
+                {
+                  "value": ")",
+                  "type": "RParen",
+                  "line": 1,
+                  "length": 1,
+                  "column": 43
+                },
+                {
+                  "value": ":>",
+                  "type": "RtnTypeOp",
+                  "line": 1,
+                  "length": 2,
+                  "column": 45
+                },
+                {
+                  "value": "Int",
+                  "type": "Identifier",
+                  "line": 1,
+                  "length": 3,
+                  "column": 48
+                },
+                {
+                  "value": "f",
+                  "type": "Identifier",
+                  "line": 2,
+                  "length": 1,
+                  "column": 3
+                },
+                {
+                  "value": "(",
+                  "type": "LParen",
+                  "line": 2,
+                  "length": 1,
+                  "column": 4
+                },
+                {
+                  "value": "f",
+                  "type": "Identifier",
+                  "line": 2,
+                  "length": 1,
+                  "column": 5
+                },
+                {
+                  "value": "(",
+                  "type": "LParen",
+                  "line": 2,
+                  "length": 1,
+                  "column": 6
+                },
+                {
+                  "value": "x",
+                  "type": "Identifier",
+                  "line": 2,
+                  "length": 1,
+                  "column": 7
+                },
+                {
+                  "value": ")",
+                  "type": "RParen",
+                  "line": 2,
+                  "length": 1,
+                  "column": 8
+                },
+                {
+                  "value": ")",
+                  "type": "RParen",
+                  "line": 2,
+                  "length": 1,
+                  "column": 9
+                },
+                {
+                  "value": "end",
+                  "type": "EndStmt",
+                  "line": 3,
+                  "length": 3,
+                  "column": 1
+                },
+                {
+                  "value": "func",
+                  "type": "FuncStart",
+                  "line": 5,
+                  "length": 4,
+                  "column": 1
+                },
+                {
+                  "value": "main",
+                  "type": "Identifier",
+                  "line": 5,
+                  "length": 4,
+                  "column": 6
+                },
+                {
+                  "value": "(",
+                  "type": "LParen",
+                  "line": 5,
+                  "length": 1,
+                  "column": 10
+                },
+                {
+                  "value": ")",
+                  "type": "RParen",
+                  "line": 5,
+                  "length": 1,
+                  "column": 11
+                },
+                {
+                  "value": ":>",
+                  "type": "RtnTypeOp",
+                  "line": 5,
+                  "length": 2,
+                  "column": 13
+                },
+                {
+                  "value": "Int",
+                  "type": "Identifier",
+                  "line": 5,
+                  "length": 3,
+                  "column": 16
+                },
+                {
+                  "value": "let",
+                  "type": "LetKeyword",
+                  "line": 6,
+                  "length": 3,
+                  "column": 3
+                },
+                {
+                  "value": "increment",
+                  "type": "Identifier",
+                  "line": 6,
+                  "length": 9,
+                  "column": 7
+                },
+                {
+                  "value": "=",
+                  "type": "Eq",
+                  "line": 6,
+                  "length": 1,
+                  "column": 17
+                },
+                {
+                  "value": "Fn",
+                  "type": "Lambda Expression",
+                  "line": 6,
+                  "length": 2,
+                  "column": 19
+                },
+                {
+                  "value": "(",
+                  "type": "LParen",
+                  "line": 6,
+                  "length": 1,
+                  "column": 21
+                },
+                {
+                  "value": "n",
+                  "type": "Identifier",
+                  "line": 6,
+                  "length": 1,
+                  "column": 22
+                },
+                {
+                  "value": ":",
+                  "type": "Colon",
+                  "line": 6,
+                  "length": 1,
+                  "column": 23
+                },
+                {
+                  "value": "Int",
+                  "type": "Identifier",
+                  "line": 6,
+                  "length": 3,
+                  "column": 25
+                },
+                {
+                  "value": ")",
+                  "type": "RParen",
+                  "line": 6,
+                  "length": 1,
+                  "column": 28
+                },
+                {
+                  "value": ":>",
+                  "type": "RtnTypeOp",
+                  "line": 6,
+                  "length": 2,
+                  "column": 30
+                },
+                {
+                  "value": "Int",
+                  "type": "Identifier",
+                  "line": 6,
+                  "length": 3,
+                  "column": 33
+                },
+                {
+                  "value": "n",
+                  "type": "Identifier",
+                  "line": 7,
+                  "length": 1,
+                  "column": 5
+                },
+                {
+                  "value": "+",
+                  "type": "Plus",
+                  "line": 7,
+                  "length": 1,
+                  "column": 7
+                },
+                {
+                  "value": "1",
+                  "type": "IntegerLiteral",
+                  "line": 7,
+                  "length": 1,
+                  "column": 9
+                },
+                {
+                  "value": "end",
+                  "type": "EndStmt",
+                  "line": 8,
+                  "length": 3,
+                  "column": 3
+                },
+                {
+                  "value": "apply_twice",
+                  "type": "Identifier",
+                  "line": 9,
+                  "length": 11,
+                  "column": 3
+                },
+                {
+                  "value": "(",
+                  "type": "LParen",
+                  "line": 9,
+                  "length": 1,
+                  "column": 14
+                },
+                {
+                  "value": "increment",
+                  "type": "Identifier",
+                  "line": 9,
+                  "length": 9,
+                  "column": 15
+                },
+                {
+                  "value": ",",
+                  "type": "Delimitter",
+                  "line": 9,
+                  "length": 1,
+                  "column": 24
+                },
+                {
+                  "value": "40",
+                  "type": "IntegerLiteral",
+                  "line": 9,
+                  "length": 2,
+                  "column": 26
+                },
+                {
+                  "value": ")",
+                  "type": "RParen",
+                  "line": 9,
+                  "length": 1,
+                  "column": 28
+                },
+                {
+                  "value": "end",
+                  "type": "EndStmt",
+                  "line": 10,
+                  "length": 3,
+                  "column": 1
+                }
+              ],
+              "path": "generated.bz",
+              "index": [
+                {
+                  "type": "Fn(Fn(Int) :> Int, Int) :> Int",
+                  "scopeLine": 0,
+                  "scopeColumn": 0,
+                  "returns": "Int",
+                  "name": "apply_twice",
+                  "line": 1,
+                  "length": 11,
+                  "kind": "Function",
+                  "isDefinition": true,
+                  "detail": "apply_twice(f: Fn(Int) :> Int, x: Int) :> Int",
+                  "defLine": 1,
+                  "defColumn": 6,
+                  "column": 6,
+                  "annotated": true
+                },
+                {
+                  "type": "",
+                  "scopeLine": 1,
+                  "scopeColumn": 6,
+                  "returns": "",
+                  "name": "Int",
+                  "line": 1,
+                  "length": 3,
+                  "kind": "Type",
+                  "isDefinition": false,
+                  "detail": "",
+                  "defLine": 0,
+                  "defColumn": 0,
+                  "column": 48,
+                  "annotated": true
+                },
+                {
+                  "type": "Fn(Int) :> Int",
+                  "scopeLine": 1,
+                  "scopeColumn": 6,
+                  "returns": "",
+                  "name": "f",
+                  "line": 1,
+                  "length": 1,
+                  "kind": "FuncParam",
+                  "isDefinition": true,
+                  "detail": "",
+                  "defLine": 1,
+                  "defColumn": 18,
+                  "column": 18,
+                  "annotated": true
+                },
+                {
+                  "type": "",
+                  "scopeLine": 1,
+                  "scopeColumn": 6,
+                  "returns": "",
+                  "name": "Int",
+                  "line": 1,
+                  "length": 3,
+                  "kind": "Type",
+                  "isDefinition": false,
+                  "detail": "",
+                  "defLine": 0,
+                  "defColumn": 0,
+                  "column": 24,
+                  "annotated": true
+                },
+                {
+                  "type": "",
+                  "scopeLine": 1,
+                  "scopeColumn": 6,
+                  "returns": "",
+                  "name": "Int",
+                  "line": 1,
+                  "length": 3,
+                  "kind": "Type",
+                  "isDefinition": false,
+                  "detail": "",
+                  "defLine": 0,
+                  "defColumn": 0,
+                  "column": 32,
+                  "annotated": true
+                },
+                {
+                  "type": "Int",
+                  "scopeLine": 1,
+                  "scopeColumn": 6,
+                  "returns": "",
+                  "name": "x",
+                  "line": 1,
+                  "length": 1,
+                  "kind": "FuncParam",
+                  "isDefinition": true,
+                  "detail": "",
+                  "defLine": 1,
+                  "defColumn": 37,
+                  "column": 37,
+                  "annotated": true
+                },
+                {
+                  "type": "",
+                  "scopeLine": 1,
+                  "scopeColumn": 6,
+                  "returns": "",
+                  "name": "Int",
+                  "line": 1,
+                  "length": 3,
+                  "kind": "Type",
+                  "isDefinition": false,
+                  "detail": "",
+                  "defLine": 0,
+                  "defColumn": 0,
+                  "column": 40,
+                  "annotated": true
+                },
+                {
+                  "type": "Fn(Int) :> Int",
+                  "scopeLine": 1,
+                  "scopeColumn": 6,
+                  "returns": "",
+                  "name": "f",
+                  "line": 2,
+                  "length": 1,
+                  "kind": "FuncParam",
+                  "isDefinition": false,
+                  "detail": "",
+                  "defLine": 1,
+                  "defColumn": 18,
+                  "column": 3,
+                  "annotated": false
+                },
+                {
+                  "type": "Fn(Int) :> Int",
+                  "scopeLine": 1,
+                  "scopeColumn": 6,
+                  "returns": "",
+                  "name": "f",
+                  "line": 2,
+                  "length": 1,
+                  "kind": "FuncParam",
+                  "isDefinition": false,
+                  "detail": "",
+                  "defLine": 1,
+                  "defColumn": 18,
+                  "column": 5,
+                  "annotated": false
+                },
+                {
+                  "type": "Int",
+                  "scopeLine": 1,
+                  "scopeColumn": 6,
+                  "returns": "",
+                  "name": "x",
+                  "line": 2,
+                  "length": 1,
+                  "kind": "FuncParam",
+                  "isDefinition": false,
+                  "detail": "",
+                  "defLine": 1,
+                  "defColumn": 37,
+                  "column": 7,
+                  "annotated": false
+                },
+                {
+                  "type": "Fn() :> Int",
+                  "scopeLine": 0,
+                  "scopeColumn": 0,
+                  "returns": "Int",
+                  "name": "main",
+                  "line": 5,
+                  "length": 4,
+                  "kind": "Function",
+                  "isDefinition": true,
+                  "detail": "main() :> Int",
+                  "defLine": 5,
+                  "defColumn": 6,
+                  "column": 6,
+                  "annotated": true
+                },
+                {
+                  "type": "",
+                  "scopeLine": 5,
+                  "scopeColumn": 6,
+                  "returns": "",
+                  "name": "Int",
+                  "line": 5,
+                  "length": 3,
+                  "kind": "Type",
+                  "isDefinition": false,
+                  "detail": "",
+                  "defLine": 0,
+                  "defColumn": 0,
+                  "column": 16,
+                  "annotated": true
+                },
+                {
+                  "type": "Fn(Int) :> Int",
+                  "scopeLine": 5,
+                  "scopeColumn": 6,
+                  "returns": "",
+                  "name": "increment",
+                  "line": 6,
+                  "length": 9,
+                  "kind": "Binding",
+                  "isDefinition": true,
+                  "detail": "",
+                  "defLine": 6,
+                  "defColumn": 7,
+                  "column": 7,
+                  "annotated": false
+                },
+                {
+                  "type": "Int",
+                  "scopeLine": 5,
+                  "scopeColumn": 6,
+                  "returns": "",
+                  "name": "n",
+                  "line": 6,
+                  "length": 1,
+                  "kind": "FuncParam",
+                  "isDefinition": true,
+                  "detail": "",
+                  "defLine": 6,
+                  "defColumn": 22,
+                  "column": 22,
+                  "annotated": true
+                },
+                {
+                  "type": "",
+                  "scopeLine": 5,
+                  "scopeColumn": 6,
+                  "returns": "",
+                  "name": "Int",
+                  "line": 6,
+                  "length": 3,
+                  "kind": "Type",
+                  "isDefinition": false,
+                  "detail": "",
+                  "defLine": 0,
+                  "defColumn": 0,
+                  "column": 25,
+                  "annotated": true
+                },
+                {
+                  "type": "Int",
+                  "scopeLine": 5,
+                  "scopeColumn": 6,
+                  "returns": "",
+                  "name": "n",
+                  "line": 7,
+                  "length": 1,
+                  "kind": "FuncParam",
+                  "isDefinition": false,
+                  "detail": "",
+                  "defLine": 6,
+                  "defColumn": 22,
+                  "column": 5,
+                  "annotated": false
+                },
+                {
+                  "type": "Int",
+                  "scopeLine": 5,
+                  "scopeColumn": 6,
+                  "returns": "",
+                  "name": "1",
+                  "line": 7,
+                  "length": 1,
+                  "kind": "Literal",
+                  "isDefinition": false,
+                  "detail": "",
+                  "defLine": 0,
+                  "defColumn": 0,
+                  "column": 9,
+                  "annotated": false
+                },
+                {
+                  "type": "Fn(Fn(Int) :> Int, Int) :> Int",
+                  "scopeLine": 5,
+                  "scopeColumn": 6,
+                  "returns": "",
+                  "name": "apply_twice",
+                  "line": 9,
+                  "length": 11,
+                  "kind": "Function",
+                  "isDefinition": false,
+                  "detail": "",
+                  "defLine": 1,
+                  "defColumn": 6,
+                  "column": 3,
+                  "annotated": false
+                },
+                {
+                  "type": "Fn(Int) :> Int",
+                  "scopeLine": 5,
+                  "scopeColumn": 6,
+                  "returns": "",
+                  "name": "increment",
+                  "line": 9,
+                  "length": 9,
+                  "kind": "Binding",
+                  "isDefinition": false,
+                  "detail": "",
+                  "defLine": 6,
+                  "defColumn": 7,
+                  "column": 15,
+                  "annotated": false
+                },
+                {
+                  "type": "Int",
+                  "scopeLine": 5,
+                  "scopeColumn": 6,
+                  "returns": "",
+                  "name": "40",
+                  "line": 9,
+                  "length": 2,
+                  "kind": "Literal",
+                  "isDefinition": false,
+                  "detail": "",
+                  "defLine": 0,
+                  "defColumn": 0,
+                  "column": 26,
+                  "annotated": false
+                }
+              ],
+              "diagnostics": []
+            }
+          },
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"source\":\"func apply_twice(f: Fn(Int) :> Int, x: Int) :> Int\\n  f(f(x))\\nend\\n\\nfunc main() :> Int\\n  let increment = Fn(n: Int) :> Int\\n    n + 1\\n  end\\n  apply_twice(increment, 40)\\nend\",\"validated\":true,\"valid\":true,\"analysis\":{\"tokens\":[{\"value\":\"func\",\"type\":\"FuncStart\",\"line\":1,\"length\":4,\"column\":1},{\"value\":\"apply_twice\",\"type\":\"Identifier\",\"line\":1,\"length\":11,\"column\":6},{\"value\":\"(\",\"type\":\"LParen\",\"line\":1,\"length\":1,\"column\":17},{\"value\":\"f\",\"type\":\"Identifier\",\"line\":1,\"length\":1,\"column\":18},{\"value\":\":\",\"type\":\"Colon\",\"line\":1,\"length\":1,\"column\":19},{\"value\":\"Fn\",\"type\":\"Lambda Expression\",\"line\":1,\"length\":2,\"column\":21},{\"value\":\"(\",\"type\":\"LParen\",\"line\":1,\"length\":1,\"column\":23},{\"value\":\"Int\",\"type\":\"Identifier\",\"line\":1,\"length\":3,\"column\":24},{\"value\":\")\",\"type\":\"RParen\",\"line\":1,\"length\":1,\"column\":27},{\"value\":\":>\",\"type\":\"RtnTypeOp\",\"line\":1,\"length\":2,\"column\":29},{\"value\":\"Int\",\"type\":\"Identifier\",\"line\":1,\"length\":3,\"column\":32},{\"value\":\",\",\"type\":\"Delimitter\",\"line\":1,\"length\":1,\"column\":35},{\"value\":\"x\",\"type\":\"Identifier\",\"line\":1,\"length\":1,\"column\":37},{\"value\":\":\",\"type\":\"Colon\",\"line\":1,\"length\":1,\"column\":38},{\"value\":\"Int\",\"type\":\"Identifier\",\"line\":1,\"length\":3,\"column\":40},{\"value\":\")\",\"type\":\"RParen\",\"line\":1,\"length\":1,\"column\":43},{\"value\":\":>\",\"type\":\"RtnTypeOp\",\"line\":1,\"length\":2,\"column\":45},{\"value\":\"Int\",\"type\":\"Identifier\",\"line\":1,\"length\":3,\"column\":48},{\"value\":\"f\",\"type\":\"Identifier\",\"line\":2,\"length\":1,\"column\":3},{\"value\":\"(\",\"type\":\"LParen\",\"line\":2,\"length\":1,\"column\":4},{\"value\":\"f\",\"type\":\"Identifier\",\"line\":2,\"length\":1,\"column\":5},{\"value\":\"(\",\"type\":\"LParen\",\"line\":2,\"length\":1,\"column\":6},{\"value\":\"x\",\"type\":\"Identifier\",\"line\":2,\"length\":1,\"column\":7},{\"value\":\")\",\"type\":\"RParen\",\"line\":2,\"length\":1,\"column\":8},{\"value\":\")\",\"type\":\"RParen\",\"line\":2,\"length\":1,\"column\":9},{\"value\":\"end\",\"type\":\"EndStmt\",\"line\":3,\"length\":3,\"column\":1},{\"value\":\"func\",\"type\":\"FuncStart\",\"line\":5,\"length\":4,\"column\":1},{\"value\":\"main\",\"type\":\"Identifier\",\"line\":5,\"length\":4,\"column\":6},{\"value\":\"(\",\"type\":\"LParen\",\"line\":5,\"length\":1,\"column\":10},{\"value\":\")\",\"type\":\"RParen\",\"line\":5,\"length\":1,\"column\":11},{\"value\":\":>\",\"type\":\"RtnTypeOp\",\"line\":5,\"length\":2,\"column\":13},{\"value\":\"Int\",\"type\":\"Identifier\",\"line\":5,\"length\":3,\"column\":16},{\"value\":\"let\",\"type\":\"LetKeyword\",\"line\":6,\"length\":3,\"column\":3},{\"value\":\"increment\",\"type\":\"Identifier\",\"line\":6,\"length\":9,\"column\":7},{\"value\":\"=\",\"type\":\"Eq\",\"line\":6,\"length\":1,\"column\":17},{\"value\":\"Fn\",\"type\":\"Lambda Expression\",\"line\":6,\"length\":2,\"column\":19},{\"value\":\"(\",\"type\":\"LParen\",\"line\":6,\"length\":1,\"column\":21},{\"value\":\"n\",\"type\":\"Identifier\",\"line\":6,\"length\":1,\"column\":22},{\"value\":\":\",\"type\":\"Colon\",\"line\":6,\"length\":1,\"column\":23},{\"value\":\"Int\",\"type\":\"Identifier\",\"line\":6,\"length\":3,\"column\":25},{\"value\":\")\",\"type\":\"RParen\",\"line\":6,\"length\":1,\"column\":28},{\"value\":\":>\",\"type\":\"RtnTypeOp\",\"line\":6,\"length\":2,\"column\":30},{\"value\":\"Int\",\"type\":\"Identifier\",\"line\":6,\"length\":3,\"column\":33},{\"value\":\"n\",\"type\":\"Identifier\",\"line\":7,\"length\":1,\"column\":5},{\"value\":\"+\",\"type\":\"Plus\",\"line\":7,\"length\":1,\"column\":7},{\"value\":\"1\",\"type\":\"IntegerLiteral\",\"line\":7,\"length\":1,\"column\":9},{\"value\":\"end\",\"type\":\"EndStmt\",\"line\":8,\"length\":3,\"column\":3},{\"value\":\"apply_twice\",\"type\":\"Identifier\",\"line\":9,\"length\":11,\"column\":3},{\"value\":\"(\",\"type\":\"LParen\",\"line\":9,\"length\":1,\"column\":14},{\"value\":\"increment\",\"type\":\"Identifier\",\"line\":9,\"length\":9,\"column\":15},{\"value\":\",\",\"type\":\"Delimitter\",\"line\":9,\"length\":1,\"column\":24},{\"value\":\"40\",\"type\":\"IntegerLiteral\",\"line\":9,\"length\":2,\"column\":26},{\"value\":\")\",\"type\":\"RParen\",\"line\":9,\"length\":1,\"column\":28},{\"value\":\"end\",\"type\":\"EndStmt\",\"line\":10,\"length\":3,\"column\":1}],\"path\":\"generated.bz\",\"index\":[{\"type\":\"Fn(Fn(Int) :> Int, Int) :> Int\",\"scopeLine\":0,\"scopeColumn\":0,\"returns\":\"Int\",\"name\":\"apply_twice\",\"line\":1,\"length\":11,\"kind\":\"Function\",\"isDefinition\":true,\"detail\":\"apply_twice(f: Fn(Int) :> Int, x: Int) :> Int\",\"defLine\":1,\"defColumn\":6,\"column\":6,\"annotated\":true},{\"type\":\"\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"Int\",\"line\":1,\"length\":3,\"kind\":\"Type\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":48,\"annotated\":true},{\"type\":\"Fn(Int) :> Int\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"f\",\"line\":1,\"length\":1,\"kind\":\"FuncParam\",\"isDefinition\":true,\"detail\":\"\",\"defLine\":1,\"defColumn\":18,\"column\":18,\"annotated\":true},{\"type\":\"\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"Int\",\"line\":1,\"length\":3,\"kind\":\"Type\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":24,\"annotated\":true},{\"type\":\"\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"Int\",\"line\":1,\"length\":3,\"kind\":\"Type\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":32,\"annotated\":true},{\"type\":\"Int\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"x\",\"line\":1,\"length\":1,\"kind\":\"FuncParam\",\"isDefinition\":true,\"detail\":\"\",\"defLine\":1,\"defColumn\":37,\"column\":37,\"annotated\":true},{\"type\":\"\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"Int\",\"line\":1,\"length\":3,\"kind\":\"Type\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":40,\"annotated\":true},{\"type\":\"Fn(Int) :> Int\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"f\",\"line\":2,\"length\":1,\"kind\":\"FuncParam\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":1,\"defColumn\":18,\"column\":3,\"annotated\":false},{\"type\":\"Fn(Int) :> Int\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"f\",\"line\":2,\"length\":1,\"kind\":\"FuncParam\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":1,\"defColumn\":18,\"column\":5,\"annotated\":false},{\"type\":\"Int\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"x\",\"line\":2,\"length\":1,\"kind\":\"FuncParam\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":1,\"defColumn\":37,\"column\":7,\"annotated\":false},{\"type\":\"Fn() :> Int\",\"scopeLine\":0,\"scopeColumn\":0,\"returns\":\"Int\",\"name\":\"main\",\"line\":5,\"length\":4,\"kind\":\"Function\",\"isDefinition\":true,\"detail\":\"main() :> Int\",\"defLine\":5,\"defColumn\":6,\"column\":6,\"annotated\":true},{\"type\":\"\",\"scopeLine\":5,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"Int\",\"line\":5,\"length\":3,\"kind\":\"Type\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":16,\"annotated\":true},{\"type\":\"Fn(Int) :> Int\",\"scopeLine\":5,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"increment\",\"line\":6,\"length\":9,\"kind\":\"Binding\",\"isDefinition\":true,\"detail\":\"\",\"defLine\":6,\"defColumn\":7,\"column\":7,\"annotated\":false},{\"type\":\"Int\",\"scopeLine\":5,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"n\",\"line\":6,\"length\":1,\"kind\":\"FuncParam\",\"isDefinition\":true,\"detail\":\"\",\"defLine\":6,\"defColumn\":22,\"column\":22,\"annotated\":true},{\"type\":\"\",\"scopeLine\":5,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"Int\",\"line\":6,\"length\":3,\"kind\":\"Type\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":25,\"annotated\":true},{\"type\":\"Int\",\"scopeLine\":5,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"n\",\"line\":7,\"length\":1,\"kind\":\"FuncParam\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":6,\"defColumn\":22,\"column\":5,\"annotated\":false},{\"type\":\"Int\",\"scopeLine\":5,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"1\",\"line\":7,\"length\":1,\"kind\":\"Literal\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":9,\"annotated\":false},{\"type\":\"Fn(Fn(Int) :> Int, Int) :> Int\",\"scopeLine\":5,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"apply_twice\",\"line\":9,\"length\":11,\"kind\":\"Function\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":1,\"defColumn\":6,\"column\":3,\"annotated\":false},{\"type\":\"Fn(Int) :> Int\",\"scopeLine\":5,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"increment\",\"line\":9,\"length\":9,\"kind\":\"Binding\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":6,\"defColumn\":7,\"column\":15,\"annotated\":false},{\"type\":\"Int\",\"scopeLine\":5,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"40\",\"line\":9,\"length\":2,\"kind\":\"Literal\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":26,\"annotated\":false}],\"diagnostics\":[]}}"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "per_completion_usage": [
+    {
+      "input_tokens": 19796,
+      "cached_input_tokens": 12544,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 279,
+      "reasoning_output_tokens": 0
+    },
+    {
+      "input_tokens": 25217,
+      "cached_input_tokens": 12544,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 5,
+      "reasoning_output_tokens": 0
+    }
+  ],
+  "task_correctness": "pass by independent source review; not executed",
+  "standalone_ether_check_passed": true,
+  "review_evidence": "Both implement f(f(x)), bind Fn(n: Int) :> Int returning n + 1, and call apply_twice(increment, 40)."
+}

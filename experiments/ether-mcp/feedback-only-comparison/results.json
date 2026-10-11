@@ -1,0 +1,702 @@
+{
+  "model": "gpt-6.1-sol",
+  "results": [
+    {
+      "task": "addition",
+      "arm": "A",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "low",
+      "first_attempt_accepted": false,
+      "compiler_accepted": false,
+      "submissions": 4,
+      "repair_rounds": 3,
+      "doc_calls": 0,
+      "doc_topics": [],
+      "usage": {
+        "input_tokens": 90183,
+        "cached_input_tokens": 36864,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 461,
+        "reasoning_output_tokens": 222,
+        "total_tokens": 90644
+      },
+      "elapsed_seconds": 45.99720499999967,
+      "protocol_violations": [],
+      "task_correctness": "failed compiler validation within submission budget",
+      "runner": "harness",
+      "discovery_calls": 1,
+      "language_documentation_available": false,
+      "final_message": "{\"tool\":\"finish\",\"arguments\":{\"summary\":\"Failed to produce an accepted Benzene program within four submissions. The final submission was rejected for invalid let and scoped-expression placement.\"}}",
+      "task_correct": false,
+      "review_evidence": "All four submitted candidates have compiler errors; no frontend-valid solution.",
+      "diagnostic_phases_by_submission": [
+        [
+          "lexer",
+          "parser",
+          "resolver"
+        ],
+        [
+          "parser"
+        ],
+        [
+          "parser"
+        ],
+        [
+          "resolver",
+          "scope"
+        ]
+      ]
+    },
+    {
+      "task": "addition",
+      "arm": "B",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "low",
+      "first_attempt_accepted": true,
+      "compiler_accepted": true,
+      "submissions": 1,
+      "repair_rounds": 0,
+      "doc_calls": 0,
+      "doc_topics": [],
+      "usage": {
+        "input_tokens": 41792,
+        "cached_input_tokens": 27648,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 249,
+        "reasoning_output_tokens": 0,
+        "total_tokens": 42041
+      },
+      "elapsed_seconds": 20.632874599999923,
+      "protocol_violations": [],
+      "task_correctness": "pass by independent source review; not executed",
+      "runner": "harness",
+      "discovery_calls": 1,
+      "language_documentation_available": false,
+      "final_message": "{\"tool\":\"finish\",\"arguments\":{\"summary\":\"Compiler accepted the complete Benzene program on the first submission with no diagnostics. add takes integers x and y and returns their sum; zero-argument main returns add(20, 22), which is 42.\"}}",
+      "task_correct": true,
+      "review_evidence": "Adds x and y; main calls add(20,22).",
+      "standalone_ether_check_passed": true,
+      "diagnostic_phases_by_submission": [
+        []
+      ]
+    },
+    {
+      "task": "grouping",
+      "arm": "B",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "low",
+      "first_attempt_accepted": true,
+      "compiler_accepted": true,
+      "submissions": 1,
+      "repair_rounds": 0,
+      "doc_calls": 0,
+      "doc_topics": [],
+      "usage": {
+        "input_tokens": 42133,
+        "cached_input_tokens": 18432,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 313,
+        "reasoning_output_tokens": 25,
+        "total_tokens": 42446
+      },
+      "elapsed_seconds": 21.565348399999493,
+      "protocol_violations": [],
+      "task_correctness": "pass by independent source review; not executed",
+      "runner": "harness",
+      "discovery_calls": 1,
+      "language_documentation_available": false,
+      "final_message": "{\"tool\":\"finish\",\"arguments\":{\"summary\":\"Compiler accepted the complete program on the first submission. scaled_sum takes three integers and computes (a + b) * c; zero-argument main calls scaled_sum(2, 3, 4), yielding 20.\"}}",
+      "task_correct": true,
+      "review_evidence": "Groups a+b before multiplying by c; main calls scaled_sum(2,3,4).",
+      "standalone_ether_check_passed": true,
+      "diagnostic_phases_by_submission": [
+        []
+      ]
+    },
+    {
+      "task": "grouping",
+      "arm": "A",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "low",
+      "first_attempt_accepted": false,
+      "compiler_accepted": false,
+      "submissions": 4,
+      "repair_rounds": 3,
+      "doc_calls": 0,
+      "doc_topics": [],
+      "usage": {
+        "input_tokens": 96544,
+        "cached_input_tokens": 31744,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 490,
+        "reasoning_output_tokens": 206,
+        "total_tokens": 97034
+      },
+      "elapsed_seconds": 49.067070400000375,
+      "protocol_violations": [],
+      "task_correctness": "failed compiler validation within submission budget",
+      "runner": "harness",
+      "discovery_calls": 1,
+      "language_documentation_available": false,
+      "final_message": "{\"tool\":\"finish\",\"arguments\":{\"summary\":\"Failed to produce an accepted Benzene program within the four-submission budget. All four complete programs were rejected by the compiler.\"}}",
+      "task_correct": false,
+      "review_evidence": "All four submitted candidates have compiler errors; no frontend-valid solution.",
+      "diagnostic_phases_by_submission": [
+        [
+          "lexer",
+          "parser",
+          "resolver"
+        ],
+        [
+          "parser"
+        ],
+        [
+          "resolver",
+          "scope"
+        ],
+        [
+          "resolver",
+          "scope"
+        ]
+      ]
+    },
+    {
+      "task": "call_arguments",
+      "arm": "A",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "low",
+      "first_attempt_accepted": false,
+      "compiler_accepted": false,
+      "submissions": 4,
+      "repair_rounds": 3,
+      "doc_calls": 0,
+      "doc_topics": [],
+      "usage": {
+        "input_tokens": 91240,
+        "cached_input_tokens": 55296,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 415,
+        "reasoning_output_tokens": 160,
+        "total_tokens": 91655
+      },
+      "elapsed_seconds": 43.33261639999546,
+      "protocol_violations": [],
+      "task_correctness": "failed compiler validation within submission budget",
+      "runner": "harness",
+      "discovery_calls": 1,
+      "language_documentation_available": false,
+      "final_message": "{\"tool\":\"finish\",\"arguments\":{\"summary\":\"Failed: all four permitted program submissions were rejected by the compiler. No complete program was accepted.\"}}",
+      "task_correct": false,
+      "review_evidence": "All four submitted candidates have compiler errors; no frontend-valid solution.",
+      "diagnostic_phases_by_submission": [
+        [
+          "lexer",
+          "parser",
+          "resolver"
+        ],
+        [
+          "parser"
+        ],
+        [
+          "parser"
+        ],
+        [
+          "parser",
+          "resolver",
+          "scope"
+        ]
+      ]
+    },
+    {
+      "task": "call_arguments",
+      "arm": "B",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "low",
+      "first_attempt_accepted": true,
+      "compiler_accepted": true,
+      "submissions": 1,
+      "repair_rounds": 0,
+      "doc_calls": 0,
+      "doc_topics": [],
+      "usage": {
+        "input_tokens": 41415,
+        "cached_input_tokens": 18432,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 327,
+        "reasoning_output_tokens": 35,
+        "total_tokens": 41742
+      },
+      "elapsed_seconds": 21.61972130000504,
+      "protocol_violations": [],
+      "task_correctness": "pass by independent source review; not executed",
+      "runner": "harness",
+      "discovery_calls": 1,
+      "language_documentation_available": false,
+      "final_message": "{\"tool\":\"finish\",\"arguments\":{\"summary\":\"Compiler accepted the complete program on the first submission with no diagnostics. square takes an Int and returns x * x; zero-argument main computes square(2 + 3) + square(4 + 5), with both additions directly inside call arguments and no intermediate bindings. The result is 106.\"}}",
+      "task_correct": true,
+      "review_evidence": "Squares scoped sums 2+3 and 4+5 and adds the results, without intermediate bindings.",
+      "standalone_ether_check_passed": true,
+      "diagnostic_phases_by_submission": [
+        []
+      ]
+    },
+    {
+      "task": "boolean",
+      "arm": "B",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "low",
+      "first_attempt_accepted": false,
+      "compiler_accepted": true,
+      "submissions": 2,
+      "repair_rounds": 1,
+      "doc_calls": 0,
+      "doc_topics": [],
+      "usage": {
+        "input_tokens": 63946,
+        "cached_input_tokens": 36864,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 476,
+        "reasoning_output_tokens": 0,
+        "total_tokens": 64422
+      },
+      "elapsed_seconds": 34.64267209999525,
+      "protocol_violations": [],
+      "task_correctness": "pass by independent source review; not executed",
+      "runner": "harness",
+      "discovery_calls": 1,
+      "language_documentation_available": false,
+      "final_message": "{\"tool\":\"finish\",\"arguments\":{\"summary\":\"Compiler accepted the complete program after one repair. eligible takes Int age and Bool blocked and returns (age >= 18) && ~blocked. Zero-argument main calls eligible(21, False).\"}}",
+      "task_correct": true,
+      "review_evidence": "Computes age>=18 AND NOT blocked; main calls eligible(21,False).",
+      "standalone_ether_check_passed": true,
+      "diagnostic_phases_by_submission": [
+        [
+          "types"
+        ],
+        []
+      ]
+    },
+    {
+      "task": "boolean",
+      "arm": "A",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "low",
+      "first_attempt_accepted": false,
+      "compiler_accepted": false,
+      "submissions": 4,
+      "repair_rounds": 3,
+      "doc_calls": 0,
+      "doc_topics": [],
+      "usage": {
+        "input_tokens": 91844,
+        "cached_input_tokens": 36864,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 430,
+        "reasoning_output_tokens": 174,
+        "total_tokens": 92274
+      },
+      "elapsed_seconds": 47.91568809999444,
+      "protocol_violations": [],
+      "task_correctness": "failed compiler validation within submission budget",
+      "runner": "harness",
+      "discovery_calls": 1,
+      "language_documentation_available": false,
+      "final_message": "{\"tool\":\"finish\",\"arguments\":{\"summary\":\"Failed: all four permitted program submissions were rejected by the compiler. The submission budget is exhausted.\"}}",
+      "task_correct": false,
+      "review_evidence": "All four submitted candidates have compiler errors; no frontend-valid solution.",
+      "diagnostic_phases_by_submission": [
+        [
+          "lexer",
+          "parser",
+          "resolver"
+        ],
+        [
+          "parser"
+        ],
+        [
+          "parser"
+        ],
+        [
+          "resolver",
+          "scope"
+        ]
+      ]
+    },
+    {
+      "task": "collections",
+      "arm": "A",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "low",
+      "first_attempt_accepted": false,
+      "compiler_accepted": false,
+      "submissions": 4,
+      "repair_rounds": 3,
+      "doc_calls": 0,
+      "doc_topics": [],
+      "usage": {
+        "input_tokens": 101801,
+        "cached_input_tokens": 55296,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 523,
+        "reasoning_output_tokens": 131,
+        "total_tokens": 102324
+      },
+      "elapsed_seconds": 51.06328190000204,
+      "protocol_violations": [],
+      "task_correctness": "failed compiler validation within submission budget",
+      "runner": "harness",
+      "discovery_calls": 1,
+      "language_documentation_available": false,
+      "final_message": "{\"tool\":\"finish\",\"arguments\":{\"summary\":\"Failed to produce an accepted program within four submissions. The final attempt was rejected because const bindings cannot hold functions.\"}}",
+      "task_correct": false,
+      "review_evidence": "All four submitted candidates have compiler errors; no frontend-valid solution.",
+      "diagnostic_phases_by_submission": [
+        [
+          "lexer",
+          "resolver",
+          "scope"
+        ],
+        [
+          "parser"
+        ],
+        [
+          "parser",
+          "resolver",
+          "scope"
+        ],
+        [
+          "parser"
+        ]
+      ]
+    },
+    {
+      "task": "collections",
+      "arm": "B",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "low",
+      "first_attempt_accepted": false,
+      "compiler_accepted": true,
+      "submissions": 2,
+      "repair_rounds": 1,
+      "doc_calls": 0,
+      "doc_topics": [],
+      "usage": {
+        "input_tokens": 67377,
+        "cached_input_tokens": 18432,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 575,
+        "reasoning_output_tokens": 13,
+        "total_tokens": 67952
+      },
+      "elapsed_seconds": 34.02915760000178,
+      "protocol_violations": [],
+      "task_correctness": "pass by independent source review; not executed",
+      "runner": "harness",
+      "discovery_calls": 1,
+      "language_documentation_available": false,
+      "final_message": "{\"tool\":\"finish\",\"arguments\":{\"summary\":\"Compiler accepted the complete program after one repair. numbers returns [1, 2, 3], pair returns the tuple containing 7 and \\\"seven\\\", and zero-argument main returns pair(). All functions have explicit return types.\"}}",
+      "task_correct": true,
+      "review_evidence": "Returns [1,2,3] and tuple (7,seven); main calls pair; return types explicit.",
+      "standalone_ether_check_passed": true,
+      "diagnostic_phases_by_submission": [
+        [
+          "types"
+        ],
+        []
+      ]
+    },
+    {
+      "task": "string_escaping",
+      "arm": "B",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "low",
+      "first_attempt_accepted": true,
+      "compiler_accepted": true,
+      "submissions": 1,
+      "repair_rounds": 0,
+      "doc_calls": 0,
+      "doc_topics": [],
+      "usage": {
+        "input_tokens": 40051,
+        "cached_input_tokens": 18432,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 183,
+        "reasoning_output_tokens": 0,
+        "total_tokens": 40234
+      },
+      "elapsed_seconds": 17.735944600004586,
+      "protocol_violations": [],
+      "task_correctness": "pass by independent source review; not executed",
+      "runner": "harness",
+      "discovery_calls": 1,
+      "language_documentation_available": false,
+      "final_message": "{\"tool\":\"finish\",\"arguments\":{\"summary\":\"Compiler accepted the complete program. Both functions explicitly return String; main() calls message(), which returns exactly He said \\\"hello\\\"\\nC:\\\\temp\\\\file with one newline and no final newline.\"}}",
+      "task_correct": true,
+      "review_evidence": "Lexer-decoded value independently matches the exact requested two-line string; main calls message.",
+      "standalone_ether_check_passed": true,
+      "diagnostic_phases_by_submission": [
+        []
+      ]
+    },
+    {
+      "task": "string_escaping",
+      "arm": "A",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "low",
+      "first_attempt_accepted": false,
+      "compiler_accepted": false,
+      "submissions": 4,
+      "repair_rounds": 3,
+      "doc_calls": 0,
+      "doc_topics": [],
+      "usage": {
+        "input_tokens": 86555,
+        "cached_input_tokens": 57600,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 415,
+        "reasoning_output_tokens": 110,
+        "total_tokens": 86970
+      },
+      "elapsed_seconds": 44.77871790000063,
+      "protocol_violations": [],
+      "task_correctness": "failed compiler validation within submission budget",
+      "runner": "harness",
+      "discovery_calls": 1,
+      "language_documentation_available": false,
+      "final_message": "{\"tool\":\"finish\",\"arguments\":{\"summary\":\"Failed to produce an accepted Benzene program within the four-submission budget. The string literal decoded exactly as required, but function declaration syntax remained invalid.\"}}",
+      "task_correct": false,
+      "review_evidence": "All four submitted candidates have compiler errors; no frontend-valid solution.",
+      "diagnostic_phases_by_submission": [
+        [
+          "lexer",
+          "resolver",
+          "scope"
+        ],
+        [
+          "parser",
+          "resolver"
+        ],
+        [
+          "parser"
+        ],
+        [
+          "parser"
+        ]
+      ]
+    },
+    {
+      "task": "case",
+      "arm": "A",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "low",
+      "first_attempt_accepted": false,
+      "compiler_accepted": false,
+      "submissions": 4,
+      "repair_rounds": 3,
+      "doc_calls": 0,
+      "doc_topics": [],
+      "usage": {
+        "input_tokens": 94068,
+        "cached_input_tokens": 48256,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 666,
+        "reasoning_output_tokens": 316,
+        "total_tokens": 94734
+      },
+      "elapsed_seconds": 51.81482099999994,
+      "protocol_violations": [],
+      "task_correctness": "failed compiler validation within submission budget",
+      "runner": "harness",
+      "discovery_calls": 1,
+      "language_documentation_available": false,
+      "final_message": "{\"tool\":\"finish\",\"arguments\":{\"summary\":\"Failure: all four permitted program submissions were rejected by the compiler. The submission budget is exhausted; no complete program was accepted.\"}}",
+      "task_correct": false,
+      "review_evidence": "All four submitted candidates have compiler errors; no frontend-valid solution.",
+      "diagnostic_phases_by_submission": [
+        [
+          "parser",
+          "resolver"
+        ],
+        [
+          "parser"
+        ],
+        [
+          "parser"
+        ],
+        [
+          "parser",
+          "resolver",
+          "scope"
+        ]
+      ]
+    },
+    {
+      "task": "case",
+      "arm": "B",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "low",
+      "first_attempt_accepted": false,
+      "compiler_accepted": true,
+      "submissions": 2,
+      "repair_rounds": 1,
+      "doc_calls": 0,
+      "doc_topics": [],
+      "usage": {
+        "input_tokens": 63127,
+        "cached_input_tokens": 36864,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 507,
+        "reasoning_output_tokens": 0,
+        "total_tokens": 63634
+      },
+      "elapsed_seconds": 35.55476830000407,
+      "protocol_violations": [],
+      "task_correctness": "pass by independent source review; not executed",
+      "runner": "harness",
+      "discovery_calls": 1,
+      "language_documentation_available": false,
+      "final_message": "{\"tool\":\"finish\",\"arguments\":{\"summary\":\"Compiler accepted the complete program after two submissions. classify(x: Int) returns String using case branches for 0, 1, and a catch-all. main() explicitly returns String by calling classify(2), yielding \\\"other\\\".\"}}",
+      "task_correct": true,
+      "review_evidence": "Maps 0 to zero, 1 to one and all other integers to other; main calls classify(2).",
+      "standalone_ether_check_passed": true,
+      "diagnostic_phases_by_submission": [
+        [
+          "types"
+        ],
+        []
+      ]
+    },
+    {
+      "task": "lambda",
+      "arm": "B",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "low",
+      "first_attempt_accepted": true,
+      "compiler_accepted": true,
+      "submissions": 1,
+      "repair_rounds": 0,
+      "doc_calls": 0,
+      "doc_topics": [],
+      "usage": {
+        "input_tokens": 43560,
+        "cached_input_tokens": 18432,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 379,
+        "reasoning_output_tokens": 12,
+        "total_tokens": 43939
+      },
+      "elapsed_seconds": 23.28350529999443,
+      "protocol_violations": [],
+      "task_correctness": "pass by independent source review; not executed",
+      "runner": "harness",
+      "discovery_calls": 1,
+      "language_documentation_available": false,
+      "final_message": "{\"tool\":\"finish\",\"arguments\":{\"summary\":\"Compiler accepted the complete program with no diagnostics on the first submission. apply_twice returns f(f(x)); main binds an explicitly typed increment lambda and returns apply_twice(increment, 40), yielding 42. All functions have explicit return types.\"}}",
+      "task_correct": true,
+      "review_evidence": "Applies f twice to x; increment lambda adds 1; main calls apply_twice(increment,40); required return types explicit.",
+      "standalone_ether_check_passed": true,
+      "diagnostic_phases_by_submission": [
+        []
+      ]
+    },
+    {
+      "task": "lambda",
+      "arm": "A",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "low",
+      "first_attempt_accepted": false,
+      "compiler_accepted": false,
+      "submissions": 4,
+      "repair_rounds": 3,
+      "doc_calls": 0,
+      "doc_topics": [],
+      "usage": {
+        "input_tokens": 108534,
+        "cached_input_tokens": 55808,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 546,
+        "reasoning_output_tokens": 139,
+        "total_tokens": 109080
+      },
+      "elapsed_seconds": 55.26908120000007,
+      "protocol_violations": [],
+      "task_correctness": "failed compiler validation within submission budget",
+      "runner": "harness",
+      "discovery_calls": 1,
+      "language_documentation_available": false,
+      "final_message": "{\"tool\":\"finish\",\"arguments\":{\"summary\":\"Failed within the four-submission budget. The compiler accepted apply_twice's syntax and types, but the complete program was rejected because the anonymous function syntax was incorrect.\"}}",
+      "task_correct": false,
+      "review_evidence": "All four submitted candidates have compiler errors; no frontend-valid solution.",
+      "diagnostic_phases_by_submission": [
+        [
+          "lexer",
+          "parser",
+          "resolver",
+          "scope"
+        ],
+        [
+          "parser"
+        ],
+        [
+          "parser",
+          "resolver",
+          "scope"
+        ],
+        [
+          "parser",
+          "resolver",
+          "scope"
+        ]
+      ]
+    }
+  ],
+  "method": "External text-action agent loop forwards requests to real MCP server. Fresh completion replays only its trial history; all model completions including repairs and finish included in totals.",
+  "runner": "harness",
+  "language_documentation_available": false,
+  "max_submissions": 4,
+  "runs_per_task_per_arm": 1,
+  "summary": {
+    "A": {
+      "trials": 8,
+      "first_attempt_passes": 0,
+      "compiler_passes": 0,
+      "task_matches": 0,
+      "repair_rounds": 24,
+      "documentation_calls": 0,
+      "input_tokens": 760769,
+      "cached_input_tokens": 377728,
+      "output_tokens": 3946,
+      "reasoning_output_tokens": 1458,
+      "total_tokens": 764715
+    },
+    "B": {
+      "trials": 8,
+      "first_attempt_passes": 5,
+      "compiler_passes": 8,
+      "task_matches": 8,
+      "repair_rounds": 3,
+      "documentation_calls": 0,
+      "input_tokens": 403401,
+      "cached_input_tokens": 193536,
+      "output_tokens": 3009,
+      "reasoning_output_tokens": 85,
+      "total_tokens": 406410
+    }
+  },
+  "date": "2026-10-11",
+  "condition": "No language documentation in either mode. Direct control gets only source-input schema and compiler feedback; structured mode gets generator input schema, formation errors and compiler feedback.",
+  "context_control": "No grammar, examples or parent conversation in initial prompts. No browsing, shell, file access or delegation. Documentation action removed from exposed tools and rejected by proxy.",
+  "interpretation": "Tests tool-provided structure versus guessing syntax from compiler feedback within a four-submission budget. It does not compare against a documentation-enabled direct writer.",
+  "caveats": [
+    "One run per mode per task, eight small tasks.",
+    "No runtime execution; successful programs reviewed against task and checked with standalone compiler.",
+    "Generator schema conveys structural language information that the direct-source tool does not. That is the treatment, not equal information in both arms.",
+    "Failed control trials consume their full repair budget; total tokens are bounded workflow costs, not costs for equally successful outputs.",
+    "Pretraining exposure cannot be verified. Cached input and reasoning tokens are subsets of input/output, not extra totals."
+  ],
+  "snapshot": {
+    "bin\\ether.exe": "b51957463645691420960cd3ad4bc7a67706d03314afc800c32f51da1e745ade",
+    "docs\\grammar.md": "b1618223db96d2a6542fccf84caeb08f13d67d751c765160448db9eed9e44dba",
+    "mcp\\ether_mcp\\src\\mcp\\schema.gleam": "6978d66071dbe67336ed02fc7b15dd492a182257d30f691caf8e0ca5c34a9475"
+  }
+}

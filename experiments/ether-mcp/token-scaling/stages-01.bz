@@ -1,0 +1,8 @@
+func step1(value: Int) :> Int
+  value + 1
+end
+
+func main() :> Int
+  let total1 = step1(0)
+  total1
+end

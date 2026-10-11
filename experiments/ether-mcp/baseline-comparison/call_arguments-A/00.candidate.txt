@@ -1,0 +1,7 @@
+func square(x: Int) :> Int
+  x * x
+end
+
+func main() :> Int
+  square({ 2 + 3 }) + square({ 4 + 5 })
+end

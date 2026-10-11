@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a12bae-a41d-7e11-980e-45d56995dd57"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"{\"tool\":\"generate_program\",\"arguments\":{\"validate\":true,\"construct\":{\"kind\":\"Module\",\"data\":[{\"kind\":\"Function\",\"identifier\":\"message\",\"param_list\":[],\"return_type\":{\"kind\":\"NamedType\",\"name\":\"String\"},\"body\":[{\"kind\":\"Text\",\"value\":\"He said \\\"hello\\\"\\nC:\\\\temp\\\\file\"}]},{\"kind\":\"Function\",\"identifier\":\"main\",\"param_list\":[],\"return_type\":{\"kind\":\"NamedType\",\"name\":\"String\"},\"body\":[{\"kind\":\"Call\",\"identifier\":\"message\",\"arguments\":[]}]}]}}}"}}
+{"type":"turn.completed","usage":{"input_tokens":13279,"cached_input_tokens":9216,"cache_write_input_tokens":0,"output_tokens":116,"reasoning_output_tokens":0}}

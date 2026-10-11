@@ -1,0 +1,17 @@
+task,arm,first_attempt_accepted,repair_rounds,doc_calls,doc_topics,task_correctness,input_tokens,cached_input_tokens,output_tokens,reasoning_output_tokens,total_tokens
+addition,A,True,0,1,['grammar'],pass by independent source review; not executed,57601,18432,135,0,57736
+addition,B,True,0,1,['all'],pass by independent source review; not executed,62619,27648,263,0,62882
+boolean,A,True,0,1,['all'],pass by independent source review; not executed,58047,17408,138,0,58185
+boolean,B,True,0,1,['all'],pass by independent source review; not executed,63151,27648,317,12,63468
+call_arguments,A,True,0,1,['all'],pass by independent source review; not executed,58264,18432,157,0,58421
+call_arguments,B,True,0,1,['examples'],pass by independent source review; not executed,55472,18432,321,0,55793
+case,A,True,0,1,['all'],pass by independent source review; not executed,58208,18432,164,0,58372
+case,B,True,0,1,['all'],pass by independent source review; not executed,63116,22528,304,0,63420
+collections,A,True,0,1,['all'],pass by independent source review; not executed,59281,27648,183,15,59464
+collections,B,True,0,1,['all'],pass by independent source review; not executed,64215,27648,332,0,64547
+grouping,A,True,0,1,['grammar'],pass by independent source review; not executed,58954,27648,159,0,59113
+grouping,B,True,0,1,['all'],pass by independent source review; not executed,64237,26624,345,0,64582
+lambda,A,True,0,1,['all'],pass by independent source review; not executed,59931,27648,160,0,60091
+lambda,B,True,0,1,['all'],pass by independent source review; not executed,64899,27648,368,0,65267
+string_escaping,A,True,0,1,['all'],pass by independent source review; not executed,56561,18432,137,0,56698
+string_escaping,B,True,0,1,['all'],pass by independent source review; not executed,61389,27648,193,0,61582

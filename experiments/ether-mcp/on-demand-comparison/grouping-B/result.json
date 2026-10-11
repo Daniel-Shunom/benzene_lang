@@ -1,0 +1,30 @@
+{
+  "task": "grouping",
+  "arm": "B",
+  "model": "gpt-6.1-sol",
+  "reasoning_effort": "low",
+  "first_attempt_accepted": true,
+  "compiler_accepted": true,
+  "submissions": 1,
+  "repair_rounds": 0,
+  "doc_calls": 1,
+  "doc_topics": [
+    "all"
+  ],
+  "usage": {
+    "input_tokens": 64237,
+    "cached_input_tokens": 26624,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 345,
+    "reasoning_output_tokens": 0,
+    "total_tokens": 64582
+  },
+  "elapsed_seconds": 30.033495200004836,
+  "protocol_violations": [],
+  "task_correctness": "pass by independent source review; not executed",
+  "runner": "harness",
+  "discovery_calls": 1,
+  "final_message": "{\"tool\":\"finish\",\"arguments\":{\"summary\":\"Compiler accepted the complete Benzene program on the first submission. scaled_sum adds a and b, then multiplies by c; main calls scaled_sum(2, 3, 4), yielding 20.\"}}",
+  "review_evidence": "Both bind a+b before multiplying by c; main calls scaled_sum(2,3,4).",
+  "standalone_ether_check_passed": true
+}

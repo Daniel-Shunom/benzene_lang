@@ -1,0 +1,42 @@
+[
+  {
+    "id": "addition",
+    "prompt": "Define add(x: Int, y: Int) returning their sum, and main() returning add(20, 22).",
+    "reference_source": "func add(x: Int, y: Int) :> Int\n x + y\nend\nfunc main() :> Int\n add(20, 22)\nend"
+  },
+  {
+    "id": "grouping",
+    "prompt": "Define scaled_sum(a: Int, b: Int, c: Int) returning (a + b) multiplied by c. Define main() calling it with 2, 3, 4. Parentheses here describe arithmetic, not target syntax.",
+    "reference_source": "func scaled_sum(a: Int, b: Int, c: Int) :> Int\n { a + b } * c\nend\nfunc main() :> Int\n scaled_sum(2, 3, 4)\nend"
+  },
+  {
+    "id": "call_arguments",
+    "prompt": "Define square(x: Int) returning x multiplied by itself. Define main() returning square applied to the sum of 2 and 3, plus square applied to the sum of 4 and 5. Put each addition directly in the corresponding call argument, without intermediate bindings.",
+    "reference_source": "func square(x: Int) :> Int\n x * x\nend\nfunc main() :> Int\n square({ 2 + 3 }) + square({ 4 + 5 })\nend"
+  },
+  {
+    "id": "boolean",
+    "prompt": "Define eligible(age: Int, blocked: Bool) returning true exactly when age is at least 18 and blocked is false. Define main() returning eligible(21, False). Use logical negation and conjunction in eligible.",
+    "reference_source": "func eligible(age: Int, blocked: Bool) :> Bool\n { age >= 18 } && { ~blocked }\nend\nfunc main() :> Bool\n eligible(21, False)\nend"
+  },
+  {
+    "id": "collections",
+    "prompt": "Define numbers() returning the integer list [1, 2, 3], and pair() returning a tuple containing integer 7 and string seven. Define main() returning pair(). Use explicit return types on all functions.",
+    "reference_source": "func numbers() :> List(Int)\n [1, 2, 3]\nend\nfunc pair() :> Tuple(Int, String)\n @{7, \"seven\"}\nend\nfunc main() :> Tuple(Int, String)\n pair()\nend"
+  },
+  {
+    "id": "string_escaping",
+    "prompt": "Define message() returning exactly this string: first line is He said \"hello\"; second line is C:\\temp\\file. There is one newline between the lines and no final newline. Define main() returning message(). Use explicit String return types.",
+    "reference_source": "func message() :> String\n \"He said \\\"hello\\\"\\nC:\\\\temp\\\\file\"\nend\nfunc main() :> String\n message()\nend"
+  },
+  {
+    "id": "case",
+    "prompt": "Define classify(x: Int) returning string zero for integer 0, one for integer 1, and other for every other integer, using a case expression with a catch-all branch. Define main() returning classify(2). Use explicit return types.",
+    "reference_source": "func classify(x: Int) :> String\n case x:\n 0 :> \"zero\"\n 1 :> \"one\"\n _ :> \"other\"\n end\nend\nfunc main() :> String\n classify(2)\nend"
+  },
+  {
+    "id": "lambda",
+    "prompt": "Define apply_twice(f: Fn(Int) :> Int, x: Int) returning f(f(x)). Define main() binding increment to an anonymous function that takes n: Int and returns n + 1, then returning apply_twice(increment, 40). Use explicit return types for named and anonymous functions.",
+    "reference_source": "func apply_twice(f: Fn(Int) :> Int, x: Int) :> Int\n f(f(x))\nend\nfunc main() :> Int\n let increment = Fn(n: Int) :> Int\n n + 1\n end\n apply_twice(increment, 40)\nend"
+  }
+]

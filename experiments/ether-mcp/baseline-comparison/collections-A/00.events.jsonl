@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a12b85-693c-7732-bb64-f7108bbe0e9b"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"func numbers() :> List(Int)\n  [1, 2, 3]\nend\n\nfunc pair() :> Tuple(Int, String)\n  @{7, \"seven\"}\nend\n\nfunc main() :> Tuple(Int, String)\n  pair()\nend"}}
+{"type":"turn.completed","usage":{"input_tokens":18188,"cached_input_tokens":12544,"cache_write_input_tokens":0,"output_tokens":57,"reasoning_output_tokens":0}}

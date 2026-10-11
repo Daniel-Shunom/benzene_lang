@@ -1,0 +1,10 @@
+func apply_twice(f: Fn(Int) :> Int, x: Int) :> Int
+  f(f(x))
+end
+
+func main() :> Int
+  let increment = Fn(n: Int) :> Int
+    n + 1
+  end
+  apply_twice(increment, 40)
+end

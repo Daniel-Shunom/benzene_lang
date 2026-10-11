@@ -1,0 +1,7 @@
+func message() :> String
+  "He said \"hello\"\nC:\\temp\\file"
+end
+
+func main() :> String
+  message()
+end

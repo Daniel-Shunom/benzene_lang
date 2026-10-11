@@ -1,0 +1,43 @@
+func step1(value: Int) :> Int
+  value + 1
+end
+
+func step2(value: Int) :> Int
+  value + 2
+end
+
+func step3(value: Int) :> Int
+  value + 3
+end
+
+func step4(value: Int) :> Int
+  value + 4
+end
+
+func step5(value: Int) :> Int
+  value + 5
+end
+
+func step6(value: Int) :> Int
+  value + 6
+end
+
+func step7(value: Int) :> Int
+  value + 7
+end
+
+func step8(value: Int) :> Int
+  value + 8
+end
+
+func main() :> Int
+  let total1 = step1(0)
+  let total2 = step2(total1)
+  let total3 = step3(total2)
+  let total4 = step4(total3)
+  let total5 = step5(total4)
+  let total6 = step6(total5)
+  let total7 = step7(total6)
+  let total8 = step8(total7)
+  total8
+end

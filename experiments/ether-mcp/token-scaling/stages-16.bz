@@ -1,0 +1,83 @@
+func step1(value: Int) :> Int
+  value + 1
+end
+
+func step2(value: Int) :> Int
+  value + 2
+end
+
+func step3(value: Int) :> Int
+  value + 3
+end
+
+func step4(value: Int) :> Int
+  value + 4
+end
+
+func step5(value: Int) :> Int
+  value + 5
+end
+
+func step6(value: Int) :> Int
+  value + 6
+end
+
+func step7(value: Int) :> Int
+  value + 7
+end
+
+func step8(value: Int) :> Int
+  value + 8
+end
+
+func step9(value: Int) :> Int
+  value + 9
+end
+
+func step10(value: Int) :> Int
+  value + 10
+end
+
+func step11(value: Int) :> Int
+  value + 11
+end
+
+func step12(value: Int) :> Int
+  value + 12
+end
+
+func step13(value: Int) :> Int
+  value + 13
+end
+
+func step14(value: Int) :> Int
+  value + 14
+end
+
+func step15(value: Int) :> Int
+  value + 15
+end
+
+func step16(value: Int) :> Int
+  value + 16
+end
+
+func main() :> Int
+  let total1 = step1(0)
+  let total2 = step2(total1)
+  let total3 = step3(total2)
+  let total4 = step4(total3)
+  let total5 = step5(total4)
+  let total6 = step6(total5)
+  let total7 = step7(total6)
+  let total8 = step8(total7)
+  let total9 = step9(total8)
+  let total10 = step10(total9)
+  let total11 = step11(total10)
+  let total12 = step12(total11)
+  let total13 = step13(total12)
+  let total14 = step14(total13)
+  let total15 = step15(total14)
+  let total16 = step16(total15)
+  total16
+end

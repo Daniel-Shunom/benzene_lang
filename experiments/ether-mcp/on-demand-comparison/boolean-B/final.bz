@@ -1,0 +1,7 @@
+func eligible(age: Int, blocked: Bool) :> Bool
+  { age >= 18 } && { ~blocked }
+end
+
+func main() :> Bool
+  eligible(21, False)
+end

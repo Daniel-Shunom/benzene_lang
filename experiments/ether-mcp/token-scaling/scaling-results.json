@@ -1,0 +1,110 @@
+{
+  "date": "2026-10-11",
+  "authoring_model": "gpt-6.1-sol",
+  "encoding": "o200k_base",
+  "tiktoken_version": "0.14.0",
+  "verified_model_encoding_mapping": null,
+  "method": "Deterministic size sweep of one model-authored program family, not seven independent model completions.",
+  "text_format": "Compact tool arguments; UTF-8 LF source; no trailing newline or code fences.",
+  "excluded": [
+    "prompts",
+    "tool schemas",
+    "reasoning",
+    "tool responses",
+    "retries",
+    "JSON-RPC envelope"
+  ],
+  "family": "Each stage adds an Int increment function and a main binding calling it on the previous result.",
+  "rows": [
+    {
+      "stages": 1,
+      "functions": 2,
+      "source_lines": 8,
+      "source_tokens": 41,
+      "json_tokens": 156,
+      "json_to_source_ratio": 3.8048780487804876,
+      "source_utf8_bytes": 102,
+      "json_utf8_bytes": 593,
+      "compiler_accepted": true,
+      "source_matches_mcp_output_exactly": true
+    },
+    {
+      "stages": 2,
+      "functions": 3,
+      "source_lines": 13,
+      "source_tokens": 70,
+      "json_tokens": 267,
+      "json_to_source_ratio": 3.8142857142857145,
+      "source_utf8_bytes": 178,
+      "json_utf8_bytes": 1020,
+      "compiler_accepted": true,
+      "source_matches_mcp_output_exactly": true
+    },
+    {
+      "stages": 4,
+      "functions": 5,
+      "source_lines": 23,
+      "source_tokens": 128,
+      "json_tokens": 489,
+      "json_to_source_ratio": 3.8203125,
+      "source_utf8_bytes": 330,
+      "json_utf8_bytes": 1874,
+      "compiler_accepted": true,
+      "source_matches_mcp_output_exactly": true
+    },
+    {
+      "stages": 8,
+      "functions": 9,
+      "source_lines": 43,
+      "source_tokens": 244,
+      "json_tokens": 933,
+      "json_to_source_ratio": 3.8237704918032787,
+      "source_utf8_bytes": 634,
+      "json_utf8_bytes": 3582,
+      "compiler_accepted": true,
+      "source_matches_mcp_output_exactly": true
+    },
+    {
+      "stages": 16,
+      "functions": 17,
+      "source_lines": 83,
+      "source_tokens": 476,
+      "json_tokens": 1821,
+      "json_to_source_ratio": 3.8256302521008405,
+      "source_utf8_bytes": 1277,
+      "json_utf8_bytes": 7033,
+      "compiler_accepted": true,
+      "source_matches_mcp_output_exactly": true
+    },
+    {
+      "stages": 32,
+      "functions": 33,
+      "source_lines": 163,
+      "source_tokens": 940,
+      "json_tokens": 3597,
+      "json_to_source_ratio": 3.826595744680851,
+      "source_utf8_bytes": 2573,
+      "json_utf8_bytes": 13945,
+      "compiler_accepted": true,
+      "source_matches_mcp_output_exactly": true
+    },
+    {
+      "stages": 64,
+      "functions": 65,
+      "source_lines": 323,
+      "source_tokens": 1868,
+      "json_tokens": 7149,
+      "json_to_source_ratio": 3.8270877944325483,
+      "source_utf8_bytes": 5165,
+      "json_utf8_bytes": 27769,
+      "compiler_accepted": true,
+      "source_matches_mcp_output_exactly": true
+    }
+  ],
+  "linear_fit": {
+    "slope": 3.8275862068965516,
+    "intercept": -0.9310344827586404,
+    "r_squared": 1.0,
+    "max_absolute_residual_tokens": 9.094947017729282e-13
+  }
+}

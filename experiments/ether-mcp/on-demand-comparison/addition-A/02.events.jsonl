@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a12b94-fb9d-7d22-896b-8a2890812ee9"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"{\"tool\":\"check_program\",\"arguments\":{\"source\":\"func add(x: Int, y: Int) :> Int\\n  x + y\\nend\\n\\nfunc main() :> Int\\n  add(20, 22)\\nend\\n\"}}"}}
+{"type":"turn.completed","usage":{"input_tokens":15617,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":55,"reasoning_output_tokens":0}}

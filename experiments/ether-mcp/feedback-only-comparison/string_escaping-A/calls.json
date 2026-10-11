@@ -1,0 +1,929 @@
+[
+  {
+    "tool": "discover_tools",
+    "arguments": {},
+    "result": {
+      "tools": [
+        {
+          "name": "check_program",
+          "description": "Validate existing Benzene source using the real lexer, parser, resolver and type checker; no code is executed.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string",
+                "default": "generated.bz"
+              }
+            },
+            "required": [
+              "source"
+            ],
+            "additionalProperties": false
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": false
+          }
+        }
+      ]
+    }
+  },
+  {
+    "tool": "check_program",
+    "arguments": {
+      "source": "fn message() -> string {\n    return \"He said \\\"hello\\\"\\nC:\\\\temp\\\\file\";\n}\n\nfn main() -> string {\n    return message();\n}"
+    },
+    "started": 1791734235.3850543,
+    "result": {
+      "isError": true,
+      "structuredContent": {
+        "source": "fn message() -> string {\n    return \"He said \\\"hello\\\"\\nC:\\\\temp\\\\file\";\n}\n\nfn main() -> string {\n    return message();\n}",
+        "validated": true,
+        "valid": false,
+        "analysis": {
+          "tokens": [
+            {
+              "value": "fn",
+              "type": "Identifier",
+              "line": 1,
+              "length": 2,
+              "column": 1
+            },
+            {
+              "value": "message",
+              "type": "Identifier",
+              "line": 1,
+              "length": 7,
+              "column": 4
+            },
+            {
+              "value": "(",
+              "type": "LParen",
+              "line": 1,
+              "length": 1,
+              "column": 11
+            },
+            {
+              "value": ")",
+              "type": "RParen",
+              "line": 1,
+              "length": 1,
+              "column": 12
+            },
+            {
+              "value": "-",
+              "type": "Minus",
+              "line": 1,
+              "length": 1,
+              "column": 14
+            },
+            {
+              "value": ">",
+              "type": "Gt",
+              "line": 1,
+              "length": 1,
+              "column": 15
+            },
+            {
+              "value": "string",
+              "type": "Identifier",
+              "line": 1,
+              "length": 6,
+              "column": 17
+            },
+            {
+              "value": "{",
+              "type": "LBrace",
+              "line": 1,
+              "length": 1,
+              "column": 24
+            },
+            {
+              "value": "return",
+              "type": "Identifier",
+              "line": 2,
+              "length": 6,
+              "column": 5
+            },
+            {
+              "value": "He said \"hello\"\nC:\\temp\\file",
+              "type": "StringLiteral",
+              "line": 2,
+              "length": 30,
+              "column": 12
+            },
+            {
+              "value": ";",
+              "type": "Unknown",
+              "line": 2,
+              "length": 1,
+              "column": 47
+            },
+            {
+              "value": "}",
+              "type": "RBrace",
+              "line": 3,
+              "length": 1,
+              "column": 1
+            },
+            {
+              "value": "fn",
+              "type": "Identifier",
+              "line": 5,
+              "length": 2,
+              "column": 1
+            },
+            {
+              "value": "main",
+              "type": "Identifier",
+              "line": 5,
+              "length": 4,
+              "column": 4
+            },
+            {
+              "value": "(",
+              "type": "LParen",
+              "line": 5,
+              "length": 1,
+              "column": 8
+            },
+            {
+              "value": ")",
+              "type": "RParen",
+              "line": 5,
+              "length": 1,
+              "column": 9
+            },
+            {
+              "value": "-",
+              "type": "Minus",
+              "line": 5,
+              "length": 1,
+              "column": 11
+            },
+            {
+              "value": ">",
+              "type": "Gt",
+              "line": 5,
+              "length": 1,
+              "column": 12
+            },
+            {
+              "value": "string",
+              "type": "Identifier",
+              "line": 5,
+              "length": 6,
+              "column": 14
+            },
+            {
+              "value": "{",
+              "type": "LBrace",
+              "line": 5,
+              "length": 1,
+              "column": 21
+            },
+            {
+              "value": "return",
+              "type": "Identifier",
+              "line": 6,
+              "length": 6,
+              "column": 5
+            },
+            {
+              "value": "message",
+              "type": "Identifier",
+              "line": 6,
+              "length": 7,
+              "column": 12
+            },
+            {
+              "value": "(",
+              "type": "LParen",
+              "line": 6,
+              "length": 1,
+              "column": 19
+            },
+            {
+              "value": ")",
+              "type": "RParen",
+              "line": 6,
+              "length": 1,
+              "column": 20
+            },
+            {
+              "value": ";",
+              "type": "Unknown",
+              "line": 6,
+              "length": 1,
+              "column": 21
+            },
+            {
+              "value": "}",
+              "type": "RBrace",
+              "line": 7,
+              "length": 1,
+              "column": 1
+            }
+          ],
+          "path": "generated.bz",
+          "index": [
+            {
+              "type": "'t0",
+              "scopeLine": 0,
+              "scopeColumn": 0,
+              "returns": "",
+              "name": "fn",
+              "line": 1,
+              "length": 2,
+              "kind": "UnResolved",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 0,
+              "defColumn": 0,
+              "column": 1,
+              "annotated": false
+            },
+            {
+              "type": "Fn() :> 't1",
+              "scopeLine": 0,
+              "scopeColumn": 0,
+              "returns": "",
+              "name": "message",
+              "line": 1,
+              "length": 7,
+              "kind": "UnResolved",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 0,
+              "defColumn": 0,
+              "column": 4,
+              "annotated": false
+            }
+          ],
+          "diagnostics": [
+            {
+              "severity": "warning",
+              "related": [],
+              "phase": "lexer",
+              "message": "Unrecognized token `;` detected",
+              "line": 2,
+              "length": 1,
+              "column": 47
+            },
+            {
+              "severity": "warning",
+              "related": [],
+              "phase": "lexer",
+              "message": "Unrecognized token `;` detected",
+              "line": 6,
+              "length": 1,
+              "column": 21
+            },
+            {
+              "severity": "error",
+              "related": [],
+              "phase": "resolver",
+              "message": "Identifier `fn` is not defined",
+              "line": 1,
+              "length": 2,
+              "column": 1
+            },
+            {
+              "severity": "error",
+              "related": [],
+              "phase": "resolver",
+              "message": "Function `message` is not defined",
+              "line": 1,
+              "length": 7,
+              "column": 4
+            },
+            {
+              "severity": "error",
+              "related": [],
+              "phase": "scope",
+              "message": "Cannot call a function outside of a valid scope",
+              "line": 1,
+              "length": 7,
+              "column": 4
+            }
+          ]
+        }
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"source\":\"fn message() -> string {\\n    return \\\"He said \\\\\\\"hello\\\\\\\"\\\\nC:\\\\\\\\temp\\\\\\\\file\\\";\\n}\\n\\nfn main() -> string {\\n    return message();\\n}\",\"validated\":true,\"valid\":false,\"analysis\":{\"tokens\":[{\"value\":\"fn\",\"type\":\"Identifier\",\"line\":1,\"length\":2,\"column\":1},{\"value\":\"message\",\"type\":\"Identifier\",\"line\":1,\"length\":7,\"column\":4},{\"value\":\"(\",\"type\":\"LParen\",\"line\":1,\"length\":1,\"column\":11},{\"value\":\")\",\"type\":\"RParen\",\"line\":1,\"length\":1,\"column\":12},{\"value\":\"-\",\"type\":\"Minus\",\"line\":1,\"length\":1,\"column\":14},{\"value\":\">\",\"type\":\"Gt\",\"line\":1,\"length\":1,\"column\":15},{\"value\":\"string\",\"type\":\"Identifier\",\"line\":1,\"length\":6,\"column\":17},{\"value\":\"{\",\"type\":\"LBrace\",\"line\":1,\"length\":1,\"column\":24},{\"value\":\"return\",\"type\":\"Identifier\",\"line\":2,\"length\":6,\"column\":5},{\"value\":\"He said \\\"hello\\\"\\nC:\\\\temp\\\\file\",\"type\":\"StringLiteral\",\"line\":2,\"length\":30,\"column\":12},{\"value\":\";\",\"type\":\"Unknown\",\"line\":2,\"length\":1,\"column\":47},{\"value\":\"}\",\"type\":\"RBrace\",\"line\":3,\"length\":1,\"column\":1},{\"value\":\"fn\",\"type\":\"Identifier\",\"line\":5,\"length\":2,\"column\":1},{\"value\":\"main\",\"type\":\"Identifier\",\"line\":5,\"length\":4,\"column\":4},{\"value\":\"(\",\"type\":\"LParen\",\"line\":5,\"length\":1,\"column\":8},{\"value\":\")\",\"type\":\"RParen\",\"line\":5,\"length\":1,\"column\":9},{\"value\":\"-\",\"type\":\"Minus\",\"line\":5,\"length\":1,\"column\":11},{\"value\":\">\",\"type\":\"Gt\",\"line\":5,\"length\":1,\"column\":12},{\"value\":\"string\",\"type\":\"Identifier\",\"line\":5,\"length\":6,\"column\":14},{\"value\":\"{\",\"type\":\"LBrace\",\"line\":5,\"length\":1,\"column\":21},{\"value\":\"return\",\"type\":\"Identifier\",\"line\":6,\"length\":6,\"column\":5},{\"value\":\"message\",\"type\":\"Identifier\",\"line\":6,\"length\":7,\"column\":12},{\"value\":\"(\",\"type\":\"LParen\",\"line\":6,\"length\":1,\"column\":19},{\"value\":\")\",\"type\":\"RParen\",\"line\":6,\"length\":1,\"column\":20},{\"value\":\";\",\"type\":\"Unknown\",\"line\":6,\"length\":1,\"column\":21},{\"value\":\"}\",\"type\":\"RBrace\",\"line\":7,\"length\":1,\"column\":1}],\"path\":\"generated.bz\",\"index\":[{\"type\":\"'t0\",\"scopeLine\":0,\"scopeColumn\":0,\"returns\":\"\",\"name\":\"fn\",\"line\":1,\"length\":2,\"kind\":\"UnResolved\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":1,\"annotated\":false},{\"type\":\"Fn() :> 't1\",\"scopeLine\":0,\"scopeColumn\":0,\"returns\":\"\",\"name\":\"message\",\"line\":1,\"length\":7,\"kind\":\"UnResolved\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":4,\"annotated\":false}],\"diagnostics\":[{\"severity\":\"warning\",\"related\":[],\"phase\":\"lexer\",\"message\":\"Unrecognized token `;` detected\",\"line\":2,\"length\":1,\"column\":47},{\"severity\":\"warning\",\"related\":[],\"phase\":\"lexer\",\"message\":\"Unrecognized token `;` detected\",\"line\":6,\"length\":1,\"column\":21},{\"severity\":\"error\",\"related\":[],\"phase\":\"resolver\",\"message\":\"Identifier `fn` is not defined\",\"line\":1,\"length\":2,\"column\":1},{\"severity\":\"error\",\"related\":[],\"phase\":\"resolver\",\"message\":\"Function `message` is not defined\",\"line\":1,\"length\":7,\"column\":4},{\"severity\":\"error\",\"related\":[],\"phase\":\"scope\",\"message\":\"Cannot call a function outside of a valid scope\",\"line\":1,\"length\":7,\"column\":4}]}}"
+        }
+      ]
+    }
+  },
+  {
+    "tool": "check_program",
+    "arguments": {
+      "source": "message = () :> String {\n    \"He said \\\"hello\\\"\\nC:\\\\temp\\\\file\"\n}\n\nmain = () :> String {\n    message()\n}"
+    },
+    "started": 1791734247.2401333,
+    "result": {
+      "isError": true,
+      "structuredContent": {
+        "source": "message = () :> String {\n    \"He said \\\"hello\\\"\\nC:\\\\temp\\\\file\"\n}\n\nmain = () :> String {\n    message()\n}",
+        "validated": true,
+        "valid": false,
+        "analysis": {
+          "tokens": [
+            {
+              "value": "message",
+              "type": "Identifier",
+              "line": 1,
+              "length": 7,
+              "column": 1
+            },
+            {
+              "value": "=",
+              "type": "Eq",
+              "line": 1,
+              "length": 1,
+              "column": 9
+            },
+            {
+              "value": "(",
+              "type": "LParen",
+              "line": 1,
+              "length": 1,
+              "column": 11
+            },
+            {
+              "value": ")",
+              "type": "RParen",
+              "line": 1,
+              "length": 1,
+              "column": 12
+            },
+            {
+              "value": ":>",
+              "type": "RtnTypeOp",
+              "line": 1,
+              "length": 2,
+              "column": 14
+            },
+            {
+              "value": "String",
+              "type": "Identifier",
+              "line": 1,
+              "length": 6,
+              "column": 17
+            },
+            {
+              "value": "{",
+              "type": "LBrace",
+              "line": 1,
+              "length": 1,
+              "column": 24
+            },
+            {
+              "value": "He said \"hello\"\nC:\\temp\\file",
+              "type": "StringLiteral",
+              "line": 2,
+              "length": 30,
+              "column": 5
+            },
+            {
+              "value": "}",
+              "type": "RBrace",
+              "line": 3,
+              "length": 1,
+              "column": 1
+            },
+            {
+              "value": "main",
+              "type": "Identifier",
+              "line": 5,
+              "length": 4,
+              "column": 1
+            },
+            {
+              "value": "=",
+              "type": "Eq",
+              "line": 5,
+              "length": 1,
+              "column": 6
+            },
+            {
+              "value": "(",
+              "type": "LParen",
+              "line": 5,
+              "length": 1,
+              "column": 8
+            },
+            {
+              "value": ")",
+              "type": "RParen",
+              "line": 5,
+              "length": 1,
+              "column": 9
+            },
+            {
+              "value": ":>",
+              "type": "RtnTypeOp",
+              "line": 5,
+              "length": 2,
+              "column": 11
+            },
+            {
+              "value": "String",
+              "type": "Identifier",
+              "line": 5,
+              "length": 6,
+              "column": 14
+            },
+            {
+              "value": "{",
+              "type": "LBrace",
+              "line": 5,
+              "length": 1,
+              "column": 21
+            },
+            {
+              "value": "message",
+              "type": "Identifier",
+              "line": 6,
+              "length": 7,
+              "column": 5
+            },
+            {
+              "value": "(",
+              "type": "LParen",
+              "line": 6,
+              "length": 1,
+              "column": 12
+            },
+            {
+              "value": ")",
+              "type": "RParen",
+              "line": 6,
+              "length": 1,
+              "column": 13
+            },
+            {
+              "value": "}",
+              "type": "RBrace",
+              "line": 7,
+              "length": 1,
+              "column": 1
+            }
+          ],
+          "path": "generated.bz",
+          "index": [
+            {
+              "type": "'t0",
+              "scopeLine": 0,
+              "scopeColumn": 0,
+              "returns": "",
+              "name": "message",
+              "line": 1,
+              "length": 7,
+              "kind": "UnResolved",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 0,
+              "defColumn": 0,
+              "column": 1,
+              "annotated": false
+            }
+          ],
+          "diagnostics": [
+            {
+              "severity": "error",
+              "related": [],
+              "phase": "parser",
+              "message": "`message` is assigned without a binder. Benzene has no assignment: write `let message = ...` to introduce a binding, or `const` at module scope.",
+              "line": 1,
+              "length": 7,
+              "column": 1
+            },
+            {
+              "severity": "error",
+              "related": [],
+              "phase": "resolver",
+              "message": "Identifier `message` is not defined",
+              "line": 1,
+              "length": 7,
+              "column": 1
+            }
+          ]
+        }
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"source\":\"message = () :> String {\\n    \\\"He said \\\\\\\"hello\\\\\\\"\\\\nC:\\\\\\\\temp\\\\\\\\file\\\"\\n}\\n\\nmain = () :> String {\\n    message()\\n}\",\"validated\":true,\"valid\":false,\"analysis\":{\"tokens\":[{\"value\":\"message\",\"type\":\"Identifier\",\"line\":1,\"length\":7,\"column\":1},{\"value\":\"=\",\"type\":\"Eq\",\"line\":1,\"length\":1,\"column\":9},{\"value\":\"(\",\"type\":\"LParen\",\"line\":1,\"length\":1,\"column\":11},{\"value\":\")\",\"type\":\"RParen\",\"line\":1,\"length\":1,\"column\":12},{\"value\":\":>\",\"type\":\"RtnTypeOp\",\"line\":1,\"length\":2,\"column\":14},{\"value\":\"String\",\"type\":\"Identifier\",\"line\":1,\"length\":6,\"column\":17},{\"value\":\"{\",\"type\":\"LBrace\",\"line\":1,\"length\":1,\"column\":24},{\"value\":\"He said \\\"hello\\\"\\nC:\\\\temp\\\\file\",\"type\":\"StringLiteral\",\"line\":2,\"length\":30,\"column\":5},{\"value\":\"}\",\"type\":\"RBrace\",\"line\":3,\"length\":1,\"column\":1},{\"value\":\"main\",\"type\":\"Identifier\",\"line\":5,\"length\":4,\"column\":1},{\"value\":\"=\",\"type\":\"Eq\",\"line\":5,\"length\":1,\"column\":6},{\"value\":\"(\",\"type\":\"LParen\",\"line\":5,\"length\":1,\"column\":8},{\"value\":\")\",\"type\":\"RParen\",\"line\":5,\"length\":1,\"column\":9},{\"value\":\":>\",\"type\":\"RtnTypeOp\",\"line\":5,\"length\":2,\"column\":11},{\"value\":\"String\",\"type\":\"Identifier\",\"line\":5,\"length\":6,\"column\":14},{\"value\":\"{\",\"type\":\"LBrace\",\"line\":5,\"length\":1,\"column\":21},{\"value\":\"message\",\"type\":\"Identifier\",\"line\":6,\"length\":7,\"column\":5},{\"value\":\"(\",\"type\":\"LParen\",\"line\":6,\"length\":1,\"column\":12},{\"value\":\")\",\"type\":\"RParen\",\"line\":6,\"length\":1,\"column\":13},{\"value\":\"}\",\"type\":\"RBrace\",\"line\":7,\"length\":1,\"column\":1}],\"path\":\"generated.bz\",\"index\":[{\"type\":\"'t0\",\"scopeLine\":0,\"scopeColumn\":0,\"returns\":\"\",\"name\":\"message\",\"line\":1,\"length\":7,\"kind\":\"UnResolved\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":1,\"annotated\":false}],\"diagnostics\":[{\"severity\":\"error\",\"related\":[],\"phase\":\"parser\",\"message\":\"`message` is assigned without a binder. Benzene has no assignment: write `let message = ...` to introduce a binding, or `const` at module scope.\",\"line\":1,\"length\":7,\"column\":1},{\"severity\":\"error\",\"related\":[],\"phase\":\"resolver\",\"message\":\"Identifier `message` is not defined\",\"line\":1,\"length\":7,\"column\":1}]}}"
+        }
+      ]
+    }
+  },
+  {
+    "tool": "check_program",
+    "arguments": {
+      "source": "const message = () :> String {\n    \"He said \\\"hello\\\"\\nC:\\\\temp\\\\file\"\n}\n\nconst main = () :> String {\n    message()\n}"
+    },
+    "started": 1791734254.1255827,
+    "result": {
+      "isError": true,
+      "structuredContent": {
+        "source": "const message = () :> String {\n    \"He said \\\"hello\\\"\\nC:\\\\temp\\\\file\"\n}\n\nconst main = () :> String {\n    message()\n}",
+        "validated": true,
+        "valid": false,
+        "analysis": {
+          "tokens": [
+            {
+              "value": "const",
+              "type": "ConstantKeyword",
+              "line": 1,
+              "length": 5,
+              "column": 1
+            },
+            {
+              "value": "message",
+              "type": "Identifier",
+              "line": 1,
+              "length": 7,
+              "column": 7
+            },
+            {
+              "value": "=",
+              "type": "Eq",
+              "line": 1,
+              "length": 1,
+              "column": 15
+            },
+            {
+              "value": "(",
+              "type": "LParen",
+              "line": 1,
+              "length": 1,
+              "column": 17
+            },
+            {
+              "value": ")",
+              "type": "RParen",
+              "line": 1,
+              "length": 1,
+              "column": 18
+            },
+            {
+              "value": ":>",
+              "type": "RtnTypeOp",
+              "line": 1,
+              "length": 2,
+              "column": 20
+            },
+            {
+              "value": "String",
+              "type": "Identifier",
+              "line": 1,
+              "length": 6,
+              "column": 23
+            },
+            {
+              "value": "{",
+              "type": "LBrace",
+              "line": 1,
+              "length": 1,
+              "column": 30
+            },
+            {
+              "value": "He said \"hello\"\nC:\\temp\\file",
+              "type": "StringLiteral",
+              "line": 2,
+              "length": 30,
+              "column": 5
+            },
+            {
+              "value": "}",
+              "type": "RBrace",
+              "line": 3,
+              "length": 1,
+              "column": 1
+            },
+            {
+              "value": "const",
+              "type": "ConstantKeyword",
+              "line": 5,
+              "length": 5,
+              "column": 1
+            },
+            {
+              "value": "main",
+              "type": "Identifier",
+              "line": 5,
+              "length": 4,
+              "column": 7
+            },
+            {
+              "value": "=",
+              "type": "Eq",
+              "line": 5,
+              "length": 1,
+              "column": 12
+            },
+            {
+              "value": "(",
+              "type": "LParen",
+              "line": 5,
+              "length": 1,
+              "column": 14
+            },
+            {
+              "value": ")",
+              "type": "RParen",
+              "line": 5,
+              "length": 1,
+              "column": 15
+            },
+            {
+              "value": ":>",
+              "type": "RtnTypeOp",
+              "line": 5,
+              "length": 2,
+              "column": 17
+            },
+            {
+              "value": "String",
+              "type": "Identifier",
+              "line": 5,
+              "length": 6,
+              "column": 20
+            },
+            {
+              "value": "{",
+              "type": "LBrace",
+              "line": 5,
+              "length": 1,
+              "column": 27
+            },
+            {
+              "value": "message",
+              "type": "Identifier",
+              "line": 6,
+              "length": 7,
+              "column": 5
+            },
+            {
+              "value": "(",
+              "type": "LParen",
+              "line": 6,
+              "length": 1,
+              "column": 12
+            },
+            {
+              "value": ")",
+              "type": "RParen",
+              "line": 6,
+              "length": 1,
+              "column": 13
+            },
+            {
+              "value": "}",
+              "type": "RBrace",
+              "line": 7,
+              "length": 1,
+              "column": 1
+            }
+          ],
+          "path": "generated.bz",
+          "index": [],
+          "diagnostics": [
+            {
+              "severity": "error",
+              "related": [],
+              "phase": "parser",
+              "message": "Const values can only hold primitive data and user-generated types",
+              "line": 1,
+              "length": 1,
+              "column": 17
+            },
+            {
+              "severity": "error",
+              "related": [],
+              "phase": "parser",
+              "message": "Const values can only hold primitive data and user-generated types",
+              "line": 5,
+              "length": 1,
+              "column": 14
+            }
+          ]
+        }
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"source\":\"const message = () :> String {\\n    \\\"He said \\\\\\\"hello\\\\\\\"\\\\nC:\\\\\\\\temp\\\\\\\\file\\\"\\n}\\n\\nconst main = () :> String {\\n    message()\\n}\",\"validated\":true,\"valid\":false,\"analysis\":{\"tokens\":[{\"value\":\"const\",\"type\":\"ConstantKeyword\",\"line\":1,\"length\":5,\"column\":1},{\"value\":\"message\",\"type\":\"Identifier\",\"line\":1,\"length\":7,\"column\":7},{\"value\":\"=\",\"type\":\"Eq\",\"line\":1,\"length\":1,\"column\":15},{\"value\":\"(\",\"type\":\"LParen\",\"line\":1,\"length\":1,\"column\":17},{\"value\":\")\",\"type\":\"RParen\",\"line\":1,\"length\":1,\"column\":18},{\"value\":\":>\",\"type\":\"RtnTypeOp\",\"line\":1,\"length\":2,\"column\":20},{\"value\":\"String\",\"type\":\"Identifier\",\"line\":1,\"length\":6,\"column\":23},{\"value\":\"{\",\"type\":\"LBrace\",\"line\":1,\"length\":1,\"column\":30},{\"value\":\"He said \\\"hello\\\"\\nC:\\\\temp\\\\file\",\"type\":\"StringLiteral\",\"line\":2,\"length\":30,\"column\":5},{\"value\":\"}\",\"type\":\"RBrace\",\"line\":3,\"length\":1,\"column\":1},{\"value\":\"const\",\"type\":\"ConstantKeyword\",\"line\":5,\"length\":5,\"column\":1},{\"value\":\"main\",\"type\":\"Identifier\",\"line\":5,\"length\":4,\"column\":7},{\"value\":\"=\",\"type\":\"Eq\",\"line\":5,\"length\":1,\"column\":12},{\"value\":\"(\",\"type\":\"LParen\",\"line\":5,\"length\":1,\"column\":14},{\"value\":\")\",\"type\":\"RParen\",\"line\":5,\"length\":1,\"column\":15},{\"value\":\":>\",\"type\":\"RtnTypeOp\",\"line\":5,\"length\":2,\"column\":17},{\"value\":\"String\",\"type\":\"Identifier\",\"line\":5,\"length\":6,\"column\":20},{\"value\":\"{\",\"type\":\"LBrace\",\"line\":5,\"length\":1,\"column\":27},{\"value\":\"message\",\"type\":\"Identifier\",\"line\":6,\"length\":7,\"column\":5},{\"value\":\"(\",\"type\":\"LParen\",\"line\":6,\"length\":1,\"column\":12},{\"value\":\")\",\"type\":\"RParen\",\"line\":6,\"length\":1,\"column\":13},{\"value\":\"}\",\"type\":\"RBrace\",\"line\":7,\"length\":1,\"column\":1}],\"path\":\"generated.bz\",\"index\":[],\"diagnostics\":[{\"severity\":\"error\",\"related\":[],\"phase\":\"parser\",\"message\":\"Const values can only hold primitive data and user-generated types\",\"line\":1,\"length\":1,\"column\":17},{\"severity\":\"error\",\"related\":[],\"phase\":\"parser\",\"message\":\"Const values can only hold primitive data and user-generated types\",\"line\":5,\"length\":1,\"column\":14}]}}"
+        }
+      ]
+    }
+  },
+  {
+    "tool": "check_program",
+    "arguments": {
+      "source": "let message = () :> String {\n    \"He said \\\"hello\\\"\\nC:\\\\temp\\\\file\"\n}\n\nlet main = () :> String {\n    message()\n}"
+    },
+    "started": 1791734260.9389217,
+    "result": {
+      "isError": true,
+      "structuredContent": {
+        "source": "let message = () :> String {\n    \"He said \\\"hello\\\"\\nC:\\\\temp\\\\file\"\n}\n\nlet main = () :> String {\n    message()\n}",
+        "validated": true,
+        "valid": false,
+        "analysis": {
+          "tokens": [
+            {
+              "value": "let",
+              "type": "LetKeyword",
+              "line": 1,
+              "length": 3,
+              "column": 1
+            },
+            {
+              "value": "message",
+              "type": "Identifier",
+              "line": 1,
+              "length": 7,
+              "column": 5
+            },
+            {
+              "value": "=",
+              "type": "Eq",
+              "line": 1,
+              "length": 1,
+              "column": 13
+            },
+            {
+              "value": "(",
+              "type": "LParen",
+              "line": 1,
+              "length": 1,
+              "column": 15
+            },
+            {
+              "value": ")",
+              "type": "RParen",
+              "line": 1,
+              "length": 1,
+              "column": 16
+            },
+            {
+              "value": ":>",
+              "type": "RtnTypeOp",
+              "line": 1,
+              "length": 2,
+              "column": 18
+            },
+            {
+              "value": "String",
+              "type": "Identifier",
+              "line": 1,
+              "length": 6,
+              "column": 21
+            },
+            {
+              "value": "{",
+              "type": "LBrace",
+              "line": 1,
+              "length": 1,
+              "column": 28
+            },
+            {
+              "value": "He said \"hello\"\nC:\\temp\\file",
+              "type": "StringLiteral",
+              "line": 2,
+              "length": 30,
+              "column": 5
+            },
+            {
+              "value": "}",
+              "type": "RBrace",
+              "line": 3,
+              "length": 1,
+              "column": 1
+            },
+            {
+              "value": "let",
+              "type": "LetKeyword",
+              "line": 5,
+              "length": 3,
+              "column": 1
+            },
+            {
+              "value": "main",
+              "type": "Identifier",
+              "line": 5,
+              "length": 4,
+              "column": 5
+            },
+            {
+              "value": "=",
+              "type": "Eq",
+              "line": 5,
+              "length": 1,
+              "column": 10
+            },
+            {
+              "value": "(",
+              "type": "LParen",
+              "line": 5,
+              "length": 1,
+              "column": 12
+            },
+            {
+              "value": ")",
+              "type": "RParen",
+              "line": 5,
+              "length": 1,
+              "column": 13
+            },
+            {
+              "value": ":>",
+              "type": "RtnTypeOp",
+              "line": 5,
+              "length": 2,
+              "column": 15
+            },
+            {
+              "value": "String",
+              "type": "Identifier",
+              "line": 5,
+              "length": 6,
+              "column": 18
+            },
+            {
+              "value": "{",
+              "type": "LBrace",
+              "line": 5,
+              "length": 1,
+              "column": 25
+            },
+            {
+              "value": "message",
+              "type": "Identifier",
+              "line": 6,
+              "length": 7,
+              "column": 5
+            },
+            {
+              "value": "(",
+              "type": "LParen",
+              "line": 6,
+              "length": 1,
+              "column": 12
+            },
+            {
+              "value": ")",
+              "type": "RParen",
+              "line": 6,
+              "length": 1,
+              "column": 13
+            },
+            {
+              "value": "}",
+              "type": "RBrace",
+              "line": 7,
+              "length": 1,
+              "column": 1
+            }
+          ],
+          "path": "generated.bz",
+          "index": [],
+          "diagnostics": [
+            {
+              "severity": "error",
+              "related": [],
+              "phase": "parser",
+              "message": "Expected a valid expression",
+              "line": 1,
+              "length": 1,
+              "column": 15
+            },
+            {
+              "severity": "error",
+              "related": [],
+              "phase": "parser",
+              "message": "Expected a valid expression",
+              "line": 5,
+              "length": 1,
+              "column": 12
+            }
+          ]
+        }
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"source\":\"let message = () :> String {\\n    \\\"He said \\\\\\\"hello\\\\\\\"\\\\nC:\\\\\\\\temp\\\\\\\\file\\\"\\n}\\n\\nlet main = () :> String {\\n    message()\\n}\",\"validated\":true,\"valid\":false,\"analysis\":{\"tokens\":[{\"value\":\"let\",\"type\":\"LetKeyword\",\"line\":1,\"length\":3,\"column\":1},{\"value\":\"message\",\"type\":\"Identifier\",\"line\":1,\"length\":7,\"column\":5},{\"value\":\"=\",\"type\":\"Eq\",\"line\":1,\"length\":1,\"column\":13},{\"value\":\"(\",\"type\":\"LParen\",\"line\":1,\"length\":1,\"column\":15},{\"value\":\")\",\"type\":\"RParen\",\"line\":1,\"length\":1,\"column\":16},{\"value\":\":>\",\"type\":\"RtnTypeOp\",\"line\":1,\"length\":2,\"column\":18},{\"value\":\"String\",\"type\":\"Identifier\",\"line\":1,\"length\":6,\"column\":21},{\"value\":\"{\",\"type\":\"LBrace\",\"line\":1,\"length\":1,\"column\":28},{\"value\":\"He said \\\"hello\\\"\\nC:\\\\temp\\\\file\",\"type\":\"StringLiteral\",\"line\":2,\"length\":30,\"column\":5},{\"value\":\"}\",\"type\":\"RBrace\",\"line\":3,\"length\":1,\"column\":1},{\"value\":\"let\",\"type\":\"LetKeyword\",\"line\":5,\"length\":3,\"column\":1},{\"value\":\"main\",\"type\":\"Identifier\",\"line\":5,\"length\":4,\"column\":5},{\"value\":\"=\",\"type\":\"Eq\",\"line\":5,\"length\":1,\"column\":10},{\"value\":\"(\",\"type\":\"LParen\",\"line\":5,\"length\":1,\"column\":12},{\"value\":\")\",\"type\":\"RParen\",\"line\":5,\"length\":1,\"column\":13},{\"value\":\":>\",\"type\":\"RtnTypeOp\",\"line\":5,\"length\":2,\"column\":15},{\"value\":\"String\",\"type\":\"Identifier\",\"line\":5,\"length\":6,\"column\":18},{\"value\":\"{\",\"type\":\"LBrace\",\"line\":5,\"length\":1,\"column\":25},{\"value\":\"message\",\"type\":\"Identifier\",\"line\":6,\"length\":7,\"column\":5},{\"value\":\"(\",\"type\":\"LParen\",\"line\":6,\"length\":1,\"column\":12},{\"value\":\")\",\"type\":\"RParen\",\"line\":6,\"length\":1,\"column\":13},{\"value\":\"}\",\"type\":\"RBrace\",\"line\":7,\"length\":1,\"column\":1}],\"path\":\"generated.bz\",\"index\":[],\"diagnostics\":[{\"severity\":\"error\",\"related\":[],\"phase\":\"parser\",\"message\":\"Expected a valid expression\",\"line\":1,\"length\":1,\"column\":15},{\"severity\":\"error\",\"related\":[],\"phase\":\"parser\",\"message\":\"Expected a valid expression\",\"line\":5,\"length\":1,\"column\":12}]}}"
+        }
+      ]
+    }
+  }
+]

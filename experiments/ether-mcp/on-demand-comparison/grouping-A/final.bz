@@ -1,0 +1,8 @@
+func scaled_sum(a: Int, b: Int, c: Int) :> Int
+    let sum = a + b
+    sum * c
+end
+
+func main() :> Int
+    scaled_sum(2, 3, 4)
+end

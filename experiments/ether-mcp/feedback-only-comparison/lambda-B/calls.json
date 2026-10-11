@@ -1,0 +1,1560 @@
+[
+  {
+    "tool": "discover_tools",
+    "arguments": {},
+    "result": {
+      "tools": [
+        {
+          "name": "generate_program",
+          "description": "Generate Benzene source from structured constructs. By default resolves symbols and type-checks it using ether. Use validate=false for individual fragments; no files are written.",
+          "inputSchema": {
+            "type": "object",
+            "required": [
+              "construct"
+            ],
+            "properties": {
+              "validate": {
+                "type": "boolean",
+                "default": true
+              },
+              "path": {
+                "type": "string",
+                "default": "generated.bz"
+              },
+              "construct": {
+                "$ref": "#/$defs/Construct"
+              }
+            },
+            "additionalProperties": false,
+            "$defs": {
+              "TypeField": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "data_type"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "data_type": {
+                    "$ref": "#/$defs/DataType"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "FuncParam": {
+                "type": "object",
+                "required": [
+                  "param"
+                ],
+                "properties": {
+                  "param": {
+                    "type": "string"
+                  },
+                  "data_type": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/DataType"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
+              "DataType": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "name"
+                    ],
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "kind": {
+                        "const": "NamedType"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "name",
+                      "arguments"
+                    ],
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "kind": {
+                        "const": "AppliedType"
+                      },
+                      "arguments": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/$defs/DataType"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "parameters",
+                      "returns"
+                    ],
+                    "properties": {
+                      "returns": {
+                        "$ref": "#/$defs/DataType"
+                      },
+                      "parameters": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/$defs/DataType"
+                        }
+                      },
+                      "kind": {
+                        "const": "FunctionType"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "name",
+                      "fields"
+                    ],
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "kind": {
+                        "const": "LabelledType"
+                      },
+                      "fields": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/$defs/TypeField"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "Construct": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "data"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "Module"
+                      },
+                      "data": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/$defs/Construct"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "identifier",
+                      "value"
+                    ],
+                    "properties": {
+                      "value": {
+                        "$ref": "#/$defs/Construct"
+                      },
+                      "kind": {
+                        "const": "Let"
+                      },
+                      "identifier": {
+                        "type": "string"
+                      },
+                      "data_type": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/DataType"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "identifier",
+                      "value"
+                    ],
+                    "properties": {
+                      "value": {
+                        "$ref": "#/$defs/Construct"
+                      },
+                      "kind": {
+                        "const": "Const"
+                      },
+                      "identifier": {
+                        "type": "string"
+                      },
+                      "data_type": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/DataType"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "identifier",
+                      "body"
+                    ],
+                    "properties": {
+                      "return_type": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/DataType"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "param_list": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/$defs/FuncParam"
+                        }
+                      },
+                      "kind": {
+                        "const": "Function"
+                      },
+                      "identifier": {
+                        "type": "string"
+                      },
+                      "body": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/$defs/Construct"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "body"
+                    ],
+                    "properties": {
+                      "return_type": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/DataType"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "param_list": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/$defs/FuncParam"
+                        }
+                      },
+                      "kind": {
+                        "const": "Lambda"
+                      },
+                      "body": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/$defs/Construct"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "identifier"
+                    ],
+                    "properties": {
+                      "parameters": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "members": {
+                        "anyOf": [
+                          {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/$defs/DataType"
+                            }
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "kind": {
+                        "const": "TypeDeclaration"
+                      },
+                      "identifier": {
+                        "type": "string"
+                      },
+                      "alias_target": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/DataType"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "module_path"
+                    ],
+                    "properties": {
+                      "module_path": {
+                        "type": "string"
+                      },
+                      "kind": {
+                        "const": "Import"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "comment_type",
+                      "data"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "Comment"
+                      },
+                      "data": {
+                        "type": "string"
+                      },
+                      "comment_type": {
+                        "type": "string",
+                        "enum": [
+                          "SingleLine",
+                          "MultiLine"
+                        ]
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "conditions",
+                      "case_evals"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "CaseExpr"
+                      },
+                      "conditions": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/$defs/Construct"
+                        }
+                      },
+                      "case_evals": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/$defs/CaseEval"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "expr"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "ScopedExpr"
+                      },
+                      "expr": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/$defs/Construct"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "name"
+                    ],
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "kind": {
+                        "const": "Identifier"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "value"
+                    ],
+                    "properties": {
+                      "value": {
+                        "type": "integer"
+                      },
+                      "kind": {
+                        "const": "Integer"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "value"
+                    ],
+                    "properties": {
+                      "value": {
+                        "type": "number"
+                      },
+                      "kind": {
+                        "const": "Decimal"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "value"
+                    ],
+                    "properties": {
+                      "value": {
+                        "type": "string"
+                      },
+                      "kind": {
+                        "const": "Text"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "value"
+                    ],
+                    "properties": {
+                      "value": {
+                        "type": "boolean"
+                      },
+                      "kind": {
+                        "const": "Boolean"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "NilValue"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "Wildcard"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "identifier"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "Call"
+                      },
+                      "identifier": {
+                        "type": "string"
+                      },
+                      "arguments": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/$defs/Construct"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "operator",
+                      "left",
+                      "right"
+                    ],
+                    "properties": {
+                      "right": {
+                        "$ref": "#/$defs/Construct"
+                      },
+                      "operator": {
+                        "type": "string",
+                        "enum": [
+                          "Add",
+                          "Subtract",
+                          "Multiply",
+                          "Divide",
+                          "Equal",
+                          "NotEqual",
+                          "LessThan",
+                          "LessOrEqual",
+                          "GreaterThan",
+                          "GreaterOrEqual",
+                          "And",
+                          "Or"
+                        ]
+                      },
+                      "left": {
+                        "$ref": "#/$defs/Construct"
+                      },
+                      "kind": {
+                        "const": "Binary"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "operator",
+                      "value"
+                    ],
+                    "properties": {
+                      "value": {
+                        "$ref": "#/$defs/Construct"
+                      },
+                      "operator": {
+                        "type": "string",
+                        "enum": [
+                          "Negate",
+                          "Not"
+                        ]
+                      },
+                      "kind": {
+                        "const": "Unary"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "calls"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "Pipeline"
+                      },
+                      "calls": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/$defs/Construct"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "values"
+                    ],
+                    "properties": {
+                      "values": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/$defs/Construct"
+                        }
+                      },
+                      "kind": {
+                        "const": "ListExpr"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "values"
+                    ],
+                    "properties": {
+                      "values": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/$defs/Construct"
+                        }
+                      },
+                      "kind": {
+                        "const": "TupleExpr"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "CaseEval": {
+                "type": "object",
+                "required": [
+                  "cases",
+                  "return_value"
+                ],
+                "properties": {
+                  "return_value": {
+                    "$ref": "#/$defs/Construct"
+                  },
+                  "cases": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/Construct"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": false
+          }
+        }
+      ]
+    }
+  },
+  {
+    "tool": "generate_program",
+    "arguments": {
+      "validate": true,
+      "construct": {
+        "kind": "Module",
+        "data": [
+          {
+            "kind": "Function",
+            "identifier": "apply_twice",
+            "param_list": [
+              {
+                "param": "f",
+                "data_type": {
+                  "kind": "FunctionType",
+                  "parameters": [
+                    {
+                      "kind": "NamedType",
+                      "name": "Int"
+                    }
+                  ],
+                  "returns": {
+                    "kind": "NamedType",
+                    "name": "Int"
+                  }
+                }
+              },
+              {
+                "param": "x",
+                "data_type": {
+                  "kind": "NamedType",
+                  "name": "Int"
+                }
+              }
+            ],
+            "return_type": {
+              "kind": "NamedType",
+              "name": "Int"
+            },
+            "body": [
+              {
+                "kind": "Call",
+                "identifier": "f",
+                "arguments": [
+                  {
+                    "kind": "Call",
+                    "identifier": "f",
+                    "arguments": [
+                      {
+                        "kind": "Identifier",
+                        "name": "x"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "Function",
+            "identifier": "main",
+            "param_list": [],
+            "return_type": {
+              "kind": "NamedType",
+              "name": "Int"
+            },
+            "body": [
+              {
+                "kind": "Let",
+                "identifier": "increment",
+                "value": {
+                  "kind": "Lambda",
+                  "param_list": [
+                    {
+                      "param": "n",
+                      "data_type": {
+                        "kind": "NamedType",
+                        "name": "Int"
+                      }
+                    }
+                  ],
+                  "return_type": {
+                    "kind": "NamedType",
+                    "name": "Int"
+                  },
+                  "body": [
+                    {
+                      "kind": "Binary",
+                      "operator": "Add",
+                      "left": {
+                        "kind": "Identifier",
+                        "name": "n"
+                      },
+                      "right": {
+                        "kind": "Integer",
+                        "value": 1
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "kind": "Call",
+                "identifier": "apply_twice",
+                "arguments": [
+                  {
+                    "kind": "Identifier",
+                    "name": "increment"
+                  },
+                  {
+                    "kind": "Integer",
+                    "value": 40
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "started": 1791734334.5523546,
+    "result": {
+      "isError": false,
+      "structuredContent": {
+        "source": "func apply_twice(f: Fn(Int) :> Int, x: Int) :> Int\n  f(f(x))\nend\n\nfunc main() :> Int\n  let increment = Fn(n: Int) :> Int\n    n + 1\n  end\n  apply_twice(increment, 40)\nend",
+        "validated": true,
+        "valid": true,
+        "analysis": {
+          "tokens": [
+            {
+              "value": "func",
+              "type": "FuncStart",
+              "line": 1,
+              "length": 4,
+              "column": 1
+            },
+            {
+              "value": "apply_twice",
+              "type": "Identifier",
+              "line": 1,
+              "length": 11,
+              "column": 6
+            },
+            {
+              "value": "(",
+              "type": "LParen",
+              "line": 1,
+              "length": 1,
+              "column": 17
+            },
+            {
+              "value": "f",
+              "type": "Identifier",
+              "line": 1,
+              "length": 1,
+              "column": 18
+            },
+            {
+              "value": ":",
+              "type": "Colon",
+              "line": 1,
+              "length": 1,
+              "column": 19
+            },
+            {
+              "value": "Fn",
+              "type": "Lambda Expression",
+              "line": 1,
+              "length": 2,
+              "column": 21
+            },
+            {
+              "value": "(",
+              "type": "LParen",
+              "line": 1,
+              "length": 1,
+              "column": 23
+            },
+            {
+              "value": "Int",
+              "type": "Identifier",
+              "line": 1,
+              "length": 3,
+              "column": 24
+            },
+            {
+              "value": ")",
+              "type": "RParen",
+              "line": 1,
+              "length": 1,
+              "column": 27
+            },
+            {
+              "value": ":>",
+              "type": "RtnTypeOp",
+              "line": 1,
+              "length": 2,
+              "column": 29
+            },
+            {
+              "value": "Int",
+              "type": "Identifier",
+              "line": 1,
+              "length": 3,
+              "column": 32
+            },
+            {
+              "value": ",",
+              "type": "Delimitter",
+              "line": 1,
+              "length": 1,
+              "column": 35
+            },
+            {
+              "value": "x",
+              "type": "Identifier",
+              "line": 1,
+              "length": 1,
+              "column": 37
+            },
+            {
+              "value": ":",
+              "type": "Colon",
+              "line": 1,
+              "length": 1,
+              "column": 38
+            },
+            {
+              "value": "Int",
+              "type": "Identifier",
+              "line": 1,
+              "length": 3,
+              "column": 40
+            },
+            {
+              "value": ")",
+              "type": "RParen",
+              "line": 1,
+              "length": 1,
+              "column": 43
+            },
+            {
+              "value": ":>",
+              "type": "RtnTypeOp",
+              "line": 1,
+              "length": 2,
+              "column": 45
+            },
+            {
+              "value": "Int",
+              "type": "Identifier",
+              "line": 1,
+              "length": 3,
+              "column": 48
+            },
+            {
+              "value": "f",
+              "type": "Identifier",
+              "line": 2,
+              "length": 1,
+              "column": 3
+            },
+            {
+              "value": "(",
+              "type": "LParen",
+              "line": 2,
+              "length": 1,
+              "column": 4
+            },
+            {
+              "value": "f",
+              "type": "Identifier",
+              "line": 2,
+              "length": 1,
+              "column": 5
+            },
+            {
+              "value": "(",
+              "type": "LParen",
+              "line": 2,
+              "length": 1,
+              "column": 6
+            },
+            {
+              "value": "x",
+              "type": "Identifier",
+              "line": 2,
+              "length": 1,
+              "column": 7
+            },
+            {
+              "value": ")",
+              "type": "RParen",
+              "line": 2,
+              "length": 1,
+              "column": 8
+            },
+            {
+              "value": ")",
+              "type": "RParen",
+              "line": 2,
+              "length": 1,
+              "column": 9
+            },
+            {
+              "value": "end",
+              "type": "EndStmt",
+              "line": 3,
+              "length": 3,
+              "column": 1
+            },
+            {
+              "value": "func",
+              "type": "FuncStart",
+              "line": 5,
+              "length": 4,
+              "column": 1
+            },
+            {
+              "value": "main",
+              "type": "Identifier",
+              "line": 5,
+              "length": 4,
+              "column": 6
+            },
+            {
+              "value": "(",
+              "type": "LParen",
+              "line": 5,
+              "length": 1,
+              "column": 10
+            },
+            {
+              "value": ")",
+              "type": "RParen",
+              "line": 5,
+              "length": 1,
+              "column": 11
+            },
+            {
+              "value": ":>",
+              "type": "RtnTypeOp",
+              "line": 5,
+              "length": 2,
+              "column": 13
+            },
+            {
+              "value": "Int",
+              "type": "Identifier",
+              "line": 5,
+              "length": 3,
+              "column": 16
+            },
+            {
+              "value": "let",
+              "type": "LetKeyword",
+              "line": 6,
+              "length": 3,
+              "column": 3
+            },
+            {
+              "value": "increment",
+              "type": "Identifier",
+              "line": 6,
+              "length": 9,
+              "column": 7
+            },
+            {
+              "value": "=",
+              "type": "Eq",
+              "line": 6,
+              "length": 1,
+              "column": 17
+            },
+            {
+              "value": "Fn",
+              "type": "Lambda Expression",
+              "line": 6,
+              "length": 2,
+              "column": 19
+            },
+            {
+              "value": "(",
+              "type": "LParen",
+              "line": 6,
+              "length": 1,
+              "column": 21
+            },
+            {
+              "value": "n",
+              "type": "Identifier",
+              "line": 6,
+              "length": 1,
+              "column": 22
+            },
+            {
+              "value": ":",
+              "type": "Colon",
+              "line": 6,
+              "length": 1,
+              "column": 23
+            },
+            {
+              "value": "Int",
+              "type": "Identifier",
+              "line": 6,
+              "length": 3,
+              "column": 25
+            },
+            {
+              "value": ")",
+              "type": "RParen",
+              "line": 6,
+              "length": 1,
+              "column": 28
+            },
+            {
+              "value": ":>",
+              "type": "RtnTypeOp",
+              "line": 6,
+              "length": 2,
+              "column": 30
+            },
+            {
+              "value": "Int",
+              "type": "Identifier",
+              "line": 6,
+              "length": 3,
+              "column": 33
+            },
+            {
+              "value": "n",
+              "type": "Identifier",
+              "line": 7,
+              "length": 1,
+              "column": 5
+            },
+            {
+              "value": "+",
+              "type": "Plus",
+              "line": 7,
+              "length": 1,
+              "column": 7
+            },
+            {
+              "value": "1",
+              "type": "IntegerLiteral",
+              "line": 7,
+              "length": 1,
+              "column": 9
+            },
+            {
+              "value": "end",
+              "type": "EndStmt",
+              "line": 8,
+              "length": 3,
+              "column": 3
+            },
+            {
+              "value": "apply_twice",
+              "type": "Identifier",
+              "line": 9,
+              "length": 11,
+              "column": 3
+            },
+            {
+              "value": "(",
+              "type": "LParen",
+              "line": 9,
+              "length": 1,
+              "column": 14
+            },
+            {
+              "value": "increment",
+              "type": "Identifier",
+              "line": 9,
+              "length": 9,
+              "column": 15
+            },
+            {
+              "value": ",",
+              "type": "Delimitter",
+              "line": 9,
+              "length": 1,
+              "column": 24
+            },
+            {
+              "value": "40",
+              "type": "IntegerLiteral",
+              "line": 9,
+              "length": 2,
+              "column": 26
+            },
+            {
+              "value": ")",
+              "type": "RParen",
+              "line": 9,
+              "length": 1,
+              "column": 28
+            },
+            {
+              "value": "end",
+              "type": "EndStmt",
+              "line": 10,
+              "length": 3,
+              "column": 1
+            }
+          ],
+          "path": "generated.bz",
+          "index": [
+            {
+              "type": "Fn(Fn(Int) :> Int, Int) :> Int",
+              "scopeLine": 0,
+              "scopeColumn": 0,
+              "returns": "Int",
+              "name": "apply_twice",
+              "line": 1,
+              "length": 11,
+              "kind": "Function",
+              "isDefinition": true,
+              "detail": "apply_twice(f: Fn(Int) :> Int, x: Int) :> Int",
+              "defLine": 1,
+              "defColumn": 6,
+              "column": 6,
+              "annotated": true
+            },
+            {
+              "type": "",
+              "scopeLine": 1,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "Int",
+              "line": 1,
+              "length": 3,
+              "kind": "Type",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 0,
+              "defColumn": 0,
+              "column": 48,
+              "annotated": true
+            },
+            {
+              "type": "Fn(Int) :> Int",
+              "scopeLine": 1,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "f",
+              "line": 1,
+              "length": 1,
+              "kind": "FuncParam",
+              "isDefinition": true,
+              "detail": "",
+              "defLine": 1,
+              "defColumn": 18,
+              "column": 18,
+              "annotated": true
+            },
+            {
+              "type": "",
+              "scopeLine": 1,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "Int",
+              "line": 1,
+              "length": 3,
+              "kind": "Type",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 0,
+              "defColumn": 0,
+              "column": 24,
+              "annotated": true
+            },
+            {
+              "type": "",
+              "scopeLine": 1,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "Int",
+              "line": 1,
+              "length": 3,
+              "kind": "Type",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 0,
+              "defColumn": 0,
+              "column": 32,
+              "annotated": true
+            },
+            {
+              "type": "Int",
+              "scopeLine": 1,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "x",
+              "line": 1,
+              "length": 1,
+              "kind": "FuncParam",
+              "isDefinition": true,
+              "detail": "",
+              "defLine": 1,
+              "defColumn": 37,
+              "column": 37,
+              "annotated": true
+            },
+            {
+              "type": "",
+              "scopeLine": 1,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "Int",
+              "line": 1,
+              "length": 3,
+              "kind": "Type",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 0,
+              "defColumn": 0,
+              "column": 40,
+              "annotated": true
+            },
+            {
+              "type": "Fn(Int) :> Int",
+              "scopeLine": 1,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "f",
+              "line": 2,
+              "length": 1,
+              "kind": "FuncParam",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 1,
+              "defColumn": 18,
+              "column": 3,
+              "annotated": false
+            },
+            {
+              "type": "Fn(Int) :> Int",
+              "scopeLine": 1,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "f",
+              "line": 2,
+              "length": 1,
+              "kind": "FuncParam",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 1,
+              "defColumn": 18,
+              "column": 5,
+              "annotated": false
+            },
+            {
+              "type": "Int",
+              "scopeLine": 1,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "x",
+              "line": 2,
+              "length": 1,
+              "kind": "FuncParam",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 1,
+              "defColumn": 37,
+              "column": 7,
+              "annotated": false
+            },
+            {
+              "type": "Fn() :> Int",
+              "scopeLine": 0,
+              "scopeColumn": 0,
+              "returns": "Int",
+              "name": "main",
+              "line": 5,
+              "length": 4,
+              "kind": "Function",
+              "isDefinition": true,
+              "detail": "main() :> Int",
+              "defLine": 5,
+              "defColumn": 6,
+              "column": 6,
+              "annotated": true
+            },
+            {
+              "type": "",
+              "scopeLine": 5,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "Int",
+              "line": 5,
+              "length": 3,
+              "kind": "Type",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 0,
+              "defColumn": 0,
+              "column": 16,
+              "annotated": true
+            },
+            {
+              "type": "Fn(Int) :> Int",
+              "scopeLine": 5,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "increment",
+              "line": 6,
+              "length": 9,
+              "kind": "Binding",
+              "isDefinition": true,
+              "detail": "",
+              "defLine": 6,
+              "defColumn": 7,
+              "column": 7,
+              "annotated": false
+            },
+            {
+              "type": "Int",
+              "scopeLine": 5,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "n",
+              "line": 6,
+              "length": 1,
+              "kind": "FuncParam",
+              "isDefinition": true,
+              "detail": "",
+              "defLine": 6,
+              "defColumn": 22,
+              "column": 22,
+              "annotated": true
+            },
+            {
+              "type": "",
+              "scopeLine": 5,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "Int",
+              "line": 6,
+              "length": 3,
+              "kind": "Type",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 0,
+              "defColumn": 0,
+              "column": 25,
+              "annotated": true
+            },
+            {
+              "type": "Int",
+              "scopeLine": 5,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "n",
+              "line": 7,
+              "length": 1,
+              "kind": "FuncParam",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 6,
+              "defColumn": 22,
+              "column": 5,
+              "annotated": false
+            },
+            {
+              "type": "Int",
+              "scopeLine": 5,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "1",
+              "line": 7,
+              "length": 1,
+              "kind": "Literal",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 0,
+              "defColumn": 0,
+              "column": 9,
+              "annotated": false
+            },
+            {
+              "type": "Fn(Fn(Int) :> Int, Int) :> Int",
+              "scopeLine": 5,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "apply_twice",
+              "line": 9,
+              "length": 11,
+              "kind": "Function",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 1,
+              "defColumn": 6,
+              "column": 3,
+              "annotated": false
+            },
+            {
+              "type": "Fn(Int) :> Int",
+              "scopeLine": 5,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "increment",
+              "line": 9,
+              "length": 9,
+              "kind": "Binding",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 6,
+              "defColumn": 7,
+              "column": 15,
+              "annotated": false
+            },
+            {
+              "type": "Int",
+              "scopeLine": 5,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "40",
+              "line": 9,
+              "length": 2,
+              "kind": "Literal",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 0,
+              "defColumn": 0,
+              "column": 26,
+              "annotated": false
+            }
+          ],
+          "diagnostics": []
+        }
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"source\":\"func apply_twice(f: Fn(Int) :> Int, x: Int) :> Int\\n  f(f(x))\\nend\\n\\nfunc main() :> Int\\n  let increment = Fn(n: Int) :> Int\\n    n + 1\\n  end\\n  apply_twice(increment, 40)\\nend\",\"validated\":true,\"valid\":true,\"analysis\":{\"tokens\":[{\"value\":\"func\",\"type\":\"FuncStart\",\"line\":1,\"length\":4,\"column\":1},{\"value\":\"apply_twice\",\"type\":\"Identifier\",\"line\":1,\"length\":11,\"column\":6},{\"value\":\"(\",\"type\":\"LParen\",\"line\":1,\"length\":1,\"column\":17},{\"value\":\"f\",\"type\":\"Identifier\",\"line\":1,\"length\":1,\"column\":18},{\"value\":\":\",\"type\":\"Colon\",\"line\":1,\"length\":1,\"column\":19},{\"value\":\"Fn\",\"type\":\"Lambda Expression\",\"line\":1,\"length\":2,\"column\":21},{\"value\":\"(\",\"type\":\"LParen\",\"line\":1,\"length\":1,\"column\":23},{\"value\":\"Int\",\"type\":\"Identifier\",\"line\":1,\"length\":3,\"column\":24},{\"value\":\")\",\"type\":\"RParen\",\"line\":1,\"length\":1,\"column\":27},{\"value\":\":>\",\"type\":\"RtnTypeOp\",\"line\":1,\"length\":2,\"column\":29},{\"value\":\"Int\",\"type\":\"Identifier\",\"line\":1,\"length\":3,\"column\":32},{\"value\":\",\",\"type\":\"Delimitter\",\"line\":1,\"length\":1,\"column\":35},{\"value\":\"x\",\"type\":\"Identifier\",\"line\":1,\"length\":1,\"column\":37},{\"value\":\":\",\"type\":\"Colon\",\"line\":1,\"length\":1,\"column\":38},{\"value\":\"Int\",\"type\":\"Identifier\",\"line\":1,\"length\":3,\"column\":40},{\"value\":\")\",\"type\":\"RParen\",\"line\":1,\"length\":1,\"column\":43},{\"value\":\":>\",\"type\":\"RtnTypeOp\",\"line\":1,\"length\":2,\"column\":45},{\"value\":\"Int\",\"type\":\"Identifier\",\"line\":1,\"length\":3,\"column\":48},{\"value\":\"f\",\"type\":\"Identifier\",\"line\":2,\"length\":1,\"column\":3},{\"value\":\"(\",\"type\":\"LParen\",\"line\":2,\"length\":1,\"column\":4},{\"value\":\"f\",\"type\":\"Identifier\",\"line\":2,\"length\":1,\"column\":5},{\"value\":\"(\",\"type\":\"LParen\",\"line\":2,\"length\":1,\"column\":6},{\"value\":\"x\",\"type\":\"Identifier\",\"line\":2,\"length\":1,\"column\":7},{\"value\":\")\",\"type\":\"RParen\",\"line\":2,\"length\":1,\"column\":8},{\"value\":\")\",\"type\":\"RParen\",\"line\":2,\"length\":1,\"column\":9},{\"value\":\"end\",\"type\":\"EndStmt\",\"line\":3,\"length\":3,\"column\":1},{\"value\":\"func\",\"type\":\"FuncStart\",\"line\":5,\"length\":4,\"column\":1},{\"value\":\"main\",\"type\":\"Identifier\",\"line\":5,\"length\":4,\"column\":6},{\"value\":\"(\",\"type\":\"LParen\",\"line\":5,\"length\":1,\"column\":10},{\"value\":\")\",\"type\":\"RParen\",\"line\":5,\"length\":1,\"column\":11},{\"value\":\":>\",\"type\":\"RtnTypeOp\",\"line\":5,\"length\":2,\"column\":13},{\"value\":\"Int\",\"type\":\"Identifier\",\"line\":5,\"length\":3,\"column\":16},{\"value\":\"let\",\"type\":\"LetKeyword\",\"line\":6,\"length\":3,\"column\":3},{\"value\":\"increment\",\"type\":\"Identifier\",\"line\":6,\"length\":9,\"column\":7},{\"value\":\"=\",\"type\":\"Eq\",\"line\":6,\"length\":1,\"column\":17},{\"value\":\"Fn\",\"type\":\"Lambda Expression\",\"line\":6,\"length\":2,\"column\":19},{\"value\":\"(\",\"type\":\"LParen\",\"line\":6,\"length\":1,\"column\":21},{\"value\":\"n\",\"type\":\"Identifier\",\"line\":6,\"length\":1,\"column\":22},{\"value\":\":\",\"type\":\"Colon\",\"line\":6,\"length\":1,\"column\":23},{\"value\":\"Int\",\"type\":\"Identifier\",\"line\":6,\"length\":3,\"column\":25},{\"value\":\")\",\"type\":\"RParen\",\"line\":6,\"length\":1,\"column\":28},{\"value\":\":>\",\"type\":\"RtnTypeOp\",\"line\":6,\"length\":2,\"column\":30},{\"value\":\"Int\",\"type\":\"Identifier\",\"line\":6,\"length\":3,\"column\":33},{\"value\":\"n\",\"type\":\"Identifier\",\"line\":7,\"length\":1,\"column\":5},{\"value\":\"+\",\"type\":\"Plus\",\"line\":7,\"length\":1,\"column\":7},{\"value\":\"1\",\"type\":\"IntegerLiteral\",\"line\":7,\"length\":1,\"column\":9},{\"value\":\"end\",\"type\":\"EndStmt\",\"line\":8,\"length\":3,\"column\":3},{\"value\":\"apply_twice\",\"type\":\"Identifier\",\"line\":9,\"length\":11,\"column\":3},{\"value\":\"(\",\"type\":\"LParen\",\"line\":9,\"length\":1,\"column\":14},{\"value\":\"increment\",\"type\":\"Identifier\",\"line\":9,\"length\":9,\"column\":15},{\"value\":\",\",\"type\":\"Delimitter\",\"line\":9,\"length\":1,\"column\":24},{\"value\":\"40\",\"type\":\"IntegerLiteral\",\"line\":9,\"length\":2,\"column\":26},{\"value\":\")\",\"type\":\"RParen\",\"line\":9,\"length\":1,\"column\":28},{\"value\":\"end\",\"type\":\"EndStmt\",\"line\":10,\"length\":3,\"column\":1}],\"path\":\"generated.bz\",\"index\":[{\"type\":\"Fn(Fn(Int) :> Int, Int) :> Int\",\"scopeLine\":0,\"scopeColumn\":0,\"returns\":\"Int\",\"name\":\"apply_twice\",\"line\":1,\"length\":11,\"kind\":\"Function\",\"isDefinition\":true,\"detail\":\"apply_twice(f: Fn(Int) :> Int, x: Int) :> Int\",\"defLine\":1,\"defColumn\":6,\"column\":6,\"annotated\":true},{\"type\":\"\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"Int\",\"line\":1,\"length\":3,\"kind\":\"Type\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":48,\"annotated\":true},{\"type\":\"Fn(Int) :> Int\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"f\",\"line\":1,\"length\":1,\"kind\":\"FuncParam\",\"isDefinition\":true,\"detail\":\"\",\"defLine\":1,\"defColumn\":18,\"column\":18,\"annotated\":true},{\"type\":\"\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"Int\",\"line\":1,\"length\":3,\"kind\":\"Type\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":24,\"annotated\":true},{\"type\":\"\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"Int\",\"line\":1,\"length\":3,\"kind\":\"Type\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":32,\"annotated\":true},{\"type\":\"Int\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"x\",\"line\":1,\"length\":1,\"kind\":\"FuncParam\",\"isDefinition\":true,\"detail\":\"\",\"defLine\":1,\"defColumn\":37,\"column\":37,\"annotated\":true},{\"type\":\"\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"Int\",\"line\":1,\"length\":3,\"kind\":\"Type\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":40,\"annotated\":true},{\"type\":\"Fn(Int) :> Int\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"f\",\"line\":2,\"length\":1,\"kind\":\"FuncParam\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":1,\"defColumn\":18,\"column\":3,\"annotated\":false},{\"type\":\"Fn(Int) :> Int\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"f\",\"line\":2,\"length\":1,\"kind\":\"FuncParam\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":1,\"defColumn\":18,\"column\":5,\"annotated\":false},{\"type\":\"Int\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"x\",\"line\":2,\"length\":1,\"kind\":\"FuncParam\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":1,\"defColumn\":37,\"column\":7,\"annotated\":false},{\"type\":\"Fn() :> Int\",\"scopeLine\":0,\"scopeColumn\":0,\"returns\":\"Int\",\"name\":\"main\",\"line\":5,\"length\":4,\"kind\":\"Function\",\"isDefinition\":true,\"detail\":\"main() :> Int\",\"defLine\":5,\"defColumn\":6,\"column\":6,\"annotated\":true},{\"type\":\"\",\"scopeLine\":5,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"Int\",\"line\":5,\"length\":3,\"kind\":\"Type\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":16,\"annotated\":true},{\"type\":\"Fn(Int) :> Int\",\"scopeLine\":5,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"increment\",\"line\":6,\"length\":9,\"kind\":\"Binding\",\"isDefinition\":true,\"detail\":\"\",\"defLine\":6,\"defColumn\":7,\"column\":7,\"annotated\":false},{\"type\":\"Int\",\"scopeLine\":5,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"n\",\"line\":6,\"length\":1,\"kind\":\"FuncParam\",\"isDefinition\":true,\"detail\":\"\",\"defLine\":6,\"defColumn\":22,\"column\":22,\"annotated\":true},{\"type\":\"\",\"scopeLine\":5,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"Int\",\"line\":6,\"length\":3,\"kind\":\"Type\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":25,\"annotated\":true},{\"type\":\"Int\",\"scopeLine\":5,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"n\",\"line\":7,\"length\":1,\"kind\":\"FuncParam\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":6,\"defColumn\":22,\"column\":5,\"annotated\":false},{\"type\":\"Int\",\"scopeLine\":5,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"1\",\"line\":7,\"length\":1,\"kind\":\"Literal\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":9,\"annotated\":false},{\"type\":\"Fn(Fn(Int) :> Int, Int) :> Int\",\"scopeLine\":5,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"apply_twice\",\"line\":9,\"length\":11,\"kind\":\"Function\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":1,\"defColumn\":6,\"column\":3,\"annotated\":false},{\"type\":\"Fn(Int) :> Int\",\"scopeLine\":5,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"increment\",\"line\":9,\"length\":9,\"kind\":\"Binding\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":6,\"defColumn\":7,\"column\":15,\"annotated\":false},{\"type\":\"Int\",\"scopeLine\":5,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"40\",\"line\":9,\"length\":2,\"kind\":\"Literal\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":26,\"annotated\":false}],\"diagnostics\":[]}}"
+        }
+      ]
+    }
+  }
+]

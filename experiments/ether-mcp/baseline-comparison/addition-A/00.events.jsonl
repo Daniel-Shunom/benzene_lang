@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a12b84-70c3-7c72-8b4d-c1dbca63270c"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"func add(x: Int, y: Int) :> Int\n  x + y\nend\n\nfunc main() :> Int\n  add(20, 22)\nend"}}
+{"type":"turn.completed","usage":{"input_tokens":18646,"cached_input_tokens":12544,"cache_write_input_tokens":0,"output_tokens":41,"reasoning_output_tokens":0}}

@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a12bac-d7c1-7a01-94fb-4f175d154c45"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"{\"tool\":\"check_program\",\"arguments\":{\"source\":\"let square = fun(x) { x * x }\\nlet main = fun() { square(2 + 3) + square(4 + 5) }\"}}"}}
+{"type":"turn.completed","usage":{"input_tokens":17366,"cached_input_tokens":9216,"cache_write_input_tokens":0,"output_tokens":95,"reasoning_output_tokens":44}}

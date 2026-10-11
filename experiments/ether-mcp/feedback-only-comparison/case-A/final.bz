@@ -1,0 +1,10 @@
+let classify = fun(x: Int) :> String {
+    case x:
+        0 :> "zero",
+        1 :> "one",
+        _ :> "other"
+}
+
+let main = fun() :> String {
+    classify(2)
+}

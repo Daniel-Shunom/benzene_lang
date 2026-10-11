@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a12bab-09e6-72f3-9348-1a117c4823f6"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"{\"tool\":\"check_program\",\"arguments\":{\"source\":\"fn add(x: int, y: int) -> int {\\n    return x + y;\\n}\\n\\nfn main() -> int {\\n    return add(20, 22);\\n}\"}}"}}
+{"type":"turn.completed","usage":{"input_tokens":11658,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":74,"reasoning_output_tokens":15}}

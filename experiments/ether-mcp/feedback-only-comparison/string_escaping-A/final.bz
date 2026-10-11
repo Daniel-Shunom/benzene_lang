@@ -1,0 +1,7 @@
+let message = () :> String {
+    "He said \"hello\"\nC:\\temp\\file"
+}
+
+let main = () :> String {
+    message()
+}

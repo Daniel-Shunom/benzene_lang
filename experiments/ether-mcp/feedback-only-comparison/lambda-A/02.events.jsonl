@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a12bb0-3c5f-7b41-b2c3-212cff17df36"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"{\"tool\":\"check_program\",\"arguments\":{\"source\":\"func apply_twice(f: (int): int, x: int): int {\\n    f(f(x))\\n}\\n\\nfunc main(): int {\\n    let increment = func(n: int): int {\\n        n + 1\\n    }\\n    apply_twice(increment, 40)\\n}\"}}"}}
+{"type":"turn.completed","usage":{"input_tokens":16098,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":126,"reasoning_output_tokens":42}}

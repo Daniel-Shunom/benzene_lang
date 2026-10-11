@@ -1,0 +1,11 @@
+func numbers() :> List(Int)
+  [1, 2, 3]
+end
+
+func pair() :> Tuple(Int, String)
+  @{7, "seven"}
+end
+
+func main() :> Tuple(Int, String)
+  pair()
+end

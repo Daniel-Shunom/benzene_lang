@@ -1,0 +1,2 @@
+def scaled_sum(a, b, c) { (a + b) * c }
+def main() { scaled_sum(2, 3, 4) }

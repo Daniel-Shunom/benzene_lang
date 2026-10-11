@@ -1,0 +1,30 @@
+{
+  "task": "collections",
+  "arm": "B",
+  "model": "gpt-6.1-sol",
+  "reasoning_effort": "low",
+  "first_attempt_accepted": true,
+  "compiler_accepted": true,
+  "submissions": 1,
+  "repair_rounds": 0,
+  "doc_calls": 1,
+  "doc_topics": [
+    "all"
+  ],
+  "usage": {
+    "input_tokens": 64215,
+    "cached_input_tokens": 27648,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 332,
+    "reasoning_output_tokens": 0,
+    "total_tokens": 64547
+  },
+  "elapsed_seconds": 26.311919799998577,
+  "protocol_violations": [],
+  "task_correctness": "pass by independent source review; not executed",
+  "runner": "harness",
+  "discovery_calls": 1,
+  "final_message": "{\"tool\":\"finish\",\"arguments\":{\"summary\":\"Compiler accepted the complete program on the first submission. numbers returns [1, 2, 3], pair returns @{7, \\\"seven\\\"}, and zero-argument main returns pair(). All functions have explicit return types.\"}}",
+  "review_evidence": "Both return integer list [1,2,3], tuple containing 7 and seven, and main calls pair. Return types are explicit.",
+  "standalone_ether_check_passed": true
+}

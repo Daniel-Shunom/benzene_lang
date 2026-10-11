@@ -1,0 +1,11 @@
+const numbers = Fn() :> List<Int> {
+    [1, 2, 3]
+}
+
+const pair = Fn() :> Tuple<Int, String> {
+    (7, "seven")
+}
+
+const main = Fn() :> Tuple<Int, String> {
+    pair()
+}

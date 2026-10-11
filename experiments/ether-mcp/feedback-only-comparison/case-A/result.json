@@ -1,0 +1,46 @@
+{
+  "task": "case",
+  "arm": "A",
+  "model": "gpt-6.1-sol",
+  "reasoning_effort": "low",
+  "first_attempt_accepted": false,
+  "compiler_accepted": false,
+  "submissions": 4,
+  "repair_rounds": 3,
+  "doc_calls": 0,
+  "doc_topics": [],
+  "usage": {
+    "input_tokens": 94068,
+    "cached_input_tokens": 48256,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 666,
+    "reasoning_output_tokens": 316,
+    "total_tokens": 94734
+  },
+  "elapsed_seconds": 51.81482099999994,
+  "protocol_violations": [],
+  "task_correctness": "failed compiler validation within submission budget",
+  "runner": "harness",
+  "discovery_calls": 1,
+  "language_documentation_available": false,
+  "final_message": "{\"tool\":\"finish\",\"arguments\":{\"summary\":\"Failure: all four permitted program submissions were rejected by the compiler. The submission budget is exhausted; no complete program was accepted.\"}}",
+  "task_correct": false,
+  "review_evidence": "All four submitted candidates have compiler errors; no frontend-valid solution.",
+  "diagnostic_phases_by_submission": [
+    [
+      "parser",
+      "resolver"
+    ],
+    [
+      "parser"
+    ],
+    [
+      "parser"
+    ],
+    [
+      "parser",
+      "resolver",
+      "scope"
+    ]
+  ]
+}

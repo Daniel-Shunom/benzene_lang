@@ -1,0 +1,30 @@
+[
+  {
+    "input_tokens": 11579,
+    "cached_input_tokens": 9216,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 14,
+    "reasoning_output_tokens": 0
+  },
+  {
+    "input_tokens": 13270,
+    "cached_input_tokens": 9216,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 216,
+    "reasoning_output_tokens": 0
+  },
+  {
+    "input_tokens": 17305,
+    "cached_input_tokens": 9216,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 216,
+    "reasoning_output_tokens": 0
+  },
+  {
+    "input_tokens": 20973,
+    "cached_input_tokens": 9216,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 61,
+    "reasoning_output_tokens": 0
+  }
+]

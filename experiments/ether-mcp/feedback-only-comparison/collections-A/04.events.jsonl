@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a12bae-35e7-7880-9f1c-d131dcecd542"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"{\"tool\":\"check_program\",\"arguments\":{\"source\":\"const numbers = Fn() :> List<Int> {\\n    [1, 2, 3]\\n}\\n\\nconst pair = Fn() :> Tuple<Int, String> {\\n    (7, \\\"seven\\\")\\n}\\n\\nconst main = Fn() :> Tuple<Int, String> {\\n    pair()\\n}\"}}"}}
+{"type":"turn.completed","usage":{"input_tokens":21302,"cached_input_tokens":9216,"cache_write_input_tokens":0,"output_tokens":143,"reasoning_output_tokens":55}}

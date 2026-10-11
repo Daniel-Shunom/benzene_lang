@@ -1,0 +1,47 @@
+{
+  "task": "collections",
+  "arm": "A",
+  "model": "gpt-6.1-sol",
+  "reasoning_effort": "low",
+  "first_attempt_accepted": false,
+  "compiler_accepted": false,
+  "submissions": 4,
+  "repair_rounds": 3,
+  "doc_calls": 0,
+  "doc_topics": [],
+  "usage": {
+    "input_tokens": 101801,
+    "cached_input_tokens": 55296,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 523,
+    "reasoning_output_tokens": 131,
+    "total_tokens": 102324
+  },
+  "elapsed_seconds": 51.06328190000204,
+  "protocol_violations": [],
+  "task_correctness": "failed compiler validation within submission budget",
+  "runner": "harness",
+  "discovery_calls": 1,
+  "language_documentation_available": false,
+  "final_message": "{\"tool\":\"finish\",\"arguments\":{\"summary\":\"Failed to produce an accepted program within four submissions. The final attempt was rejected because const bindings cannot hold functions.\"}}",
+  "task_correct": false,
+  "review_evidence": "All four submitted candidates have compiler errors; no frontend-valid solution.",
+  "diagnostic_phases_by_submission": [
+    [
+      "lexer",
+      "resolver",
+      "scope"
+    ],
+    [
+      "parser"
+    ],
+    [
+      "parser",
+      "resolver",
+      "scope"
+    ],
+    [
+      "parser"
+    ]
+  ]
+}

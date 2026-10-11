@@ -1,0 +1,30 @@
+{
+  "task": "lambda",
+  "arm": "A",
+  "model": "gpt-6.1-sol",
+  "reasoning_effort": "low",
+  "first_attempt_accepted": true,
+  "compiler_accepted": true,
+  "submissions": 1,
+  "repair_rounds": 0,
+  "doc_calls": 1,
+  "doc_topics": [
+    "all"
+  ],
+  "usage": {
+    "input_tokens": 59931,
+    "cached_input_tokens": 27648,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 160,
+    "reasoning_output_tokens": 0,
+    "total_tokens": 60091
+  },
+  "elapsed_seconds": 25.020729399999254,
+  "protocol_violations": [],
+  "task_correctness": "pass by independent source review; not executed",
+  "runner": "harness",
+  "discovery_calls": 1,
+  "final_message": "{\"tool\":\"finish\",\"arguments\":{\"summary\":\"The complete program was accepted on the first submission with no diagnostics. All named and anonymous functions have explicit return types; main computes 42.\"}}",
+  "review_evidence": "Both apply f twice to x, bind an integer increment lambda, and call apply_twice(increment,40). Return types are explicit.",
+  "standalone_ether_check_passed": true
+}

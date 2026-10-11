@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a12baf-8e3d-7921-979d-b3ceef00a144"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"{\"tool\":\"check_program\",\"arguments\":{\"source\":\"let classify = (x: Int): String :> case x: {\\n    0 :> \\\"zero\\\",\\n    1 :> \\\"one\\\",\\n    _ :> \\\"other\\\"\\n}\\n\\nlet main = (): String :> classify(2)\\n\"}}"}}
+{"type":"turn.completed","usage":{"input_tokens":16376,"cached_input_tokens":11392,"cache_write_input_tokens":0,"output_tokens":157,"reasoning_output_tokens":83}}

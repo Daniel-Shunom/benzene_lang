@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a12baf-0b9e-74e2-8562-1e7b839e8c25"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"{\"tool\":\"check_program\",\"arguments\":{\"source\":\"let message = () :> String {\\n    \\\"He said \\\\\\\"hello\\\\\\\"\\\\nC:\\\\\\\\temp\\\\\\\\file\\\"\\n}\\n\\nlet main = () :> String {\\n    message()\\n}\"}}"}}
+{"type":"turn.completed","usage":{"input_tokens":16544,"cached_input_tokens":9216,"cache_write_input_tokens":0,"output_tokens":78,"reasoning_output_tokens":16}}

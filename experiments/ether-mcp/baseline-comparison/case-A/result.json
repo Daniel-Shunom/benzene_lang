@@ -1,0 +1,534 @@
+{
+  "task": "case",
+  "arm": "A",
+  "model": "gpt-6.1-sol",
+  "reasoning_effort": "low",
+  "compiler_accepted": true,
+  "first_attempt_accepted": true,
+  "repair_rounds": 0,
+  "model_completions": 2,
+  "acknowledged_final_feedback": true,
+  "usage": {
+    "input_tokens": 39918,
+    "cached_input_tokens": 25088,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 64,
+    "reasoning_output_tokens": 0,
+    "total_tokens": 39982
+  },
+  "elapsed_seconds": 8.970555799998692,
+  "attempts": [
+    {
+      "compiler_accepted": true,
+      "source": "func classify(x: Int) :> String\n  case x:\n    0 :> \"zero\"\n    1 :> \"one\"\n    _ :> \"other\"\n  end\nend\n\nfunc main() :> String\n  classify(2)\nend",
+      "candidate": "func classify(x: Int) :> String\n  case x:\n    0 :> \"zero\"\n    1 :> \"one\"\n    _ :> \"other\"\n  end\nend\n\nfunc main() :> String\n  classify(2)\nend",
+      "tool_response": {
+        "jsonrpc": "2.0",
+        "id": "pilot",
+        "result": {
+          "isError": false,
+          "structuredContent": {
+            "source": "func classify(x: Int) :> String\n  case x:\n    0 :> \"zero\"\n    1 :> \"one\"\n    _ :> \"other\"\n  end\nend\n\nfunc main() :> String\n  classify(2)\nend",
+            "validated": true,
+            "valid": true,
+            "analysis": {
+              "tokens": [
+                {
+                  "value": "func",
+                  "type": "FuncStart",
+                  "line": 1,
+                  "length": 4,
+                  "column": 1
+                },
+                {
+                  "value": "classify",
+                  "type": "Identifier",
+                  "line": 1,
+                  "length": 8,
+                  "column": 6
+                },
+                {
+                  "value": "(",
+                  "type": "LParen",
+                  "line": 1,
+                  "length": 1,
+                  "column": 14
+                },
+                {
+                  "value": "x",
+                  "type": "Identifier",
+                  "line": 1,
+                  "length": 1,
+                  "column": 15
+                },
+                {
+                  "value": ":",
+                  "type": "Colon",
+                  "line": 1,
+                  "length": 1,
+                  "column": 16
+                },
+                {
+                  "value": "Int",
+                  "type": "Identifier",
+                  "line": 1,
+                  "length": 3,
+                  "column": 18
+                },
+                {
+                  "value": ")",
+                  "type": "RParen",
+                  "line": 1,
+                  "length": 1,
+                  "column": 21
+                },
+                {
+                  "value": ":>",
+                  "type": "RtnTypeOp",
+                  "line": 1,
+                  "length": 2,
+                  "column": 23
+                },
+                {
+                  "value": "String",
+                  "type": "Identifier",
+                  "line": 1,
+                  "length": 6,
+                  "column": 26
+                },
+                {
+                  "value": "case",
+                  "type": "Case",
+                  "line": 2,
+                  "length": 4,
+                  "column": 3
+                },
+                {
+                  "value": "x",
+                  "type": "Identifier",
+                  "line": 2,
+                  "length": 1,
+                  "column": 8
+                },
+                {
+                  "value": ":",
+                  "type": "Colon",
+                  "line": 2,
+                  "length": 1,
+                  "column": 9
+                },
+                {
+                  "value": "0",
+                  "type": "IntegerLiteral",
+                  "line": 3,
+                  "length": 1,
+                  "column": 5
+                },
+                {
+                  "value": ":>",
+                  "type": "RtnTypeOp",
+                  "line": 3,
+                  "length": 2,
+                  "column": 7
+                },
+                {
+                  "value": "zero",
+                  "type": "StringLiteral",
+                  "line": 3,
+                  "length": 6,
+                  "column": 10
+                },
+                {
+                  "value": "1",
+                  "type": "IntegerLiteral",
+                  "line": 4,
+                  "length": 1,
+                  "column": 5
+                },
+                {
+                  "value": ":>",
+                  "type": "RtnTypeOp",
+                  "line": 4,
+                  "length": 2,
+                  "column": 7
+                },
+                {
+                  "value": "one",
+                  "type": "StringLiteral",
+                  "line": 4,
+                  "length": 5,
+                  "column": 10
+                },
+                {
+                  "value": "_",
+                  "type": "Identifier",
+                  "line": 5,
+                  "length": 1,
+                  "column": 5
+                },
+                {
+                  "value": ":>",
+                  "type": "RtnTypeOp",
+                  "line": 5,
+                  "length": 2,
+                  "column": 7
+                },
+                {
+                  "value": "other",
+                  "type": "StringLiteral",
+                  "line": 5,
+                  "length": 7,
+                  "column": 10
+                },
+                {
+                  "value": "end",
+                  "type": "EndStmt",
+                  "line": 6,
+                  "length": 3,
+                  "column": 3
+                },
+                {
+                  "value": "end",
+                  "type": "EndStmt",
+                  "line": 7,
+                  "length": 3,
+                  "column": 1
+                },
+                {
+                  "value": "func",
+                  "type": "FuncStart",
+                  "line": 9,
+                  "length": 4,
+                  "column": 1
+                },
+                {
+                  "value": "main",
+                  "type": "Identifier",
+                  "line": 9,
+                  "length": 4,
+                  "column": 6
+                },
+                {
+                  "value": "(",
+                  "type": "LParen",
+                  "line": 9,
+                  "length": 1,
+                  "column": 10
+                },
+                {
+                  "value": ")",
+                  "type": "RParen",
+                  "line": 9,
+                  "length": 1,
+                  "column": 11
+                },
+                {
+                  "value": ":>",
+                  "type": "RtnTypeOp",
+                  "line": 9,
+                  "length": 2,
+                  "column": 13
+                },
+                {
+                  "value": "String",
+                  "type": "Identifier",
+                  "line": 9,
+                  "length": 6,
+                  "column": 16
+                },
+                {
+                  "value": "classify",
+                  "type": "Identifier",
+                  "line": 10,
+                  "length": 8,
+                  "column": 3
+                },
+                {
+                  "value": "(",
+                  "type": "LParen",
+                  "line": 10,
+                  "length": 1,
+                  "column": 11
+                },
+                {
+                  "value": "2",
+                  "type": "IntegerLiteral",
+                  "line": 10,
+                  "length": 1,
+                  "column": 12
+                },
+                {
+                  "value": ")",
+                  "type": "RParen",
+                  "line": 10,
+                  "length": 1,
+                  "column": 13
+                },
+                {
+                  "value": "end",
+                  "type": "EndStmt",
+                  "line": 11,
+                  "length": 3,
+                  "column": 1
+                }
+              ],
+              "path": "generated.bz",
+              "index": [
+                {
+                  "type": "Fn(Int) :> String",
+                  "scopeLine": 0,
+                  "scopeColumn": 0,
+                  "returns": "String",
+                  "name": "classify",
+                  "line": 1,
+                  "length": 8,
+                  "kind": "Function",
+                  "isDefinition": true,
+                  "detail": "classify(x: Int) :> String",
+                  "defLine": 1,
+                  "defColumn": 6,
+                  "column": 6,
+                  "annotated": true
+                },
+                {
+                  "type": "",
+                  "scopeLine": 1,
+                  "scopeColumn": 6,
+                  "returns": "",
+                  "name": "String",
+                  "line": 1,
+                  "length": 6,
+                  "kind": "Type",
+                  "isDefinition": false,
+                  "detail": "",
+                  "defLine": 0,
+                  "defColumn": 0,
+                  "column": 26,
+                  "annotated": true
+                },
+                {
+                  "type": "Int",
+                  "scopeLine": 1,
+                  "scopeColumn": 6,
+                  "returns": "",
+                  "name": "x",
+                  "line": 1,
+                  "length": 1,
+                  "kind": "FuncParam",
+                  "isDefinition": true,
+                  "detail": "",
+                  "defLine": 1,
+                  "defColumn": 15,
+                  "column": 15,
+                  "annotated": true
+                },
+                {
+                  "type": "",
+                  "scopeLine": 1,
+                  "scopeColumn": 6,
+                  "returns": "",
+                  "name": "Int",
+                  "line": 1,
+                  "length": 3,
+                  "kind": "Type",
+                  "isDefinition": false,
+                  "detail": "",
+                  "defLine": 0,
+                  "defColumn": 0,
+                  "column": 18,
+                  "annotated": true
+                },
+                {
+                  "type": "Int",
+                  "scopeLine": 1,
+                  "scopeColumn": 6,
+                  "returns": "",
+                  "name": "x",
+                  "line": 2,
+                  "length": 1,
+                  "kind": "FuncParam",
+                  "isDefinition": false,
+                  "detail": "",
+                  "defLine": 1,
+                  "defColumn": 15,
+                  "column": 8,
+                  "annotated": false
+                },
+                {
+                  "type": "Int",
+                  "scopeLine": 1,
+                  "scopeColumn": 6,
+                  "returns": "",
+                  "name": "0",
+                  "line": 3,
+                  "length": 1,
+                  "kind": "Literal",
+                  "isDefinition": false,
+                  "detail": "",
+                  "defLine": 0,
+                  "defColumn": 0,
+                  "column": 5,
+                  "annotated": false
+                },
+                {
+                  "type": "String",
+                  "scopeLine": 1,
+                  "scopeColumn": 6,
+                  "returns": "",
+                  "name": "zero",
+                  "line": 3,
+                  "length": 6,
+                  "kind": "Literal",
+                  "isDefinition": false,
+                  "detail": "",
+                  "defLine": 0,
+                  "defColumn": 0,
+                  "column": 10,
+                  "annotated": false
+                },
+                {
+                  "type": "Int",
+                  "scopeLine": 1,
+                  "scopeColumn": 6,
+                  "returns": "",
+                  "name": "1",
+                  "line": 4,
+                  "length": 1,
+                  "kind": "Literal",
+                  "isDefinition": false,
+                  "detail": "",
+                  "defLine": 0,
+                  "defColumn": 0,
+                  "column": 5,
+                  "annotated": false
+                },
+                {
+                  "type": "String",
+                  "scopeLine": 1,
+                  "scopeColumn": 6,
+                  "returns": "",
+                  "name": "one",
+                  "line": 4,
+                  "length": 5,
+                  "kind": "Literal",
+                  "isDefinition": false,
+                  "detail": "",
+                  "defLine": 0,
+                  "defColumn": 0,
+                  "column": 10,
+                  "annotated": false
+                },
+                {
+                  "type": "String",
+                  "scopeLine": 1,
+                  "scopeColumn": 6,
+                  "returns": "",
+                  "name": "other",
+                  "line": 5,
+                  "length": 7,
+                  "kind": "Literal",
+                  "isDefinition": false,
+                  "detail": "",
+                  "defLine": 0,
+                  "defColumn": 0,
+                  "column": 10,
+                  "annotated": false
+                },
+                {
+                  "type": "Fn() :> String",
+                  "scopeLine": 0,
+                  "scopeColumn": 0,
+                  "returns": "String",
+                  "name": "main",
+                  "line": 9,
+                  "length": 4,
+                  "kind": "Function",
+                  "isDefinition": true,
+                  "detail": "main() :> String",
+                  "defLine": 9,
+                  "defColumn": 6,
+                  "column": 6,
+                  "annotated": true
+                },
+                {
+                  "type": "",
+                  "scopeLine": 9,
+                  "scopeColumn": 6,
+                  "returns": "",
+                  "name": "String",
+                  "line": 9,
+                  "length": 6,
+                  "kind": "Type",
+                  "isDefinition": false,
+                  "detail": "",
+                  "defLine": 0,
+                  "defColumn": 0,
+                  "column": 16,
+                  "annotated": true
+                },
+                {
+                  "type": "Fn(Int) :> String",
+                  "scopeLine": 9,
+                  "scopeColumn": 6,
+                  "returns": "",
+                  "name": "classify",
+                  "line": 10,
+                  "length": 8,
+                  "kind": "Function",
+                  "isDefinition": false,
+                  "detail": "",
+                  "defLine": 1,
+                  "defColumn": 6,
+                  "column": 3,
+                  "annotated": false
+                },
+                {
+                  "type": "Int",
+                  "scopeLine": 9,
+                  "scopeColumn": 6,
+                  "returns": "",
+                  "name": "2",
+                  "line": 10,
+                  "length": 1,
+                  "kind": "Literal",
+                  "isDefinition": false,
+                  "detail": "",
+                  "defLine": 0,
+                  "defColumn": 0,
+                  "column": 12,
+                  "annotated": false
+                }
+              ],
+              "diagnostics": []
+            }
+          },
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"source\":\"func classify(x: Int) :> String\\n  case x:\\n    0 :> \\\"zero\\\"\\n    1 :> \\\"one\\\"\\n    _ :> \\\"other\\\"\\n  end\\nend\\n\\nfunc main() :> String\\n  classify(2)\\nend\",\"validated\":true,\"valid\":true,\"analysis\":{\"tokens\":[{\"value\":\"func\",\"type\":\"FuncStart\",\"line\":1,\"length\":4,\"column\":1},{\"value\":\"classify\",\"type\":\"Identifier\",\"line\":1,\"length\":8,\"column\":6},{\"value\":\"(\",\"type\":\"LParen\",\"line\":1,\"length\":1,\"column\":14},{\"value\":\"x\",\"type\":\"Identifier\",\"line\":1,\"length\":1,\"column\":15},{\"value\":\":\",\"type\":\"Colon\",\"line\":1,\"length\":1,\"column\":16},{\"value\":\"Int\",\"type\":\"Identifier\",\"line\":1,\"length\":3,\"column\":18},{\"value\":\")\",\"type\":\"RParen\",\"line\":1,\"length\":1,\"column\":21},{\"value\":\":>\",\"type\":\"RtnTypeOp\",\"line\":1,\"length\":2,\"column\":23},{\"value\":\"String\",\"type\":\"Identifier\",\"line\":1,\"length\":6,\"column\":26},{\"value\":\"case\",\"type\":\"Case\",\"line\":2,\"length\":4,\"column\":3},{\"value\":\"x\",\"type\":\"Identifier\",\"line\":2,\"length\":1,\"column\":8},{\"value\":\":\",\"type\":\"Colon\",\"line\":2,\"length\":1,\"column\":9},{\"value\":\"0\",\"type\":\"IntegerLiteral\",\"line\":3,\"length\":1,\"column\":5},{\"value\":\":>\",\"type\":\"RtnTypeOp\",\"line\":3,\"length\":2,\"column\":7},{\"value\":\"zero\",\"type\":\"StringLiteral\",\"line\":3,\"length\":6,\"column\":10},{\"value\":\"1\",\"type\":\"IntegerLiteral\",\"line\":4,\"length\":1,\"column\":5},{\"value\":\":>\",\"type\":\"RtnTypeOp\",\"line\":4,\"length\":2,\"column\":7},{\"value\":\"one\",\"type\":\"StringLiteral\",\"line\":4,\"length\":5,\"column\":10},{\"value\":\"_\",\"type\":\"Identifier\",\"line\":5,\"length\":1,\"column\":5},{\"value\":\":>\",\"type\":\"RtnTypeOp\",\"line\":5,\"length\":2,\"column\":7},{\"value\":\"other\",\"type\":\"StringLiteral\",\"line\":5,\"length\":7,\"column\":10},{\"value\":\"end\",\"type\":\"EndStmt\",\"line\":6,\"length\":3,\"column\":3},{\"value\":\"end\",\"type\":\"EndStmt\",\"line\":7,\"length\":3,\"column\":1},{\"value\":\"func\",\"type\":\"FuncStart\",\"line\":9,\"length\":4,\"column\":1},{\"value\":\"main\",\"type\":\"Identifier\",\"line\":9,\"length\":4,\"column\":6},{\"value\":\"(\",\"type\":\"LParen\",\"line\":9,\"length\":1,\"column\":10},{\"value\":\")\",\"type\":\"RParen\",\"line\":9,\"length\":1,\"column\":11},{\"value\":\":>\",\"type\":\"RtnTypeOp\",\"line\":9,\"length\":2,\"column\":13},{\"value\":\"String\",\"type\":\"Identifier\",\"line\":9,\"length\":6,\"column\":16},{\"value\":\"classify\",\"type\":\"Identifier\",\"line\":10,\"length\":8,\"column\":3},{\"value\":\"(\",\"type\":\"LParen\",\"line\":10,\"length\":1,\"column\":11},{\"value\":\"2\",\"type\":\"IntegerLiteral\",\"line\":10,\"length\":1,\"column\":12},{\"value\":\")\",\"type\":\"RParen\",\"line\":10,\"length\":1,\"column\":13},{\"value\":\"end\",\"type\":\"EndStmt\",\"line\":11,\"length\":3,\"column\":1}],\"path\":\"generated.bz\",\"index\":[{\"type\":\"Fn(Int) :> String\",\"scopeLine\":0,\"scopeColumn\":0,\"returns\":\"String\",\"name\":\"classify\",\"line\":1,\"length\":8,\"kind\":\"Function\",\"isDefinition\":true,\"detail\":\"classify(x: Int) :> String\",\"defLine\":1,\"defColumn\":6,\"column\":6,\"annotated\":true},{\"type\":\"\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"String\",\"line\":1,\"length\":6,\"kind\":\"Type\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":26,\"annotated\":true},{\"type\":\"Int\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"x\",\"line\":1,\"length\":1,\"kind\":\"FuncParam\",\"isDefinition\":true,\"detail\":\"\",\"defLine\":1,\"defColumn\":15,\"column\":15,\"annotated\":true},{\"type\":\"\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"Int\",\"line\":1,\"length\":3,\"kind\":\"Type\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":18,\"annotated\":true},{\"type\":\"Int\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"x\",\"line\":2,\"length\":1,\"kind\":\"FuncParam\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":1,\"defColumn\":15,\"column\":8,\"annotated\":false},{\"type\":\"Int\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"0\",\"line\":3,\"length\":1,\"kind\":\"Literal\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":5,\"annotated\":false},{\"type\":\"String\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"zero\",\"line\":3,\"length\":6,\"kind\":\"Literal\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":10,\"annotated\":false},{\"type\":\"Int\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"1\",\"line\":4,\"length\":1,\"kind\":\"Literal\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":5,\"annotated\":false},{\"type\":\"String\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"one\",\"line\":4,\"length\":5,\"kind\":\"Literal\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":10,\"annotated\":false},{\"type\":\"String\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"other\",\"line\":5,\"length\":7,\"kind\":\"Literal\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":10,\"annotated\":false},{\"type\":\"Fn() :> String\",\"scopeLine\":0,\"scopeColumn\":0,\"returns\":\"String\",\"name\":\"main\",\"line\":9,\"length\":4,\"kind\":\"Function\",\"isDefinition\":true,\"detail\":\"main() :> String\",\"defLine\":9,\"defColumn\":6,\"column\":6,\"annotated\":true},{\"type\":\"\",\"scopeLine\":9,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"String\",\"line\":9,\"length\":6,\"kind\":\"Type\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":16,\"annotated\":true},{\"type\":\"Fn(Int) :> String\",\"scopeLine\":9,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"classify\",\"line\":10,\"length\":8,\"kind\":\"Function\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":1,\"defColumn\":6,\"column\":3,\"annotated\":false},{\"type\":\"Int\",\"scopeLine\":9,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"2\",\"line\":10,\"length\":1,\"kind\":\"Literal\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":12,\"annotated\":false}],\"diagnostics\":[]}}"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "per_completion_usage": [
+    {
+      "input_tokens": 18194,
+      "cached_input_tokens": 12544,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 59,
+      "reasoning_output_tokens": 0
+    },
+    {
+      "input_tokens": 21724,
+      "cached_input_tokens": 12544,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 5,
+      "reasoning_output_tokens": 0
+    }
+  ],
+  "task_correctness": "pass by independent source review; not executed",
+  "standalone_ether_check_passed": true,
+  "review_evidence": "Both match integer 0 to zero, 1 to one, wildcard to other; main calls classify(2)."
+}

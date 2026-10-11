@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a12b85-31de-7430-bfca-c4c83048983e"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"func eligible(age: Int, blocked: Bool) :> Bool\n  age >= 18 && ~blocked\nend\n\nfunc main() :> Bool\n  eligible(21, False)\nend"}}
+{"type":"turn.completed","usage":{"input_tokens":18188,"cached_input_tokens":12544,"cache_write_input_tokens":0,"output_tokens":44,"reasoning_output_tokens":0}}

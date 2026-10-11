@@ -1,0 +1,23 @@
+[
+  {
+    "input_tokens": 11581,
+    "cached_input_tokens": 0,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 14,
+    "reasoning_output_tokens": 0
+  },
+  {
+    "input_tokens": 13272,
+    "cached_input_tokens": 9216,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 238,
+    "reasoning_output_tokens": 35
+  },
+  {
+    "input_tokens": 16562,
+    "cached_input_tokens": 9216,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 75,
+    "reasoning_output_tokens": 0
+  }
+]

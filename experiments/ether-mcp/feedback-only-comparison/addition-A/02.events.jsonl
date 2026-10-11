@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a12bab-23e9-7a11-8521-10de556717e8"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"{\"tool\":\"check_program\",\"arguments\":{\"source\":\"let add = (x, y) => x + y\\nlet main = () => add(20, 22)\"}}\n"}}
+{"type":"turn.completed","usage":{"input_tokens":14095,"cached_input_tokens":9216,"cache_write_input_tokens":0,"output_tokens":80,"reasoning_output_tokens":37}}

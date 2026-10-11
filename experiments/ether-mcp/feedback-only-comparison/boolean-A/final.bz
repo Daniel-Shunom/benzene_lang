@@ -1,0 +1,2 @@
+let eligible = fun(age, blocked) { (age >= 18) && not(blocked) }
+let main = fun() { eligible(21, false) }

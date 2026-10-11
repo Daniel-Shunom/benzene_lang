@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a12b86-0dd0-7940-86dd-8daca59849bd"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"func apply_twice(f: Fn(Int) :> Int, x: Int) :> Int\n  f(f(x))\nend\n\nfunc main() :> Int\n  let increment = Fn(n: Int) :> Int\n    n + 1\n  end\n  apply_twice(increment, 40)\nend"}}
+{"type":"turn.completed","usage":{"input_tokens":18208,"cached_input_tokens":12544,"cache_write_input_tokens":0,"output_tokens":72,"reasoning_output_tokens":0}}

@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a12b96-5fc4-7920-97b6-e830ba9b6b01"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"{\"tool\":\"finish\",\"arguments\":{\"summary\":\"Compiler accepted the complete program on the first submission with no diagnostics. eligible uses age >= 18 && ~blocked, and zero-argument main calls eligible(21, False).\"}}"}}
+{"type":"turn.completed","usage":{"input_tokens":19102,"cached_input_tokens":4096,"cache_write_input_tokens":0,"output_tokens":49,"reasoning_output_tokens":0}}

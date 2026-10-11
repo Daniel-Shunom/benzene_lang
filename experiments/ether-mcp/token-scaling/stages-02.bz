@@ -1,0 +1,13 @@
+func step1(value: Int) :> Int
+  value + 1
+end
+
+func step2(value: Int) :> Int
+  value + 2
+end
+
+func main() :> Int
+  let total1 = step1(0)
+  let total2 = step2(total1)
+  total2
+end

@@ -1,0 +1,33 @@
+{
+  "task": "string_escaping",
+  "arm": "B",
+  "model": "gpt-6.1-sol",
+  "reasoning_effort": "low",
+  "first_attempt_accepted": true,
+  "compiler_accepted": true,
+  "submissions": 1,
+  "repair_rounds": 0,
+  "doc_calls": 0,
+  "doc_topics": [],
+  "usage": {
+    "input_tokens": 40051,
+    "cached_input_tokens": 18432,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 183,
+    "reasoning_output_tokens": 0,
+    "total_tokens": 40234
+  },
+  "elapsed_seconds": 17.735944600004586,
+  "protocol_violations": [],
+  "task_correctness": "pass by independent source review; not executed",
+  "runner": "harness",
+  "discovery_calls": 1,
+  "language_documentation_available": false,
+  "final_message": "{\"tool\":\"finish\",\"arguments\":{\"summary\":\"Compiler accepted the complete program. Both functions explicitly return String; main() calls message(), which returns exactly He said \\\"hello\\\"\\nC:\\\\temp\\\\file with one newline and no final newline.\"}}",
+  "task_correct": true,
+  "review_evidence": "Lexer-decoded value independently matches the exact requested two-line string; main calls message.",
+  "standalone_ether_check_passed": true,
+  "diagnostic_phases_by_submission": [
+    []
+  ]
+}

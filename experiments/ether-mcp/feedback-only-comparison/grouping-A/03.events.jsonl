@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a12bab-ffc4-7841-adbe-6c9fb5e1dfb7"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"{\"tool\":\"check_program\",\"arguments\":{\"source\":\"let scaled_sum = fun(a, b, c) { (a + b) * c }\\nlet main = fun() { scaled_sum(2, 3, 4) }\"}}"}}
+{"type":"turn.completed","usage":{"input_tokens":16209,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":140,"reasoning_output_tokens":84}}

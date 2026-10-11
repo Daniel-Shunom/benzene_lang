@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a12bad-ddb7-77f1-b13a-06abd758781c"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"{\"tool\":\"check_program\",\"arguments\":{\"source\":\"fn numbers() -> List<Int> {\\n    return [1, 2, 3];\\n}\\n\\nfn pair() -> (Int, String) {\\n    return (7, \\\"seven\\\");\\n}\\n\\nfn main() -> (Int, String) {\\n    return pair();\\n}\"} }"}}
+{"type":"turn.completed","usage":{"input_tokens":11675,"cached_input_tokens":9216,"cache_write_input_tokens":0,"output_tokens":97,"reasoning_output_tokens":11}}

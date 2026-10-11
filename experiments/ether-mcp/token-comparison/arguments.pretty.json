@@ -1,0 +1,81 @@
+{
+  "construct": {
+    "kind": "Module",
+    "data": [
+      {
+        "kind": "Function",
+        "identifier": "add",
+        "param_list": [
+          {
+            "param": "x",
+            "data_type": {
+              "kind": "NamedType",
+              "name": "Int"
+            }
+          },
+          {
+            "param": "y",
+            "data_type": {
+              "kind": "NamedType",
+              "name": "Int"
+            }
+          }
+        ],
+        "return_type": {
+          "kind": "NamedType",
+          "name": "Int"
+        },
+        "body": [
+          {
+            "kind": "Binary",
+            "operator": "Add",
+            "left": {
+              "kind": "Identifier",
+              "name": "x"
+            },
+            "right": {
+              "kind": "Identifier",
+              "name": "y"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "Function",
+        "identifier": "main",
+        "return_type": {
+          "kind": "NamedType",
+          "name": "Int"
+        },
+        "body": [
+          {
+            "kind": "Let",
+            "identifier": "total",
+            "data_type": {
+              "kind": "NamedType",
+              "name": "Int"
+            },
+            "value": {
+              "kind": "Call",
+              "identifier": "add",
+              "arguments": [
+                {
+                  "kind": "Integer",
+                  "value": 20
+                },
+                {
+                  "kind": "Integer",
+                  "value": 22
+                }
+              ]
+            }
+          },
+          {
+            "kind": "Identifier",
+            "name": "total"
+          }
+        ]
+      }
+    ]
+  }
+}

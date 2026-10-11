@@ -1,0 +1,12 @@
+func identity(x: Int) :> Int
+  x
+end
+
+func double(x: Int) :> Int
+  x * 2
+end
+
+func main() :> Int
+  let value: Int = double(5)
+  identity(value)
+end

@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a12bad-f7d1-78e3-80a2-37b11274356c"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"{\"tool\":\"check_program\",\"arguments\":{\"source\":\"Fn numbers() :> [Int] {\\n    [1, 2, 3]\\n}\\n\\nFn pair() :> (Int, String) {\\n    (7, \\\"seven\\\")\\n}\\n\\nFn main() :> (Int, String) {\\n    pair()\\n}\"} }"}}
+{"type":"turn.completed","usage":{"input_tokens":15182,"cached_input_tokens":9216,"cache_write_input_tokens":0,"output_tokens":125,"reasoning_output_tokens":42}}

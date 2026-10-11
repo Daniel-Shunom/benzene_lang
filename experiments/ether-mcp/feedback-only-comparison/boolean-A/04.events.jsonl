@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a12bad-882c-7cf0-aaa3-f82854039c20"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"{\"tool\":\"check_program\",\"arguments\":{\"source\":\"let eligible = fun(age, blocked) { (age >= 18) && not(blocked) }\\nlet main = fun() { eligible(21, false) }\"}}"}}
+{"type":"turn.completed","usage":{"input_tokens":17529,"cached_input_tokens":9216,"cache_write_input_tokens":0,"output_tokens":130,"reasoning_output_tokens":78}}

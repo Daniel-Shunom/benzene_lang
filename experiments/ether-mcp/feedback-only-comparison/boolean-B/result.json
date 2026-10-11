@@ -1,0 +1,36 @@
+{
+  "task": "boolean",
+  "arm": "B",
+  "model": "gpt-6.1-sol",
+  "reasoning_effort": "low",
+  "first_attempt_accepted": false,
+  "compiler_accepted": true,
+  "submissions": 2,
+  "repair_rounds": 1,
+  "doc_calls": 0,
+  "doc_topics": [],
+  "usage": {
+    "input_tokens": 63946,
+    "cached_input_tokens": 36864,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 476,
+    "reasoning_output_tokens": 0,
+    "total_tokens": 64422
+  },
+  "elapsed_seconds": 34.64267209999525,
+  "protocol_violations": [],
+  "task_correctness": "pass by independent source review; not executed",
+  "runner": "harness",
+  "discovery_calls": 1,
+  "language_documentation_available": false,
+  "final_message": "{\"tool\":\"finish\",\"arguments\":{\"summary\":\"Compiler accepted the complete program after one repair. eligible takes Int age and Bool blocked and returns (age >= 18) && ~blocked. Zero-argument main calls eligible(21, False).\"}}",
+  "task_correct": true,
+  "review_evidence": "Computes age>=18 AND NOT blocked; main calls eligible(21,False).",
+  "standalone_ether_check_passed": true,
+  "diagnostic_phases_by_submission": [
+    [
+      "types"
+    ],
+    []
+  ]
+}

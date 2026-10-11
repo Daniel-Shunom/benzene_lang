@@ -1,0 +1,11 @@
+func classify(x: Int) :> String
+  case x:
+    0 :> "zero"
+    1 :> "one"
+    _ :> "other"
+  end
+end
+
+func main() :> String
+  classify(2)
+end

@@ -1,0 +1,30 @@
+{
+  "task": "addition",
+  "arm": "A",
+  "model": "gpt-6.1-sol",
+  "reasoning_effort": "low",
+  "first_attempt_accepted": true,
+  "compiler_accepted": true,
+  "submissions": 1,
+  "repair_rounds": 0,
+  "doc_calls": 1,
+  "doc_topics": [
+    "grammar"
+  ],
+  "usage": {
+    "input_tokens": 57601,
+    "cached_input_tokens": 18432,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 135,
+    "reasoning_output_tokens": 0,
+    "total_tokens": 57736
+  },
+  "elapsed_seconds": 21.207563600000867,
+  "protocol_violations": [],
+  "task_correctness": "pass by independent source review; not executed",
+  "runner": "harness",
+  "discovery_calls": 1,
+  "final_message": "{\"tool\":\"finish\",\"arguments\":{\"summary\":\"Compiler accepted the complete program on the first submission with no diagnostics. add takes two integers and returns their sum; main returns add(20, 22), yielding 42.\"}}",
+  "review_evidence": "Both define integer addition and call add(20,22).",
+  "standalone_ether_check_passed": true
+}

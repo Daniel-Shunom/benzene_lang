@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a12b84-f1a3-79c2-9c7b-ee51738e5525"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"func square(x: Int) :> Int\n  x * x\nend\n\nfunc main() :> Int\n  square({ 2 + 3 }) + square({ 4 + 5 })\nend"}}
+{"type":"turn.completed","usage":{"input_tokens":18199,"cached_input_tokens":12544,"cache_write_input_tokens":0,"output_tokens":47,"reasoning_output_tokens":0}}

@@ -1,0 +1,17 @@
+task,arm,first_attempt_accepted,compiler_accepted,task_correct,repair_rounds,doc_calls,input_tokens,cached_input_tokens,output_tokens,reasoning_output_tokens,total_tokens
+addition,A,False,False,False,3,0,90183,36864,461,222,90644
+addition,B,True,True,True,0,0,41792,27648,249,0,42041
+boolean,A,False,False,False,3,0,91844,36864,430,174,92274
+boolean,B,False,True,True,1,0,63946,36864,476,0,64422
+call_arguments,A,False,False,False,3,0,91240,55296,415,160,91655
+call_arguments,B,True,True,True,0,0,41415,18432,327,35,41742
+case,A,False,False,False,3,0,94068,48256,666,316,94734
+case,B,False,True,True,1,0,63127,36864,507,0,63634
+collections,A,False,False,False,3,0,101801,55296,523,131,102324
+collections,B,False,True,True,1,0,67377,18432,575,13,67952
+grouping,A,False,False,False,3,0,96544,31744,490,206,97034
+grouping,B,True,True,True,0,0,42133,18432,313,25,42446
+lambda,A,False,False,False,3,0,108534,55808,546,139,109080
+lambda,B,True,True,True,0,0,43560,18432,379,12,43939
+string_escaping,A,False,False,False,3,0,86555,57600,415,110,86970
+string_escaping,B,True,True,True,0,0,40051,18432,183,0,40234

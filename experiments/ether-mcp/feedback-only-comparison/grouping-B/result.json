@@ -1,0 +1,33 @@
+{
+  "task": "grouping",
+  "arm": "B",
+  "model": "gpt-6.1-sol",
+  "reasoning_effort": "low",
+  "first_attempt_accepted": true,
+  "compiler_accepted": true,
+  "submissions": 1,
+  "repair_rounds": 0,
+  "doc_calls": 0,
+  "doc_topics": [],
+  "usage": {
+    "input_tokens": 42133,
+    "cached_input_tokens": 18432,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 313,
+    "reasoning_output_tokens": 25,
+    "total_tokens": 42446
+  },
+  "elapsed_seconds": 21.565348399999493,
+  "protocol_violations": [],
+  "task_correctness": "pass by independent source review; not executed",
+  "runner": "harness",
+  "discovery_calls": 1,
+  "language_documentation_available": false,
+  "final_message": "{\"tool\":\"finish\",\"arguments\":{\"summary\":\"Compiler accepted the complete program on the first submission. scaled_sum takes three integers and computes (a + b) * c; zero-argument main calls scaled_sum(2, 3, 4), yielding 20.\"}}",
+  "task_correct": true,
+  "review_evidence": "Groups a+b before multiplying by c; main calls scaled_sum(2,3,4).",
+  "standalone_ether_check_passed": true,
+  "diagnostic_phases_by_submission": [
+    []
+  ]
+}

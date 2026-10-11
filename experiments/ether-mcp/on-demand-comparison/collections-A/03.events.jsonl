@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a12b96-d975-7b20-9d66-1562ef395cb5"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"{\"tool\":\"finish\",\"arguments\":{\"summary\":\"Accepted on the first submission with no diagnostics. numbers returns [1, 2, 3], pair returns @{7, \\\"seven\\\"}, and zero-argument main returns pair(). All functions have explicit return types.\"}}"}}
+{"type":"turn.completed","usage":{"input_tokens":20333,"cached_input_tokens":9216,"cache_write_input_tokens":0,"output_tokens":58,"reasoning_output_tokens":0}}

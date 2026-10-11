@@ -1,0 +1,30 @@
+{
+  "task": "case",
+  "arm": "B",
+  "model": "gpt-6.1-sol",
+  "reasoning_effort": "low",
+  "first_attempt_accepted": true,
+  "compiler_accepted": true,
+  "submissions": 1,
+  "repair_rounds": 0,
+  "doc_calls": 1,
+  "doc_topics": [
+    "all"
+  ],
+  "usage": {
+    "input_tokens": 63116,
+    "cached_input_tokens": 22528,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 304,
+    "reasoning_output_tokens": 0,
+    "total_tokens": 63420
+  },
+  "elapsed_seconds": 34.95738490000076,
+  "protocol_violations": [],
+  "task_correctness": "pass by independent source review; not executed",
+  "runner": "harness",
+  "discovery_calls": 1,
+  "final_message": "{\"tool\":\"finish\",\"arguments\":{\"summary\":\"Compiler accepted the complete program on the first submission with no diagnostics. classify uses a case expression with a catch-all branch, both functions have explicit String return types, and main returns classify(2), yielding \\\"other\\\".\"}}",
+  "review_evidence": "Both classify 0 as zero, 1 as one, and all others as other; main calls classify(2).",
+  "standalone_ether_check_passed": true
+}

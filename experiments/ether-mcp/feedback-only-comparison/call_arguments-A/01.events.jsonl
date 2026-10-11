@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a12bac-75ef-71b0-b8ec-919d92b270a8"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"{\"tool\":\"check_program\",\"arguments\":{\"source\":\"fn square(x: Int) -> Int {\\n    return x * x;\\n}\\n\\nfn main() -> Int {\\n    return square(2 + 3) + square(4 + 5);\\n}\"} }"}}
+{"type":"turn.completed","usage":{"input_tokens":11685,"cached_input_tokens":9216,"cache_write_input_tokens":0,"output_tokens":81,"reasoning_output_tokens":17}}

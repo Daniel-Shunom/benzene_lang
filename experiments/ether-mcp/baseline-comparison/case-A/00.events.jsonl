@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a12b85-da48-7440-83dc-5eb12f532fb6"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"func classify(x: Int) :> String\n  case x:\n    0 :> \"zero\"\n    1 :> \"one\"\n    _ :> \"other\"\n  end\nend\n\nfunc main() :> String\n  classify(2)\nend"}}
+{"type":"turn.completed","usage":{"input_tokens":18194,"cached_input_tokens":12544,"cache_write_input_tokens":0,"output_tokens":59,"reasoning_output_tokens":0}}

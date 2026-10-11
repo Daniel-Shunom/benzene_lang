@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a12b95-1108-7d60-abfe-5d3b8b564808"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"{\"tool\":\"finish\",\"arguments\":{\"summary\":\"Compiler accepted the complete program on the first submission with no diagnostics. add takes two integers and returns their sum; main returns add(20, 22), yielding 42.\"}}"}}
+{"type":"turn.completed","usage":{"input_tokens":18769,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":49,"reasoning_output_tokens":0}}

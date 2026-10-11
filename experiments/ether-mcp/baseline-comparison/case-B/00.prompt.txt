@@ -1,0 +1,342 @@
+You are participating in a controlled programming experiment. Do not use any tools, read files, browse, or ask questions. Everything needed is in this prompt. Output no explanations or Markdown fences.
+TASK: Define classify(x: Int) returning string zero for integer 0, one for integer 1, and other for every other integer, using a case expression with a catch-all branch. Define main() returning classify(2). Use explicit return types.
+MODE B: Write only a JSON object containing the generate_program arguments. The harness will call generate_program with compiler validation enabled. Use the supplied input schema. No raw-source escape hatches.
+Both modes get at most four submitted candidates (initial attempt plus three repairs). After each candidate the harness returns the actual tool result. If it is compiler-valid and satisfies the task, reply only DONE; otherwise output a complete revised candidate. You must first submit a candidate, not DONE.
+
+GRAMMAR AND RESTRICTIONS:
+﻿# Benzene EBNF specification
+
+This specification describes the current `ether` lexer and parser, inspected on
+2026-10-11. It specifies structurally complete source. Scope resolution and type
+checking impose additional constraints; error recovery can retain malformed ASTs.
+
+## Notation
+
+`=` defines a production, `;` ends it, `|` means alternative, `[ ... ]` means
+optional, `{ ... }` means repetition, and `( ... )` groups terms. Quoted strings
+are terminals. `(* ... *)` is a specification comment, not a language comment.
+`? ... ?` denotes a special character sequence. `EOF` is end of input.
+
+The syntactic grammar operates on tokens, with whitespace and comments skipped.
+Alternatives follow parser preference and repetitions consume greedily. Pipe
+chains are tried before binary expressions. The lexical grammar operates on
+characters without implicit skipping.
+
+## Complete syntactic grammar
+
+```ebnf
+program = { expression }, EOF ;
+expression = import-statement | let-binding | constant-declaration
+           | function-declaration | type-declaration | value-expression ;
+body-expression = constant-declaration | let-binding | value-expression ;
+
+import-statement = "Load", import-module ;
+let-binding = "let", identifier, [ type-annotation ], "=", value-expression ;
+constant-declaration = "const", identifier, [ type-annotation ], "=",
+                       constant-value ;
+constant-value = literal | list-expression | tuple-expression ;
+type-annotation = ":", type-expression ;
+
+type-declaration = "type", identifier, [ type-parameters ],
+                   [ "=", type-expression | subtype-body ] ;
+type-parameters = "(", [ identifier-list ], ")" ;
+identifier-list = identifier, { ",", identifier }, [ "," ] ;
+subtype-body = "{", { type-expression }, "}" ;
+type-expression = named-type | function-type | "Nil" ;
+named-type = identifier, [ type-arguments ] ;
+type-arguments = "(", [ labelled-type-list | type-list ], ")" ;
+type-list = type-expression, { ",", type-expression }, [ "," ] ;
+labelled-type-list = labelled-type, { ",", labelled-type }, [ "," ] ;
+labelled-type = identifier, ":", type-expression ;
+function-type = "Fn", "(", [ type-list ], ")", ":>", type-expression ;
+
+function-declaration = "func", identifier, "(", [ parameter-list ], ")",
+                       [ return-type ], { body-expression }, "end" ;
+lambda-expression = "Fn", "(", [ parameter-list ], ")",
+                    [ return-type ], { body-expression }, "end" ;
+parameter-list = parameter, { ",", parameter }, [ "," ] ;
+parameter = identifier, [ type-annotation ] ;
+return-type = ":>", type-expression ;
+
+value-expression = pipe-chain | or-expression | case-expression
+                 | lambda-expression ;
+pipe-chain = call-expression, "|=>", call-expression,
+             { "|=>", call-expression } ;
+call-expression = identifier, "(", [ argument-list ], ")" ;
+argument-list = primary-expression, { ",", primary-expression }, [ "," ] ;
+
+or-expression = and-expression, { "||", and-expression } ;
+and-expression = equality-expression, { "&&", equality-expression } ;
+equality-expression = comparison-expression,
+                      { ( "==" | "~=" ), comparison-expression } ;
+comparison-expression = additive-expression,
+                        { ( "<" | "<=" | ">" | ">=" ), additive-expression } ;
+additive-expression = multiplicative-expression,
+                      { ( "+" | "-" ), multiplicative-expression } ;
+multiplicative-expression = unary-expression,
+                            { ( "*" | "/" ), unary-expression } ;
+unary-expression = [ "-" | "~" ], primary-expression ;
+primary-expression = call-expression | scoped-expression | list-expression
+                   | tuple-expression | literal | identifier ;
+scoped-expression = "{", { expression }, "}" ;
+list-expression = "[", [ expression-list ], "]" ;
+tuple-expression = "@", "{", [ expression-list ], "}" ;
+expression-list = expression, { ",", expression } ;
+
+case-expression = "case", [ case-conditions ], ":", { case-branch }, "end" ;
+case-conditions = value-expression, { ",", value-expression }, [ "," ] ;
+case-branch = pattern-list, ":>", body-expression ;
+pattern-list = value-expression, { ",", value-expression } ;
+literal = integer-literal | float-literal | string-literal
+        | "True" | "False" | "Nil" ;
+```
+
+### Expression boundaries and restrictions
+
+Newlines normally behave like spaces; expressions are adjacent without statement
+terminators. There are no semicolons. `Load` is the exception: its operand consumes
+the remainder of its physical line. An identifier followed by `(` can form a call
+across whitespace or a newline.
+
+Call targets are single identifiers. Member access, qualified calls, expression
+callees, and postfix invocation such as `f()(x)` have no production. Call arguments
+are primary expressions: `f(1 + 2)`, `f(-1)`, and `f(Fn(x) x end)` are unsupported.
+Use scoped arguments such as `f({ 1 + 2 })`, `f({ -1 })`, or
+`f({ Fn(x) x end })`.
+
+Parentheses do not group value expressions. Braces introduce scoped expressions;
+tuples use `@{ ... }`. A unary expression has at most one prefix operator, so
+`--x` and `~~x` are unsupported. Pipe chains contain only calls and are separate
+from binary precedence. A chain is not a primary expression or binary operand;
+wrap it in braces when needed.
+
+Direct function/lambda bodies and case results use `body-expression`, which
+excludes imports, named function declarations, and type declarations. Scoped
+expressions and collection elements use the broader `expression` rule, subject
+to later scope checks. Constant initializers accept primitive literals, lists,
+and tuples. `const n = -1` is unsupported because `-1` is a unary expression.
+Collection elements use full expressions even in constant initializers; parsing
+does not establish compile-time evaluability.
+
+Type bodies contain consecutive type expressions without commas. A declaration
+may be bare, an alias, or have a subtype body; it cannot have both an alias target
+and a subtype body. Labelled and unlabelled type arguments cannot be mixed. A first
+argument beginning with identifier and `:` selects the labelled form. `Fn` types
+use unlabelled type arguments; `Fn` values use named parameters.
+
+Empty bodies, collections, subtype bodies, parameters, and type arguments are
+structurally accepted. Named function parsing reaches an empty body through its
+recovery path. Empty case conditions and branches are accepted by the parser;
+usefulness and type validity require additional checks. Each branch must have
+one pattern per condition: the parser diagnoses mismatches and poisons the case.
+
+### Operator precedence
+
+All binary levels associate left, including comparisons and equality.
+`1 - 2 - 3` produces an AST equivalent to `(1 - 2) - 3`; these explanatory
+parentheses are not legal grouping syntax.
+
+| Binding, strongest first | Operators |
+| --- | --- |
+| Primary | Calls, scopes, lists, tuples, literals, identifiers |
+| Unary | `-`, `~` (one prefix) |
+| Multiplicative | `*`, `/` |
+| Additive | `+`, `-` |
+| Comparison | `<`, `<=`, `>`, `>=` |
+| Equality | `==`, `~=` |
+| Logical AND | `&&` |
+| Logical OR | `||` |
+
+### Separators
+
+| Sequence | Empty allowed | Trailing comma allowed |
+| --- | --- | --- |
+| Call arguments | Yes | Yes |
+| Function/lambda parameters | Yes | Yes |
+| Type declaration parameters | Yes | Yes |
+| Named type arguments | Yes | Yes |
+| Function type parameters | Yes | Yes |
+| List/tuple elements | Yes | No |
+| Case conditions | Yes | Yes |
+| Case branch patterns | No | No |
+| Subtype body | Yes | No commas at all |
+
+## Lexical grammar
+
+```ebnf
+letter = ? character accepted by std::isalpha ? ;
+digit = ? character accepted by std::isdigit ? ;
+alphanumeric = ? character accepted by std::isalnum ? ;
+identifier-character = alphanumeric | "_" ;
+identifier-spelling = letter, { identifier-character } | "_" ;
+identifier = ? identifier-spelling other than a reserved keyword ? ;
+integer-literal = digit, { digit } ;
+float-literal = digit, { digit }, ".", { digit } ;
+string-literal = '"', { string-character | escape-sequence }, '"' ;
+string-character = ? any character except double quote, backslash, LF ? ;
+escape-sequence = '\', ? any following character ? ;
+horizontal-space = " " | ? tab U+0009 ? | ? carriage return U+000D ? ;
+newline = ? line feed U+000A ? ;
+whitespace = horizontal-space | newline ;
+
+(* Contextual token scanned immediately after Load. *)
+import-module = { horizontal-space | import-character } ;
+import-character = ? any character except horizontal-space and LF ? ;
+
+line-comment = "Cmt", { horizontal-space }, line-comment-tail ;
+line-comment-tail = ? remainder of line not starting with '{', through LF or EOF ? ;
+block-comment = "Cmt", { horizontal-space }, "{",
+                { block-comment-character | comment-escape }, "}" ;
+block-comment-character = ? any character except '}' and backtick ? ;
+comment-escape = "`", ? any following character ? ;
+```
+
+### Identifiers and keywords
+
+The lexer scans a whole identifier before keyword lookup. Keywords are
+case-sensitive:
+
+```text
+Load  Cmt  type  const  let  Nil  True  False  func  Fn  end  case  default
+```
+
+In the usual C locale, letters are ASCII `A` through `Z` and `a` through `z`, and
+digits are `0` through `9`. Classification uses C++ character functions; there is
+no defined Unicode identifier standard. An isolated `_` is an identifier token,
+used as a wildcard in patterns. Leading underscores in longer names such as
+`_name` and `__` are unsupported: the first underscore is an unknown character.
+Underscores after an initial letter are allowed. Built-in type names such as
+`Int`, `String`, and `List` are identifiers rather than keywords.
+
+### Numbers and strings
+
+Numbers have no exponent, base prefix, separator, or leading sign. `1.` is a
+float; `.5` is a dot token followed by an integer. Numeric scanning consumes a
+dot immediately after digits, including in text resembling member access.
+
+Strings use double quotes. `\\`, `\"`, `\n`, `\t`, `\r`, and `\0` decode to
+backslash, quote, LF, tab, CR, and NUL. Other escaped characters are preserved
+with the preceding backslash discarded. Escaped physical LF is accepted;
+unescaped physical LF ends an unterminated string. There are no single-quoted,
+raw, or interpolated strings.
+
+### Imports
+
+After `Load`, the lexer scans until LF or EOF, removes all spaces, tabs, and
+carriage returns, and copies every other character into one `ImportModule` token.
+The path is not restricted to identifiers and dots: `Load foo . bar` produces
+`foo.bar`. An empty token is possible. Module existence and path validity are
+separate concerns. Comment-like text and declarations on the same line become
+part of the module value. The terminating LF is ordinary whitespace.
+
+### Comments
+
+`Cmt` must be a whole keyword: `CmtThing` is an identifier. After horizontal
+whitespace, `{` selects a block comment; otherwise the remainder of the line is
+a line comment. A newline between `Cmt` and `{` does not open a block comment.
+Block comments end at the first unescaped `}` and do not nest. A backtick escapes
+the following character, including `}`. Unterminated block comments are silently
+consumed to EOF. Comments emit no tokens. `--`, `//`, and `/* ... */` are not
+comments.
+
+### Operators and punctuation
+
+Multi-character operators are checked before shorter prefixes:
+
+```text
+|=>  >=  <=  ~=  ==  &&  ||  :>  +  -  *  /  %  >  <  =  ~
+(  )  {  }  [  ]  :  ,  .  @
+```
+
+`%`, `.`, and `default` are recognized tokens without current syntactic
+productions. Other unrecognized characters emit unknown tokens and lexer
+diagnostics. Unmapped internal token enum entries introduce no source syntax.
+
+## Constraints outside EBNF
+
+`SymbolResolver` enforces these enclosing scopes after parsing:
+
+| Construct | Allowed enclosing scopes |
+| --- | --- |
+| Import, type declaration, named function declaration | Module |
+| Constant declaration | Module, Application |
+| Let binding | FunctionDeclaration, LambdaExpression, ScopedExpression, CaseExpression |
+| Call, pipe chain, lambda, scope, case | FunctionDeclaration, LambdaExpression, ScopedExpression, CaseExpression |
+| Literal, identifier reference | Module and the four expression scopes above |
+
+Top-level lets, calls, lambdas, scopes, and cases may parse but fail resolution.
+Named functions inside braces also parse but fail scope checks. Name lookup,
+duplicate declarations, and type compatibility impose further restrictions.
+
+Benzene has no assignment. `x = value` and `x: Int = value` are diagnosed as
+assignments without a binder; use `let` or `const` to introduce a name.
+Annotations belong to bindings and parameters, not general values.
+
+Type parameters are unique names local to their declaration and cannot be
+applied as constructors. Fields and alias targets can use them recursively.
+Alias applications must supply the declared number of arguments; substitution
+includes nested constructor and function types. For example,
+`type Handler(a) = Fn(a) :> String` is a parameterized alias.
+
+Patterns use the value-expression parser, then semantic validation restricts
+their meaning. Identifiers bind values within their branch, `_` ignores a value,
+and literals must match the corresponding condition type. Constructor fields
+are validated recursively; nullary constructors may be bare names. Duplicate
+binders within a branch are errors, but names may be reused in other branches.
+Branch results must have compatible types. `default` has no branch production;
+a binder or `_` can provide an applicable catch-all pattern.
+
+## Recovery and implementation edge cases
+
+These behaviors are not additional well-formed productions:
+
+- `parse_literal` also accepts `UTStringLiteral`. An unescaped LF inside a
+  string emits this token and consumes the LF. A missing closing quote at EOF
+  currently emits an ordinary `StringLiteral`, even after a dangling backslash.
+- Function, lambda, and scope parsing can skip malformed content to a closing
+  delimiter and retain a partial AST. An AST does not establish conformance.
+- A physically exhausted token stream without EOF can let call parsing exit
+  without its closing `)`. Normal lexer output includes EOF; the grammar
+  requires the delimiter in either case.
+- Assignment recovery reports an error and may retain the right-hand value to
+  continue processing subsequent expressions.
+- Top-level recovery skips input and synchronizes at `Load`, `type`, `let`,
+  `const`, `func`, or `case`. The resulting AST may omit invalid source.
+
+## Implementation references
+
+Lexical rules: [lexer.cpp](../core/src/lexer/lexer.cpp),
+[keywords](../core/include/ether/tables/keyword_table.hpp),
+[operators](../core/include/ether/tables/operator_table.hpp), and
+[literals](../core/include/ether/tables/literal_table.hpp).
+
+Syntactic rules: [dispatch](../core/src/parser/parsers.cpp),
+[declarations](../core/src/parser/declarations.cpp),
+[types](../core/src/parser/types.cpp),
+[functions](../core/src/parser/functions.cpp),
+[calls](../core/src/parser/calls.cpp),
+[operators](../core/src/parser/operators.cpp),
+[collections](../core/src/parser/collections.cpp),
+[control flow](../core/src/parser/control_flow.cpp), and
+[tokens](../core/src/parser/tokens.cpp).
+
+Scope rules: [symbol resolver](../core/src/ast_passes/symbol_resolver/symbol_resolver.cpp).
+Existing syntax tests: [test_parser.cpp](../tests/unit/test_parser.cpp).
+
+
+EXAMPLES:
+func identity(x: Int) :> Int
+  x
+end
+
+func double(x: Int) :> Int
+  x * 2
+end
+
+func main() :> Int
+  let value: Int = double(5)
+  identity(value)
+end
+
+AVAILABLE TOOL INPUT SCHEMA:
+{"type":"object","required":["construct"],"properties":{"validate":{"type":"boolean","default":true},"path":{"type":"string","default":"generated.bz"},"construct":{"$ref":"#/$defs/Construct"}},"additionalProperties":false,"$defs":{"TypeField":{"type":"object","required":["name","data_type"],"properties":{"name":{"type":"string"},"data_type":{"$ref":"#/$defs/DataType"}},"additionalProperties":false},"FuncParam":{"type":"object","required":["param"],"properties":{"param":{"type":"string"},"data_type":{"anyOf":[{"$ref":"#/$defs/DataType"},{"type":"null"}]}},"additionalProperties":false},"DataType":{"oneOf":[{"type":"object","required":["kind","name"],"properties":{"name":{"type":"string"},"kind":{"const":"NamedType"}},"additionalProperties":false},{"type":"object","required":["kind","name","arguments"],"properties":{"name":{"type":"string"},"kind":{"const":"AppliedType"},"arguments":{"type":"array","items":{"$ref":"#/$defs/DataType"}}},"additionalProperties":false},{"type":"object","required":["kind","parameters","returns"],"properties":{"returns":{"$ref":"#/$defs/DataType"},"parameters":{"type":"array","items":{"$ref":"#/$defs/DataType"}},"kind":{"const":"FunctionType"}},"additionalProperties":false},{"type":"object","required":["kind","name","fields"],"properties":{"name":{"type":"string"},"kind":{"const":"LabelledType"},"fields":{"type":"array","items":{"$ref":"#/$defs/TypeField"}}},"additionalProperties":false}]},"Construct":{"oneOf":[{"type":"object","required":["kind","data"],"properties":{"kind":{"const":"Module"},"data":{"type":"array","items":{"$ref":"#/$defs/Construct"}}},"additionalProperties":false},{"type":"object","required":["kind","identifier","value"],"properties":{"value":{"$ref":"#/$defs/Construct"},"kind":{"const":"Let"},"identifier":{"type":"string"},"data_type":{"anyOf":[{"$ref":"#/$defs/DataType"},{"type":"null"}]}},"additionalProperties":false},{"type":"object","required":["kind","identifier","value"],"properties":{"value":{"$ref":"#/$defs/Construct"},"kind":{"const":"Const"},"identifier":{"type":"string"},"data_type":{"anyOf":[{"$ref":"#/$defs/DataType"},{"type":"null"}]}},"additionalProperties":false},{"type":"object","required":["kind","identifier","body"],"properties":{"return_type":{"anyOf":[{"$ref":"#/$defs/DataType"},{"type":"null"}]},"param_list":{"type":"array","items":{"$ref":"#/$defs/FuncParam"}},"kind":{"const":"Function"},"identifier":{"type":"string"},"body":{"type":"array","items":{"$ref":"#/$defs/Construct"}}},"additionalProperties":false},{"type":"object","required":["kind","body"],"properties":{"return_type":{"anyOf":[{"$ref":"#/$defs/DataType"},{"type":"null"}]},"param_list":{"type":"array","items":{"$ref":"#/$defs/FuncParam"}},"kind":{"const":"Lambda"},"body":{"type":"array","items":{"$ref":"#/$defs/Construct"}}},"additionalProperties":false},{"type":"object","required":["kind","identifier"],"properties":{"parameters":{"type":"array","items":{"type":"string"}},"members":{"anyOf":[{"type":"array","items":{"$ref":"#/$defs/DataType"}},{"type":"null"}]},"kind":{"const":"TypeDeclaration"},"identifier":{"type":"string"},"alias_target":{"anyOf":[{"$ref":"#/$defs/DataType"},{"type":"null"}]}},"additionalProperties":false},{"type":"object","required":["kind","module_path"],"properties":{"module_path":{"type":"string"},"kind":{"const":"Import"}},"additionalProperties":false},{"type":"object","required":["kind","comment_type","data"],"properties":{"kind":{"const":"Comment"},"data":{"type":"string"},"comment_type":{"type":"string","enum":["SingleLine","MultiLine"]}},"additionalProperties":false},{"type":"object","required":["kind","conditions","case_evals"],"properties":{"kind":{"const":"CaseExpr"},"conditions":{"type":"array","items":{"$ref":"#/$defs/Construct"}},"case_evals":{"type":"array","items":{"$ref":"#/$defs/CaseEval"}}},"additionalProperties":false},{"type":"object","required":["kind","expr"],"properties":{"kind":{"const":"ScopedExpr"},"expr":{"type":"array","items":{"$ref":"#/$defs/Construct"}}},"additionalProperties":false},{"type":"object","required":["kind","name"],"properties":{"name":{"type":"string"},"kind":{"const":"Identifier"}},"additionalProperties":false},{"type":"object","required":["kind","value"],"properties":{"value":{"type":"integer"},"kind":{"const":"Integer"}},"additionalProperties":false},{"type":"object","required":["kind","value"],"properties":{"value":{"type":"number"},"kind":{"const":"Decimal"}},"additionalProperties":false},{"type":"object","required":["kind","value"],"properties":{"value":{"type":"string"},"kind":{"const":"Text"}},"additionalProperties":false},{"type":"object","required":["kind","value"],"properties":{"value":{"type":"boolean"},"kind":{"const":"Boolean"}},"additionalProperties":false},{"type":"object","required":["kind"],"properties":{"kind":{"const":"NilValue"}},"additionalProperties":false},{"type":"object","required":["kind"],"properties":{"kind":{"const":"Wildcard"}},"additionalProperties":false},{"type":"object","required":["kind","identifier"],"properties":{"kind":{"const":"Call"},"identifier":{"type":"string"},"arguments":{"type":"array","items":{"$ref":"#/$defs/Construct"}}},"additionalProperties":false},{"type":"object","required":["kind","operator","left","right"],"properties":{"right":{"$ref":"#/$defs/Construct"},"operator":{"type":"string","enum":["Add","Subtract","Multiply","Divide","Equal","NotEqual","LessThan","LessOrEqual","GreaterThan","GreaterOrEqual","And","Or"]},"left":{"$ref":"#/$defs/Construct"},"kind":{"const":"Binary"}},"additionalProperties":false},{"type":"object","required":["kind","operator","value"],"properties":{"value":{"$ref":"#/$defs/Construct"},"operator":{"type":"string","enum":["Negate","Not"]},"kind":{"const":"Unary"}},"additionalProperties":false},{"type":"object","required":["kind","calls"],"properties":{"kind":{"const":"Pipeline"},"calls":{"type":"array","items":{"$ref":"#/$defs/Construct"}}},"additionalProperties":false},{"type":"object","required":["kind","values"],"properties":{"values":{"type":"array","items":{"$ref":"#/$defs/Construct"}},"kind":{"const":"ListExpr"}},"additionalProperties":false},{"type":"object","required":["kind","values"],"properties":{"values":{"type":"array","items":{"$ref":"#/$defs/Construct"}},"kind":{"const":"TupleExpr"}},"additionalProperties":false}]},"CaseEval":{"type":"object","required":["cases","return_value"],"properties":{"return_value":{"$ref":"#/$defs/Construct"},"cases":{"type":"array","items":{"$ref":"#/$defs/Construct"}}},"additionalProperties":false}}}

@@ -1,0 +1,33 @@
+{
+  "task": "addition",
+  "arm": "B",
+  "model": "gpt-6.1-sol",
+  "reasoning_effort": "low",
+  "first_attempt_accepted": true,
+  "compiler_accepted": true,
+  "submissions": 1,
+  "repair_rounds": 0,
+  "doc_calls": 0,
+  "doc_topics": [],
+  "usage": {
+    "input_tokens": 41792,
+    "cached_input_tokens": 27648,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 249,
+    "reasoning_output_tokens": 0,
+    "total_tokens": 42041
+  },
+  "elapsed_seconds": 20.632874599999923,
+  "protocol_violations": [],
+  "task_correctness": "pass by independent source review; not executed",
+  "runner": "harness",
+  "discovery_calls": 1,
+  "language_documentation_available": false,
+  "final_message": "{\"tool\":\"finish\",\"arguments\":{\"summary\":\"Compiler accepted the complete Benzene program on the first submission with no diagnostics. add takes integers x and y and returns their sum; zero-argument main returns add(20, 22), which is 42.\"}}",
+  "task_correct": true,
+  "review_evidence": "Adds x and y; main calls add(20,22).",
+  "standalone_ether_check_passed": true,
+  "diagnostic_phases_by_submission": [
+    []
+  ]
+}

@@ -1,0 +1,1964 @@
+[
+  {
+    "tool": "discover_tools",
+    "arguments": {},
+    "result": {
+      "tools": [
+        {
+          "name": "generate_program",
+          "description": "Generate Benzene source from structured constructs. By default resolves symbols and type-checks it using ether. Use validate=false for individual fragments; no files are written.",
+          "inputSchema": {
+            "type": "object",
+            "required": [
+              "construct"
+            ],
+            "properties": {
+              "validate": {
+                "type": "boolean",
+                "default": true
+              },
+              "path": {
+                "type": "string",
+                "default": "generated.bz"
+              },
+              "construct": {
+                "$ref": "#/$defs/Construct"
+              }
+            },
+            "additionalProperties": false,
+            "$defs": {
+              "TypeField": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "data_type"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "data_type": {
+                    "$ref": "#/$defs/DataType"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "FuncParam": {
+                "type": "object",
+                "required": [
+                  "param"
+                ],
+                "properties": {
+                  "param": {
+                    "type": "string"
+                  },
+                  "data_type": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/DataType"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              },
+              "DataType": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "name"
+                    ],
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "kind": {
+                        "const": "NamedType"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "name",
+                      "arguments"
+                    ],
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "kind": {
+                        "const": "AppliedType"
+                      },
+                      "arguments": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/$defs/DataType"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "parameters",
+                      "returns"
+                    ],
+                    "properties": {
+                      "returns": {
+                        "$ref": "#/$defs/DataType"
+                      },
+                      "parameters": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/$defs/DataType"
+                        }
+                      },
+                      "kind": {
+                        "const": "FunctionType"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "name",
+                      "fields"
+                    ],
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "kind": {
+                        "const": "LabelledType"
+                      },
+                      "fields": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/$defs/TypeField"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "Construct": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "data"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "Module"
+                      },
+                      "data": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/$defs/Construct"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "identifier",
+                      "value"
+                    ],
+                    "properties": {
+                      "value": {
+                        "$ref": "#/$defs/Construct"
+                      },
+                      "kind": {
+                        "const": "Let"
+                      },
+                      "identifier": {
+                        "type": "string"
+                      },
+                      "data_type": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/DataType"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "identifier",
+                      "value"
+                    ],
+                    "properties": {
+                      "value": {
+                        "$ref": "#/$defs/Construct"
+                      },
+                      "kind": {
+                        "const": "Const"
+                      },
+                      "identifier": {
+                        "type": "string"
+                      },
+                      "data_type": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/DataType"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "identifier",
+                      "body"
+                    ],
+                    "properties": {
+                      "return_type": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/DataType"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "param_list": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/$defs/FuncParam"
+                        }
+                      },
+                      "kind": {
+                        "const": "Function"
+                      },
+                      "identifier": {
+                        "type": "string"
+                      },
+                      "body": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/$defs/Construct"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "body"
+                    ],
+                    "properties": {
+                      "return_type": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/DataType"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "param_list": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/$defs/FuncParam"
+                        }
+                      },
+                      "kind": {
+                        "const": "Lambda"
+                      },
+                      "body": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/$defs/Construct"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "identifier"
+                    ],
+                    "properties": {
+                      "parameters": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "members": {
+                        "anyOf": [
+                          {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/$defs/DataType"
+                            }
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "kind": {
+                        "const": "TypeDeclaration"
+                      },
+                      "identifier": {
+                        "type": "string"
+                      },
+                      "alias_target": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/DataType"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "module_path"
+                    ],
+                    "properties": {
+                      "module_path": {
+                        "type": "string"
+                      },
+                      "kind": {
+                        "const": "Import"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "comment_type",
+                      "data"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "Comment"
+                      },
+                      "data": {
+                        "type": "string"
+                      },
+                      "comment_type": {
+                        "type": "string",
+                        "enum": [
+                          "SingleLine",
+                          "MultiLine"
+                        ]
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "conditions",
+                      "case_evals"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "CaseExpr"
+                      },
+                      "conditions": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/$defs/Construct"
+                        }
+                      },
+                      "case_evals": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/$defs/CaseEval"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "expr"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "ScopedExpr"
+                      },
+                      "expr": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/$defs/Construct"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "name"
+                    ],
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "kind": {
+                        "const": "Identifier"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "value"
+                    ],
+                    "properties": {
+                      "value": {
+                        "type": "integer"
+                      },
+                      "kind": {
+                        "const": "Integer"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "value"
+                    ],
+                    "properties": {
+                      "value": {
+                        "type": "number"
+                      },
+                      "kind": {
+                        "const": "Decimal"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "value"
+                    ],
+                    "properties": {
+                      "value": {
+                        "type": "string"
+                      },
+                      "kind": {
+                        "const": "Text"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "value"
+                    ],
+                    "properties": {
+                      "value": {
+                        "type": "boolean"
+                      },
+                      "kind": {
+                        "const": "Boolean"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "NilValue"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "Wildcard"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "identifier"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "Call"
+                      },
+                      "identifier": {
+                        "type": "string"
+                      },
+                      "arguments": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/$defs/Construct"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "operator",
+                      "left",
+                      "right"
+                    ],
+                    "properties": {
+                      "right": {
+                        "$ref": "#/$defs/Construct"
+                      },
+                      "operator": {
+                        "type": "string",
+                        "enum": [
+                          "Add",
+                          "Subtract",
+                          "Multiply",
+                          "Divide",
+                          "Equal",
+                          "NotEqual",
+                          "LessThan",
+                          "LessOrEqual",
+                          "GreaterThan",
+                          "GreaterOrEqual",
+                          "And",
+                          "Or"
+                        ]
+                      },
+                      "left": {
+                        "$ref": "#/$defs/Construct"
+                      },
+                      "kind": {
+                        "const": "Binary"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "operator",
+                      "value"
+                    ],
+                    "properties": {
+                      "value": {
+                        "$ref": "#/$defs/Construct"
+                      },
+                      "operator": {
+                        "type": "string",
+                        "enum": [
+                          "Negate",
+                          "Not"
+                        ]
+                      },
+                      "kind": {
+                        "const": "Unary"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "calls"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "Pipeline"
+                      },
+                      "calls": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/$defs/Construct"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "values"
+                    ],
+                    "properties": {
+                      "values": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/$defs/Construct"
+                        }
+                      },
+                      "kind": {
+                        "const": "ListExpr"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "values"
+                    ],
+                    "properties": {
+                      "values": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/$defs/Construct"
+                        }
+                      },
+                      "kind": {
+                        "const": "TupleExpr"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "CaseEval": {
+                "type": "object",
+                "required": [
+                  "cases",
+                  "return_value"
+                ],
+                "properties": {
+                  "return_value": {
+                    "$ref": "#/$defs/Construct"
+                  },
+                  "cases": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/Construct"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "annotations": {
+            "readOnlyHint": true,
+            "openWorldHint": false
+          }
+        }
+      ]
+    }
+  },
+  {
+    "tool": "generate_program",
+    "arguments": {
+      "validate": true,
+      "construct": {
+        "kind": "Module",
+        "data": [
+          {
+            "kind": "Function",
+            "identifier": "eligible",
+            "param_list": [
+              {
+                "param": "age",
+                "data_type": {
+                  "kind": "NamedType",
+                  "name": "Integer"
+                }
+              },
+              {
+                "param": "blocked",
+                "data_type": {
+                  "kind": "NamedType",
+                  "name": "Boolean"
+                }
+              }
+            ],
+            "return_type": {
+              "kind": "NamedType",
+              "name": "Boolean"
+            },
+            "body": [
+              {
+                "kind": "Binary",
+                "operator": "And",
+                "left": {
+                  "kind": "Binary",
+                  "operator": "GreaterOrEqual",
+                  "left": {
+                    "kind": "Identifier",
+                    "name": "age"
+                  },
+                  "right": {
+                    "kind": "Integer",
+                    "value": 18
+                  }
+                },
+                "right": {
+                  "kind": "Unary",
+                  "operator": "Not",
+                  "value": {
+                    "kind": "Identifier",
+                    "name": "blocked"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "kind": "Function",
+            "identifier": "main",
+            "param_list": [],
+            "body": [
+              {
+                "kind": "Call",
+                "identifier": "eligible",
+                "arguments": [
+                  {
+                    "kind": "Integer",
+                    "value": 21
+                  },
+                  {
+                    "kind": "Boolean",
+                    "value": false
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "started": 1791734136.9536045,
+    "result": {
+      "isError": true,
+      "structuredContent": {
+        "source": "func eligible(age: Integer, blocked: Boolean) :> Boolean\n  { age >= 18 } && { ~blocked }\nend\n\nfunc main()\n  eligible(21, False)\nend",
+        "validated": true,
+        "valid": false,
+        "analysis": {
+          "tokens": [
+            {
+              "value": "func",
+              "type": "FuncStart",
+              "line": 1,
+              "length": 4,
+              "column": 1
+            },
+            {
+              "value": "eligible",
+              "type": "Identifier",
+              "line": 1,
+              "length": 8,
+              "column": 6
+            },
+            {
+              "value": "(",
+              "type": "LParen",
+              "line": 1,
+              "length": 1,
+              "column": 14
+            },
+            {
+              "value": "age",
+              "type": "Identifier",
+              "line": 1,
+              "length": 3,
+              "column": 15
+            },
+            {
+              "value": ":",
+              "type": "Colon",
+              "line": 1,
+              "length": 1,
+              "column": 18
+            },
+            {
+              "value": "Integer",
+              "type": "Identifier",
+              "line": 1,
+              "length": 7,
+              "column": 20
+            },
+            {
+              "value": ",",
+              "type": "Delimitter",
+              "line": 1,
+              "length": 1,
+              "column": 27
+            },
+            {
+              "value": "blocked",
+              "type": "Identifier",
+              "line": 1,
+              "length": 7,
+              "column": 29
+            },
+            {
+              "value": ":",
+              "type": "Colon",
+              "line": 1,
+              "length": 1,
+              "column": 36
+            },
+            {
+              "value": "Boolean",
+              "type": "Identifier",
+              "line": 1,
+              "length": 7,
+              "column": 38
+            },
+            {
+              "value": ")",
+              "type": "RParen",
+              "line": 1,
+              "length": 1,
+              "column": 45
+            },
+            {
+              "value": ":>",
+              "type": "RtnTypeOp",
+              "line": 1,
+              "length": 2,
+              "column": 47
+            },
+            {
+              "value": "Boolean",
+              "type": "Identifier",
+              "line": 1,
+              "length": 7,
+              "column": 50
+            },
+            {
+              "value": "{",
+              "type": "LBrace",
+              "line": 2,
+              "length": 1,
+              "column": 3
+            },
+            {
+              "value": "age",
+              "type": "Identifier",
+              "line": 2,
+              "length": 3,
+              "column": 5
+            },
+            {
+              "value": ">=",
+              "type": "Ge",
+              "line": 2,
+              "length": 2,
+              "column": 9
+            },
+            {
+              "value": "18",
+              "type": "IntegerLiteral",
+              "line": 2,
+              "length": 2,
+              "column": 12
+            },
+            {
+              "value": "}",
+              "type": "RBrace",
+              "line": 2,
+              "length": 1,
+              "column": 15
+            },
+            {
+              "value": "&&",
+              "type": "And",
+              "line": 2,
+              "length": 2,
+              "column": 17
+            },
+            {
+              "value": "{",
+              "type": "LBrace",
+              "line": 2,
+              "length": 1,
+              "column": 20
+            },
+            {
+              "value": "~",
+              "type": "Not",
+              "line": 2,
+              "length": 1,
+              "column": 22
+            },
+            {
+              "value": "blocked",
+              "type": "Identifier",
+              "line": 2,
+              "length": 7,
+              "column": 23
+            },
+            {
+              "value": "}",
+              "type": "RBrace",
+              "line": 2,
+              "length": 1,
+              "column": 31
+            },
+            {
+              "value": "end",
+              "type": "EndStmt",
+              "line": 3,
+              "length": 3,
+              "column": 1
+            },
+            {
+              "value": "func",
+              "type": "FuncStart",
+              "line": 5,
+              "length": 4,
+              "column": 1
+            },
+            {
+              "value": "main",
+              "type": "Identifier",
+              "line": 5,
+              "length": 4,
+              "column": 6
+            },
+            {
+              "value": "(",
+              "type": "LParen",
+              "line": 5,
+              "length": 1,
+              "column": 10
+            },
+            {
+              "value": ")",
+              "type": "RParen",
+              "line": 5,
+              "length": 1,
+              "column": 11
+            },
+            {
+              "value": "eligible",
+              "type": "Identifier",
+              "line": 6,
+              "length": 8,
+              "column": 3
+            },
+            {
+              "value": "(",
+              "type": "LParen",
+              "line": 6,
+              "length": 1,
+              "column": 11
+            },
+            {
+              "value": "21",
+              "type": "IntegerLiteral",
+              "line": 6,
+              "length": 2,
+              "column": 12
+            },
+            {
+              "value": ",",
+              "type": "Delimitter",
+              "line": 6,
+              "length": 1,
+              "column": 14
+            },
+            {
+              "value": "False",
+              "type": "FalseLiteral",
+              "line": 6,
+              "length": 5,
+              "column": 16
+            },
+            {
+              "value": ")",
+              "type": "RParen",
+              "line": 6,
+              "length": 1,
+              "column": 21
+            },
+            {
+              "value": "end",
+              "type": "EndStmt",
+              "line": 7,
+              "length": 3,
+              "column": 1
+            }
+          ],
+          "path": "generated.bz",
+          "index": [
+            {
+              "type": "Fn(Integer, Boolean) :> Boolean",
+              "scopeLine": 0,
+              "scopeColumn": 0,
+              "returns": "Boolean",
+              "name": "eligible",
+              "line": 1,
+              "length": 8,
+              "kind": "Function",
+              "isDefinition": true,
+              "detail": "eligible(age: Integer, blocked: Boolean) :> Boolean",
+              "defLine": 1,
+              "defColumn": 6,
+              "column": 6,
+              "annotated": true
+            },
+            {
+              "type": "",
+              "scopeLine": 1,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "Boolean",
+              "line": 1,
+              "length": 7,
+              "kind": "Type",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 0,
+              "defColumn": 0,
+              "column": 50,
+              "annotated": true
+            },
+            {
+              "type": "Integer",
+              "scopeLine": 1,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "age",
+              "line": 1,
+              "length": 3,
+              "kind": "FuncParam",
+              "isDefinition": true,
+              "detail": "",
+              "defLine": 1,
+              "defColumn": 15,
+              "column": 15,
+              "annotated": true
+            },
+            {
+              "type": "",
+              "scopeLine": 1,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "Integer",
+              "line": 1,
+              "length": 7,
+              "kind": "Type",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 0,
+              "defColumn": 0,
+              "column": 20,
+              "annotated": true
+            },
+            {
+              "type": "Boolean",
+              "scopeLine": 1,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "blocked",
+              "line": 1,
+              "length": 7,
+              "kind": "FuncParam",
+              "isDefinition": true,
+              "detail": "",
+              "defLine": 1,
+              "defColumn": 29,
+              "column": 29,
+              "annotated": true
+            },
+            {
+              "type": "",
+              "scopeLine": 1,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "Boolean",
+              "line": 1,
+              "length": 7,
+              "kind": "Type",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 0,
+              "defColumn": 0,
+              "column": 38,
+              "annotated": true
+            },
+            {
+              "type": "Integer",
+              "scopeLine": 1,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "age",
+              "line": 2,
+              "length": 3,
+              "kind": "FuncParam",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 1,
+              "defColumn": 15,
+              "column": 5,
+              "annotated": false
+            },
+            {
+              "type": "Int",
+              "scopeLine": 1,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "18",
+              "line": 2,
+              "length": 2,
+              "kind": "Literal",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 0,
+              "defColumn": 0,
+              "column": 12,
+              "annotated": false
+            },
+            {
+              "type": "Boolean",
+              "scopeLine": 1,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "blocked",
+              "line": 2,
+              "length": 7,
+              "kind": "FuncParam",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 1,
+              "defColumn": 29,
+              "column": 23,
+              "annotated": false
+            },
+            {
+              "type": "Fn() :> Boolean",
+              "scopeLine": 0,
+              "scopeColumn": 0,
+              "returns": "Boolean",
+              "name": "main",
+              "line": 5,
+              "length": 4,
+              "kind": "Function",
+              "isDefinition": true,
+              "detail": "main() :> Boolean",
+              "defLine": 5,
+              "defColumn": 6,
+              "column": 6,
+              "annotated": false
+            },
+            {
+              "type": "Fn(Integer, Boolean) :> Boolean",
+              "scopeLine": 5,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "eligible",
+              "line": 6,
+              "length": 8,
+              "kind": "Function",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 1,
+              "defColumn": 6,
+              "column": 3,
+              "annotated": false
+            },
+            {
+              "type": "Int",
+              "scopeLine": 5,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "21",
+              "line": 6,
+              "length": 2,
+              "kind": "Literal",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 0,
+              "defColumn": 0,
+              "column": 12,
+              "annotated": false
+            },
+            {
+              "type": "Bool",
+              "scopeLine": 5,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "False",
+              "line": 6,
+              "length": 5,
+              "kind": "Literal",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 0,
+              "defColumn": 0,
+              "column": 16,
+              "annotated": false
+            }
+          ],
+          "diagnostics": [
+            {
+              "severity": "error",
+              "related": [
+                {
+                  "severity": "note",
+                  "related": [],
+                  "phase": "types",
+                  "message": "The two types must agree here. Add or correct an annotation, or check the expression supplying this value.",
+                  "line": 0,
+                  "length": 1,
+                  "column": 0
+                }
+              ],
+              "phase": "types",
+              "message": "These types are incompatible: expected Integer, but found Int",
+              "line": 2,
+              "length": 2,
+              "column": 9
+            },
+            {
+              "severity": "error",
+              "related": [
+                {
+                  "severity": "note",
+                  "related": [],
+                  "phase": "types",
+                  "message": "The two types must agree here. Add or correct an annotation, or check the expression supplying this value.",
+                  "line": 0,
+                  "length": 1,
+                  "column": 0
+                }
+              ],
+              "phase": "types",
+              "message": "These types are incompatible: expected Boolean, but found Bool",
+              "line": 1,
+              "length": 4,
+              "column": 1
+            },
+            {
+              "severity": "error",
+              "related": [
+                {
+                  "severity": "note",
+                  "related": [],
+                  "phase": "types",
+                  "message": "The two types must agree here. Add or correct an annotation, or check the expression supplying this value.",
+                  "line": 0,
+                  "length": 1,
+                  "column": 0
+                }
+              ],
+              "phase": "types",
+              "message": "These types are incompatible: expected Boolean, but found Bool",
+              "line": 1,
+              "length": 8,
+              "column": 6
+            },
+            {
+              "severity": "error",
+              "related": [
+                {
+                  "severity": "note",
+                  "related": [],
+                  "phase": "types",
+                  "message": "The two types must agree here. Add or correct an annotation, or check the expression supplying this value.",
+                  "line": 0,
+                  "length": 1,
+                  "column": 0
+                }
+              ],
+              "phase": "types",
+              "message": "These types are incompatible: expected Integer, but found Int. Expected declared type Fn(Integer, Boolean) :> Boolean",
+              "line": 6,
+              "length": 8,
+              "column": 3
+            },
+            {
+              "severity": "error",
+              "related": [
+                {
+                  "severity": "note",
+                  "related": [],
+                  "phase": "types",
+                  "message": "The two types must agree here. Add or correct an annotation, or check the expression supplying this value.",
+                  "line": 0,
+                  "length": 1,
+                  "column": 0
+                }
+              ],
+              "phase": "types",
+              "message": "These types are incompatible: expected Boolean, but found Bool. Expected declared type Fn(Integer, Boolean) :> Boolean",
+              "line": 6,
+              "length": 8,
+              "column": 3
+            }
+          ]
+        }
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"source\":\"func eligible(age: Integer, blocked: Boolean) :> Boolean\\n  { age >= 18 } && { ~blocked }\\nend\\n\\nfunc main()\\n  eligible(21, False)\\nend\",\"validated\":true,\"valid\":false,\"analysis\":{\"tokens\":[{\"value\":\"func\",\"type\":\"FuncStart\",\"line\":1,\"length\":4,\"column\":1},{\"value\":\"eligible\",\"type\":\"Identifier\",\"line\":1,\"length\":8,\"column\":6},{\"value\":\"(\",\"type\":\"LParen\",\"line\":1,\"length\":1,\"column\":14},{\"value\":\"age\",\"type\":\"Identifier\",\"line\":1,\"length\":3,\"column\":15},{\"value\":\":\",\"type\":\"Colon\",\"line\":1,\"length\":1,\"column\":18},{\"value\":\"Integer\",\"type\":\"Identifier\",\"line\":1,\"length\":7,\"column\":20},{\"value\":\",\",\"type\":\"Delimitter\",\"line\":1,\"length\":1,\"column\":27},{\"value\":\"blocked\",\"type\":\"Identifier\",\"line\":1,\"length\":7,\"column\":29},{\"value\":\":\",\"type\":\"Colon\",\"line\":1,\"length\":1,\"column\":36},{\"value\":\"Boolean\",\"type\":\"Identifier\",\"line\":1,\"length\":7,\"column\":38},{\"value\":\")\",\"type\":\"RParen\",\"line\":1,\"length\":1,\"column\":45},{\"value\":\":>\",\"type\":\"RtnTypeOp\",\"line\":1,\"length\":2,\"column\":47},{\"value\":\"Boolean\",\"type\":\"Identifier\",\"line\":1,\"length\":7,\"column\":50},{\"value\":\"{\",\"type\":\"LBrace\",\"line\":2,\"length\":1,\"column\":3},{\"value\":\"age\",\"type\":\"Identifier\",\"line\":2,\"length\":3,\"column\":5},{\"value\":\">=\",\"type\":\"Ge\",\"line\":2,\"length\":2,\"column\":9},{\"value\":\"18\",\"type\":\"IntegerLiteral\",\"line\":2,\"length\":2,\"column\":12},{\"value\":\"}\",\"type\":\"RBrace\",\"line\":2,\"length\":1,\"column\":15},{\"value\":\"&&\",\"type\":\"And\",\"line\":2,\"length\":2,\"column\":17},{\"value\":\"{\",\"type\":\"LBrace\",\"line\":2,\"length\":1,\"column\":20},{\"value\":\"~\",\"type\":\"Not\",\"line\":2,\"length\":1,\"column\":22},{\"value\":\"blocked\",\"type\":\"Identifier\",\"line\":2,\"length\":7,\"column\":23},{\"value\":\"}\",\"type\":\"RBrace\",\"line\":2,\"length\":1,\"column\":31},{\"value\":\"end\",\"type\":\"EndStmt\",\"line\":3,\"length\":3,\"column\":1},{\"value\":\"func\",\"type\":\"FuncStart\",\"line\":5,\"length\":4,\"column\":1},{\"value\":\"main\",\"type\":\"Identifier\",\"line\":5,\"length\":4,\"column\":6},{\"value\":\"(\",\"type\":\"LParen\",\"line\":5,\"length\":1,\"column\":10},{\"value\":\")\",\"type\":\"RParen\",\"line\":5,\"length\":1,\"column\":11},{\"value\":\"eligible\",\"type\":\"Identifier\",\"line\":6,\"length\":8,\"column\":3},{\"value\":\"(\",\"type\":\"LParen\",\"line\":6,\"length\":1,\"column\":11},{\"value\":\"21\",\"type\":\"IntegerLiteral\",\"line\":6,\"length\":2,\"column\":12},{\"value\":\",\",\"type\":\"Delimitter\",\"line\":6,\"length\":1,\"column\":14},{\"value\":\"False\",\"type\":\"FalseLiteral\",\"line\":6,\"length\":5,\"column\":16},{\"value\":\")\",\"type\":\"RParen\",\"line\":6,\"length\":1,\"column\":21},{\"value\":\"end\",\"type\":\"EndStmt\",\"line\":7,\"length\":3,\"column\":1}],\"path\":\"generated.bz\",\"index\":[{\"type\":\"Fn(Integer, Boolean) :> Boolean\",\"scopeLine\":0,\"scopeColumn\":0,\"returns\":\"Boolean\",\"name\":\"eligible\",\"line\":1,\"length\":8,\"kind\":\"Function\",\"isDefinition\":true,\"detail\":\"eligible(age: Integer, blocked: Boolean) :> Boolean\",\"defLine\":1,\"defColumn\":6,\"column\":6,\"annotated\":true},{\"type\":\"\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"Boolean\",\"line\":1,\"length\":7,\"kind\":\"Type\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":50,\"annotated\":true},{\"type\":\"Integer\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"age\",\"line\":1,\"length\":3,\"kind\":\"FuncParam\",\"isDefinition\":true,\"detail\":\"\",\"defLine\":1,\"defColumn\":15,\"column\":15,\"annotated\":true},{\"type\":\"\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"Integer\",\"line\":1,\"length\":7,\"kind\":\"Type\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":20,\"annotated\":true},{\"type\":\"Boolean\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"blocked\",\"line\":1,\"length\":7,\"kind\":\"FuncParam\",\"isDefinition\":true,\"detail\":\"\",\"defLine\":1,\"defColumn\":29,\"column\":29,\"annotated\":true},{\"type\":\"\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"Boolean\",\"line\":1,\"length\":7,\"kind\":\"Type\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":38,\"annotated\":true},{\"type\":\"Integer\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"age\",\"line\":2,\"length\":3,\"kind\":\"FuncParam\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":1,\"defColumn\":15,\"column\":5,\"annotated\":false},{\"type\":\"Int\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"18\",\"line\":2,\"length\":2,\"kind\":\"Literal\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":12,\"annotated\":false},{\"type\":\"Boolean\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"blocked\",\"line\":2,\"length\":7,\"kind\":\"FuncParam\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":1,\"defColumn\":29,\"column\":23,\"annotated\":false},{\"type\":\"Fn() :> Boolean\",\"scopeLine\":0,\"scopeColumn\":0,\"returns\":\"Boolean\",\"name\":\"main\",\"line\":5,\"length\":4,\"kind\":\"Function\",\"isDefinition\":true,\"detail\":\"main() :> Boolean\",\"defLine\":5,\"defColumn\":6,\"column\":6,\"annotated\":false},{\"type\":\"Fn(Integer, Boolean) :> Boolean\",\"scopeLine\":5,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"eligible\",\"line\":6,\"length\":8,\"kind\":\"Function\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":1,\"defColumn\":6,\"column\":3,\"annotated\":false},{\"type\":\"Int\",\"scopeLine\":5,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"21\",\"line\":6,\"length\":2,\"kind\":\"Literal\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":12,\"annotated\":false},{\"type\":\"Bool\",\"scopeLine\":5,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"False\",\"line\":6,\"length\":5,\"kind\":\"Literal\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":16,\"annotated\":false}],\"diagnostics\":[{\"severity\":\"error\",\"related\":[{\"severity\":\"note\",\"related\":[],\"phase\":\"types\",\"message\":\"The two types must agree here. Add or correct an annotation, or check the expression supplying this value.\",\"line\":0,\"length\":1,\"column\":0}],\"phase\":\"types\",\"message\":\"These types are incompatible: expected Integer, but found Int\",\"line\":2,\"length\":2,\"column\":9},{\"severity\":\"error\",\"related\":[{\"severity\":\"note\",\"related\":[],\"phase\":\"types\",\"message\":\"The two types must agree here. Add or correct an annotation, or check the expression supplying this value.\",\"line\":0,\"length\":1,\"column\":0}],\"phase\":\"types\",\"message\":\"These types are incompatible: expected Boolean, but found Bool\",\"line\":1,\"length\":4,\"column\":1},{\"severity\":\"error\",\"related\":[{\"severity\":\"note\",\"related\":[],\"phase\":\"types\",\"message\":\"The two types must agree here. Add or correct an annotation, or check the expression supplying this value.\",\"line\":0,\"length\":1,\"column\":0}],\"phase\":\"types\",\"message\":\"These types are incompatible: expected Boolean, but found Bool\",\"line\":1,\"length\":8,\"column\":6},{\"severity\":\"error\",\"related\":[{\"severity\":\"note\",\"related\":[],\"phase\":\"types\",\"message\":\"The two types must agree here. Add or correct an annotation, or check the expression supplying this value.\",\"line\":0,\"length\":1,\"column\":0}],\"phase\":\"types\",\"message\":\"These types are incompatible: expected Integer, but found Int. Expected declared type Fn(Integer, Boolean) :> Boolean\",\"line\":6,\"length\":8,\"column\":3},{\"severity\":\"error\",\"related\":[{\"severity\":\"note\",\"related\":[],\"phase\":\"types\",\"message\":\"The two types must agree here. Add or correct an annotation, or check the expression supplying this value.\",\"line\":0,\"length\":1,\"column\":0}],\"phase\":\"types\",\"message\":\"These types are incompatible: expected Boolean, but found Bool. Expected declared type Fn(Integer, Boolean) :> Boolean\",\"line\":6,\"length\":8,\"column\":3}]}}"
+        }
+      ]
+    }
+  },
+  {
+    "tool": "generate_program",
+    "arguments": {
+      "validate": true,
+      "construct": {
+        "kind": "Module",
+        "data": [
+          {
+            "kind": "Function",
+            "identifier": "eligible",
+            "param_list": [
+              {
+                "param": "age",
+                "data_type": {
+                  "kind": "NamedType",
+                  "name": "Int"
+                }
+              },
+              {
+                "param": "blocked",
+                "data_type": {
+                  "kind": "NamedType",
+                  "name": "Bool"
+                }
+              }
+            ],
+            "return_type": {
+              "kind": "NamedType",
+              "name": "Bool"
+            },
+            "body": [
+              {
+                "kind": "Binary",
+                "operator": "And",
+                "left": {
+                  "kind": "Binary",
+                  "operator": "GreaterOrEqual",
+                  "left": {
+                    "kind": "Identifier",
+                    "name": "age"
+                  },
+                  "right": {
+                    "kind": "Integer",
+                    "value": 18
+                  }
+                },
+                "right": {
+                  "kind": "Unary",
+                  "operator": "Not",
+                  "value": {
+                    "kind": "Identifier",
+                    "name": "blocked"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "kind": "Function",
+            "identifier": "main",
+            "param_list": [],
+            "return_type": {
+              "kind": "NamedType",
+              "name": "Bool"
+            },
+            "body": [
+              {
+                "kind": "Call",
+                "identifier": "eligible",
+                "arguments": [
+                  {
+                    "kind": "Integer",
+                    "value": 21
+                  },
+                  {
+                    "kind": "Boolean",
+                    "value": false
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "started": 1791734145.1352503,
+    "result": {
+      "isError": false,
+      "structuredContent": {
+        "source": "func eligible(age: Int, blocked: Bool) :> Bool\n  { age >= 18 } && { ~blocked }\nend\n\nfunc main() :> Bool\n  eligible(21, False)\nend",
+        "validated": true,
+        "valid": true,
+        "analysis": {
+          "tokens": [
+            {
+              "value": "func",
+              "type": "FuncStart",
+              "line": 1,
+              "length": 4,
+              "column": 1
+            },
+            {
+              "value": "eligible",
+              "type": "Identifier",
+              "line": 1,
+              "length": 8,
+              "column": 6
+            },
+            {
+              "value": "(",
+              "type": "LParen",
+              "line": 1,
+              "length": 1,
+              "column": 14
+            },
+            {
+              "value": "age",
+              "type": "Identifier",
+              "line": 1,
+              "length": 3,
+              "column": 15
+            },
+            {
+              "value": ":",
+              "type": "Colon",
+              "line": 1,
+              "length": 1,
+              "column": 18
+            },
+            {
+              "value": "Int",
+              "type": "Identifier",
+              "line": 1,
+              "length": 3,
+              "column": 20
+            },
+            {
+              "value": ",",
+              "type": "Delimitter",
+              "line": 1,
+              "length": 1,
+              "column": 23
+            },
+            {
+              "value": "blocked",
+              "type": "Identifier",
+              "line": 1,
+              "length": 7,
+              "column": 25
+            },
+            {
+              "value": ":",
+              "type": "Colon",
+              "line": 1,
+              "length": 1,
+              "column": 32
+            },
+            {
+              "value": "Bool",
+              "type": "Identifier",
+              "line": 1,
+              "length": 4,
+              "column": 34
+            },
+            {
+              "value": ")",
+              "type": "RParen",
+              "line": 1,
+              "length": 1,
+              "column": 38
+            },
+            {
+              "value": ":>",
+              "type": "RtnTypeOp",
+              "line": 1,
+              "length": 2,
+              "column": 40
+            },
+            {
+              "value": "Bool",
+              "type": "Identifier",
+              "line": 1,
+              "length": 4,
+              "column": 43
+            },
+            {
+              "value": "{",
+              "type": "LBrace",
+              "line": 2,
+              "length": 1,
+              "column": 3
+            },
+            {
+              "value": "age",
+              "type": "Identifier",
+              "line": 2,
+              "length": 3,
+              "column": 5
+            },
+            {
+              "value": ">=",
+              "type": "Ge",
+              "line": 2,
+              "length": 2,
+              "column": 9
+            },
+            {
+              "value": "18",
+              "type": "IntegerLiteral",
+              "line": 2,
+              "length": 2,
+              "column": 12
+            },
+            {
+              "value": "}",
+              "type": "RBrace",
+              "line": 2,
+              "length": 1,
+              "column": 15
+            },
+            {
+              "value": "&&",
+              "type": "And",
+              "line": 2,
+              "length": 2,
+              "column": 17
+            },
+            {
+              "value": "{",
+              "type": "LBrace",
+              "line": 2,
+              "length": 1,
+              "column": 20
+            },
+            {
+              "value": "~",
+              "type": "Not",
+              "line": 2,
+              "length": 1,
+              "column": 22
+            },
+            {
+              "value": "blocked",
+              "type": "Identifier",
+              "line": 2,
+              "length": 7,
+              "column": 23
+            },
+            {
+              "value": "}",
+              "type": "RBrace",
+              "line": 2,
+              "length": 1,
+              "column": 31
+            },
+            {
+              "value": "end",
+              "type": "EndStmt",
+              "line": 3,
+              "length": 3,
+              "column": 1
+            },
+            {
+              "value": "func",
+              "type": "FuncStart",
+              "line": 5,
+              "length": 4,
+              "column": 1
+            },
+            {
+              "value": "main",
+              "type": "Identifier",
+              "line": 5,
+              "length": 4,
+              "column": 6
+            },
+            {
+              "value": "(",
+              "type": "LParen",
+              "line": 5,
+              "length": 1,
+              "column": 10
+            },
+            {
+              "value": ")",
+              "type": "RParen",
+              "line": 5,
+              "length": 1,
+              "column": 11
+            },
+            {
+              "value": ":>",
+              "type": "RtnTypeOp",
+              "line": 5,
+              "length": 2,
+              "column": 13
+            },
+            {
+              "value": "Bool",
+              "type": "Identifier",
+              "line": 5,
+              "length": 4,
+              "column": 16
+            },
+            {
+              "value": "eligible",
+              "type": "Identifier",
+              "line": 6,
+              "length": 8,
+              "column": 3
+            },
+            {
+              "value": "(",
+              "type": "LParen",
+              "line": 6,
+              "length": 1,
+              "column": 11
+            },
+            {
+              "value": "21",
+              "type": "IntegerLiteral",
+              "line": 6,
+              "length": 2,
+              "column": 12
+            },
+            {
+              "value": ",",
+              "type": "Delimitter",
+              "line": 6,
+              "length": 1,
+              "column": 14
+            },
+            {
+              "value": "False",
+              "type": "FalseLiteral",
+              "line": 6,
+              "length": 5,
+              "column": 16
+            },
+            {
+              "value": ")",
+              "type": "RParen",
+              "line": 6,
+              "length": 1,
+              "column": 21
+            },
+            {
+              "value": "end",
+              "type": "EndStmt",
+              "line": 7,
+              "length": 3,
+              "column": 1
+            }
+          ],
+          "path": "generated.bz",
+          "index": [
+            {
+              "type": "Fn(Int, Bool) :> Bool",
+              "scopeLine": 0,
+              "scopeColumn": 0,
+              "returns": "Bool",
+              "name": "eligible",
+              "line": 1,
+              "length": 8,
+              "kind": "Function",
+              "isDefinition": true,
+              "detail": "eligible(age: Int, blocked: Bool) :> Bool",
+              "defLine": 1,
+              "defColumn": 6,
+              "column": 6,
+              "annotated": true
+            },
+            {
+              "type": "",
+              "scopeLine": 1,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "Bool",
+              "line": 1,
+              "length": 4,
+              "kind": "Type",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 0,
+              "defColumn": 0,
+              "column": 43,
+              "annotated": true
+            },
+            {
+              "type": "Int",
+              "scopeLine": 1,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "age",
+              "line": 1,
+              "length": 3,
+              "kind": "FuncParam",
+              "isDefinition": true,
+              "detail": "",
+              "defLine": 1,
+              "defColumn": 15,
+              "column": 15,
+              "annotated": true
+            },
+            {
+              "type": "",
+              "scopeLine": 1,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "Int",
+              "line": 1,
+              "length": 3,
+              "kind": "Type",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 0,
+              "defColumn": 0,
+              "column": 20,
+              "annotated": true
+            },
+            {
+              "type": "Bool",
+              "scopeLine": 1,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "blocked",
+              "line": 1,
+              "length": 7,
+              "kind": "FuncParam",
+              "isDefinition": true,
+              "detail": "",
+              "defLine": 1,
+              "defColumn": 25,
+              "column": 25,
+              "annotated": true
+            },
+            {
+              "type": "",
+              "scopeLine": 1,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "Bool",
+              "line": 1,
+              "length": 4,
+              "kind": "Type",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 0,
+              "defColumn": 0,
+              "column": 34,
+              "annotated": true
+            },
+            {
+              "type": "Int",
+              "scopeLine": 1,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "age",
+              "line": 2,
+              "length": 3,
+              "kind": "FuncParam",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 1,
+              "defColumn": 15,
+              "column": 5,
+              "annotated": false
+            },
+            {
+              "type": "Int",
+              "scopeLine": 1,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "18",
+              "line": 2,
+              "length": 2,
+              "kind": "Literal",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 0,
+              "defColumn": 0,
+              "column": 12,
+              "annotated": false
+            },
+            {
+              "type": "Bool",
+              "scopeLine": 1,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "blocked",
+              "line": 2,
+              "length": 7,
+              "kind": "FuncParam",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 1,
+              "defColumn": 25,
+              "column": 23,
+              "annotated": false
+            },
+            {
+              "type": "Fn() :> Bool",
+              "scopeLine": 0,
+              "scopeColumn": 0,
+              "returns": "Bool",
+              "name": "main",
+              "line": 5,
+              "length": 4,
+              "kind": "Function",
+              "isDefinition": true,
+              "detail": "main() :> Bool",
+              "defLine": 5,
+              "defColumn": 6,
+              "column": 6,
+              "annotated": true
+            },
+            {
+              "type": "",
+              "scopeLine": 5,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "Bool",
+              "line": 5,
+              "length": 4,
+              "kind": "Type",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 0,
+              "defColumn": 0,
+              "column": 16,
+              "annotated": true
+            },
+            {
+              "type": "Fn(Int, Bool) :> Bool",
+              "scopeLine": 5,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "eligible",
+              "line": 6,
+              "length": 8,
+              "kind": "Function",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 1,
+              "defColumn": 6,
+              "column": 3,
+              "annotated": false
+            },
+            {
+              "type": "Int",
+              "scopeLine": 5,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "21",
+              "line": 6,
+              "length": 2,
+              "kind": "Literal",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 0,
+              "defColumn": 0,
+              "column": 12,
+              "annotated": false
+            },
+            {
+              "type": "Bool",
+              "scopeLine": 5,
+              "scopeColumn": 6,
+              "returns": "",
+              "name": "False",
+              "line": 6,
+              "length": 5,
+              "kind": "Literal",
+              "isDefinition": false,
+              "detail": "",
+              "defLine": 0,
+              "defColumn": 0,
+              "column": 16,
+              "annotated": false
+            }
+          ],
+          "diagnostics": []
+        }
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"source\":\"func eligible(age: Int, blocked: Bool) :> Bool\\n  { age >= 18 } && { ~blocked }\\nend\\n\\nfunc main() :> Bool\\n  eligible(21, False)\\nend\",\"validated\":true,\"valid\":true,\"analysis\":{\"tokens\":[{\"value\":\"func\",\"type\":\"FuncStart\",\"line\":1,\"length\":4,\"column\":1},{\"value\":\"eligible\",\"type\":\"Identifier\",\"line\":1,\"length\":8,\"column\":6},{\"value\":\"(\",\"type\":\"LParen\",\"line\":1,\"length\":1,\"column\":14},{\"value\":\"age\",\"type\":\"Identifier\",\"line\":1,\"length\":3,\"column\":15},{\"value\":\":\",\"type\":\"Colon\",\"line\":1,\"length\":1,\"column\":18},{\"value\":\"Int\",\"type\":\"Identifier\",\"line\":1,\"length\":3,\"column\":20},{\"value\":\",\",\"type\":\"Delimitter\",\"line\":1,\"length\":1,\"column\":23},{\"value\":\"blocked\",\"type\":\"Identifier\",\"line\":1,\"length\":7,\"column\":25},{\"value\":\":\",\"type\":\"Colon\",\"line\":1,\"length\":1,\"column\":32},{\"value\":\"Bool\",\"type\":\"Identifier\",\"line\":1,\"length\":4,\"column\":34},{\"value\":\")\",\"type\":\"RParen\",\"line\":1,\"length\":1,\"column\":38},{\"value\":\":>\",\"type\":\"RtnTypeOp\",\"line\":1,\"length\":2,\"column\":40},{\"value\":\"Bool\",\"type\":\"Identifier\",\"line\":1,\"length\":4,\"column\":43},{\"value\":\"{\",\"type\":\"LBrace\",\"line\":2,\"length\":1,\"column\":3},{\"value\":\"age\",\"type\":\"Identifier\",\"line\":2,\"length\":3,\"column\":5},{\"value\":\">=\",\"type\":\"Ge\",\"line\":2,\"length\":2,\"column\":9},{\"value\":\"18\",\"type\":\"IntegerLiteral\",\"line\":2,\"length\":2,\"column\":12},{\"value\":\"}\",\"type\":\"RBrace\",\"line\":2,\"length\":1,\"column\":15},{\"value\":\"&&\",\"type\":\"And\",\"line\":2,\"length\":2,\"column\":17},{\"value\":\"{\",\"type\":\"LBrace\",\"line\":2,\"length\":1,\"column\":20},{\"value\":\"~\",\"type\":\"Not\",\"line\":2,\"length\":1,\"column\":22},{\"value\":\"blocked\",\"type\":\"Identifier\",\"line\":2,\"length\":7,\"column\":23},{\"value\":\"}\",\"type\":\"RBrace\",\"line\":2,\"length\":1,\"column\":31},{\"value\":\"end\",\"type\":\"EndStmt\",\"line\":3,\"length\":3,\"column\":1},{\"value\":\"func\",\"type\":\"FuncStart\",\"line\":5,\"length\":4,\"column\":1},{\"value\":\"main\",\"type\":\"Identifier\",\"line\":5,\"length\":4,\"column\":6},{\"value\":\"(\",\"type\":\"LParen\",\"line\":5,\"length\":1,\"column\":10},{\"value\":\")\",\"type\":\"RParen\",\"line\":5,\"length\":1,\"column\":11},{\"value\":\":>\",\"type\":\"RtnTypeOp\",\"line\":5,\"length\":2,\"column\":13},{\"value\":\"Bool\",\"type\":\"Identifier\",\"line\":5,\"length\":4,\"column\":16},{\"value\":\"eligible\",\"type\":\"Identifier\",\"line\":6,\"length\":8,\"column\":3},{\"value\":\"(\",\"type\":\"LParen\",\"line\":6,\"length\":1,\"column\":11},{\"value\":\"21\",\"type\":\"IntegerLiteral\",\"line\":6,\"length\":2,\"column\":12},{\"value\":\",\",\"type\":\"Delimitter\",\"line\":6,\"length\":1,\"column\":14},{\"value\":\"False\",\"type\":\"FalseLiteral\",\"line\":6,\"length\":5,\"column\":16},{\"value\":\")\",\"type\":\"RParen\",\"line\":6,\"length\":1,\"column\":21},{\"value\":\"end\",\"type\":\"EndStmt\",\"line\":7,\"length\":3,\"column\":1}],\"path\":\"generated.bz\",\"index\":[{\"type\":\"Fn(Int, Bool) :> Bool\",\"scopeLine\":0,\"scopeColumn\":0,\"returns\":\"Bool\",\"name\":\"eligible\",\"line\":1,\"length\":8,\"kind\":\"Function\",\"isDefinition\":true,\"detail\":\"eligible(age: Int, blocked: Bool) :> Bool\",\"defLine\":1,\"defColumn\":6,\"column\":6,\"annotated\":true},{\"type\":\"\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"Bool\",\"line\":1,\"length\":4,\"kind\":\"Type\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":43,\"annotated\":true},{\"type\":\"Int\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"age\",\"line\":1,\"length\":3,\"kind\":\"FuncParam\",\"isDefinition\":true,\"detail\":\"\",\"defLine\":1,\"defColumn\":15,\"column\":15,\"annotated\":true},{\"type\":\"\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"Int\",\"line\":1,\"length\":3,\"kind\":\"Type\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":20,\"annotated\":true},{\"type\":\"Bool\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"blocked\",\"line\":1,\"length\":7,\"kind\":\"FuncParam\",\"isDefinition\":true,\"detail\":\"\",\"defLine\":1,\"defColumn\":25,\"column\":25,\"annotated\":true},{\"type\":\"\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"Bool\",\"line\":1,\"length\":4,\"kind\":\"Type\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":34,\"annotated\":true},{\"type\":\"Int\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"age\",\"line\":2,\"length\":3,\"kind\":\"FuncParam\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":1,\"defColumn\":15,\"column\":5,\"annotated\":false},{\"type\":\"Int\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"18\",\"line\":2,\"length\":2,\"kind\":\"Literal\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":12,\"annotated\":false},{\"type\":\"Bool\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"blocked\",\"line\":2,\"length\":7,\"kind\":\"FuncParam\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":1,\"defColumn\":25,\"column\":23,\"annotated\":false},{\"type\":\"Fn() :> Bool\",\"scopeLine\":0,\"scopeColumn\":0,\"returns\":\"Bool\",\"name\":\"main\",\"line\":5,\"length\":4,\"kind\":\"Function\",\"isDefinition\":true,\"detail\":\"main() :> Bool\",\"defLine\":5,\"defColumn\":6,\"column\":6,\"annotated\":true},{\"type\":\"\",\"scopeLine\":5,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"Bool\",\"line\":5,\"length\":4,\"kind\":\"Type\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":16,\"annotated\":true},{\"type\":\"Fn(Int, Bool) :> Bool\",\"scopeLine\":5,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"eligible\",\"line\":6,\"length\":8,\"kind\":\"Function\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":1,\"defColumn\":6,\"column\":3,\"annotated\":false},{\"type\":\"Int\",\"scopeLine\":5,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"21\",\"line\":6,\"length\":2,\"kind\":\"Literal\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":12,\"annotated\":false},{\"type\":\"Bool\",\"scopeLine\":5,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"False\",\"line\":6,\"length\":5,\"kind\":\"Literal\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":16,\"annotated\":false}],\"diagnostics\":[]}}"
+        }
+      ]
+    }
+  }
+]

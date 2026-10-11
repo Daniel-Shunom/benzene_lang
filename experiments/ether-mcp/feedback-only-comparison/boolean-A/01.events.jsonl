@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a12bad-1ff2-7693-b9b0-1cbcebb4936c"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"{\"tool\":\"check_program\",\"arguments\":{\"source\":\"fn eligible(age: int, blocked: bool) -> bool {\\n    return age >= 18 && !blocked;\\n}\\n\\nfn main() -> bool {\\n    return eligible(21, false);\\n}\"} }"}}
+{"type":"turn.completed","usage":{"input_tokens":11674,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":78,"reasoning_output_tokens":15}}

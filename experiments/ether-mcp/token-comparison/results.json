@@ -1,0 +1,38 @@
+{
+  "date": "2026-10-11",
+  "authoring_model": "gpt-6.1-sol",
+  "tiktoken_version": "0.14.0",
+  "encoding": "o200k_base",
+  "verified_model_encoding_mapping": null,
+  "scope": "Fixed visible-text representation comparison; not a billed-usage or independent generation benchmark.",
+  "text_format": "UTF-8, LF newlines, no trailing newline, no code fences",
+  "compiler_accepted": true,
+  "source_matches_mcp_output_exactly": true,
+  "rows": [
+    {
+      "representation": "Direct Benzene source",
+      "file": "direct.bz",
+      "tokens": 45,
+      "utf8_bytes": 106
+    },
+    {
+      "representation": "Compact tool arguments",
+      "file": "arguments.json",
+      "tokens": 190,
+      "utf8_bytes": 720
+    },
+    {
+      "representation": "Pretty-printed tool arguments",
+      "file": "arguments.pretty.json",
+      "tokens": 378,
+      "utf8_bytes": 1711
+    },
+    {
+      "representation": "Full compact JSON-RPC request",
+      "file": "request.json",
+      "tokens": 217,
+      "utf8_bytes": 818
+    }
+  ],
+  "compact_to_source_ratio": 4.222222222222222
+}

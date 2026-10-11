@@ -1,0 +1,48 @@
+[
+  {
+    "name": "check_program",
+    "description": "Validate existing Benzene source using the real lexer, parser, resolver and type checker; no code is executed.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string",
+          "default": "generated.bz"
+        }
+      },
+      "required": [
+        "source"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "read_language_docs",
+    "description": "Read Benzene documentation on demand. Both experimental modes have access to the same documents. Choose grammar, examples, overview, or all. No documents are included automatically.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "topic": {
+          "type": "string",
+          "enum": [
+            "grammar",
+            "examples",
+            "overview",
+            "all"
+          ]
+        }
+      },
+      "required": [
+        "topic"
+      ],
+      "additionalProperties": false
+    }
+  }
+]

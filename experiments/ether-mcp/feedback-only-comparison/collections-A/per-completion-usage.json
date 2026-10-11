@@ -1,0 +1,44 @@
+[
+  {
+    "input_tokens": 11563,
+    "cached_input_tokens": 9216,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 14,
+    "reasoning_output_tokens": 0
+  },
+  {
+    "input_tokens": 11675,
+    "cached_input_tokens": 9216,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 97,
+    "reasoning_output_tokens": 11
+  },
+  {
+    "input_tokens": 15182,
+    "cached_input_tokens": 9216,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 125,
+    "reasoning_output_tokens": 42
+  },
+  {
+    "input_tokens": 17712,
+    "cached_input_tokens": 9216,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 108,
+    "reasoning_output_tokens": 23
+  },
+  {
+    "input_tokens": 21302,
+    "cached_input_tokens": 9216,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 143,
+    "reasoning_output_tokens": 55
+  },
+  {
+    "input_tokens": 24367,
+    "cached_input_tokens": 9216,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 36,
+    "reasoning_output_tokens": 0
+  }
+]

@@ -1,0 +1,8 @@
+stages,functions,source_lines,source_tokens,json_tokens,json_to_source_ratio,source_utf8_bytes,json_utf8_bytes,compiler_accepted,source_matches_mcp_output_exactly
+1,2,8,41,156,3.8048780487804876,102,593,True,True
+2,3,13,70,267,3.8142857142857145,178,1020,True,True
+4,5,23,128,489,3.8203125,330,1874,True,True
+8,9,43,244,933,3.8237704918032787,634,3582,True,True
+16,17,83,476,1821,3.8256302521008405,1277,7033,True,True
+32,33,163,940,3597,3.826595744680851,2573,13945,True,True
+64,65,323,1868,7149,3.8270877944325483,5165,27769,True,True

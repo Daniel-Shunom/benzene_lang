@@ -1,0 +1,7 @@
+func add(x: Int, y: Int) :> Int
+  x + y
+end
+
+func main() :> Int
+  add(20, 22)
+end

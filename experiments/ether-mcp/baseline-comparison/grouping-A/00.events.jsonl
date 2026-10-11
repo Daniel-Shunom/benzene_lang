@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a12b84-b215-7b93-a3ee-e0a0331638d9"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"func scaled_sum(a: Int, b: Int, c: Int) :> Int\n  let sum: Int = a + b\n  sum * c\nend\n\nfunc main() :> Int\n  scaled_sum(2, 3, 4)\nend"}}
+{"type":"turn.completed","usage":{"input_tokens":18194,"cached_input_tokens":12544,"cache_write_input_tokens":0,"output_tokens":60,"reasoning_output_tokens":0}}

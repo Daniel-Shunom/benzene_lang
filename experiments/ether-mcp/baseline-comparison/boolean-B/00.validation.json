@@ -1,0 +1,509 @@
+{
+  "jsonrpc": "2.0",
+  "id": "pilot",
+  "result": {
+    "isError": false,
+    "structuredContent": {
+      "source": "func eligible(age: Int, blocked: Bool) :> Bool\n  { age >= 18 } && { ~blocked }\nend\n\nfunc main() :> Bool\n  eligible(21, False)\nend",
+      "validated": true,
+      "valid": true,
+      "analysis": {
+        "tokens": [
+          {
+            "value": "func",
+            "type": "FuncStart",
+            "line": 1,
+            "length": 4,
+            "column": 1
+          },
+          {
+            "value": "eligible",
+            "type": "Identifier",
+            "line": 1,
+            "length": 8,
+            "column": 6
+          },
+          {
+            "value": "(",
+            "type": "LParen",
+            "line": 1,
+            "length": 1,
+            "column": 14
+          },
+          {
+            "value": "age",
+            "type": "Identifier",
+            "line": 1,
+            "length": 3,
+            "column": 15
+          },
+          {
+            "value": ":",
+            "type": "Colon",
+            "line": 1,
+            "length": 1,
+            "column": 18
+          },
+          {
+            "value": "Int",
+            "type": "Identifier",
+            "line": 1,
+            "length": 3,
+            "column": 20
+          },
+          {
+            "value": ",",
+            "type": "Delimitter",
+            "line": 1,
+            "length": 1,
+            "column": 23
+          },
+          {
+            "value": "blocked",
+            "type": "Identifier",
+            "line": 1,
+            "length": 7,
+            "column": 25
+          },
+          {
+            "value": ":",
+            "type": "Colon",
+            "line": 1,
+            "length": 1,
+            "column": 32
+          },
+          {
+            "value": "Bool",
+            "type": "Identifier",
+            "line": 1,
+            "length": 4,
+            "column": 34
+          },
+          {
+            "value": ")",
+            "type": "RParen",
+            "line": 1,
+            "length": 1,
+            "column": 38
+          },
+          {
+            "value": ":>",
+            "type": "RtnTypeOp",
+            "line": 1,
+            "length": 2,
+            "column": 40
+          },
+          {
+            "value": "Bool",
+            "type": "Identifier",
+            "line": 1,
+            "length": 4,
+            "column": 43
+          },
+          {
+            "value": "{",
+            "type": "LBrace",
+            "line": 2,
+            "length": 1,
+            "column": 3
+          },
+          {
+            "value": "age",
+            "type": "Identifier",
+            "line": 2,
+            "length": 3,
+            "column": 5
+          },
+          {
+            "value": ">=",
+            "type": "Ge",
+            "line": 2,
+            "length": 2,
+            "column": 9
+          },
+          {
+            "value": "18",
+            "type": "IntegerLiteral",
+            "line": 2,
+            "length": 2,
+            "column": 12
+          },
+          {
+            "value": "}",
+            "type": "RBrace",
+            "line": 2,
+            "length": 1,
+            "column": 15
+          },
+          {
+            "value": "&&",
+            "type": "And",
+            "line": 2,
+            "length": 2,
+            "column": 17
+          },
+          {
+            "value": "{",
+            "type": "LBrace",
+            "line": 2,
+            "length": 1,
+            "column": 20
+          },
+          {
+            "value": "~",
+            "type": "Not",
+            "line": 2,
+            "length": 1,
+            "column": 22
+          },
+          {
+            "value": "blocked",
+            "type": "Identifier",
+            "line": 2,
+            "length": 7,
+            "column": 23
+          },
+          {
+            "value": "}",
+            "type": "RBrace",
+            "line": 2,
+            "length": 1,
+            "column": 31
+          },
+          {
+            "value": "end",
+            "type": "EndStmt",
+            "line": 3,
+            "length": 3,
+            "column": 1
+          },
+          {
+            "value": "func",
+            "type": "FuncStart",
+            "line": 5,
+            "length": 4,
+            "column": 1
+          },
+          {
+            "value": "main",
+            "type": "Identifier",
+            "line": 5,
+            "length": 4,
+            "column": 6
+          },
+          {
+            "value": "(",
+            "type": "LParen",
+            "line": 5,
+            "length": 1,
+            "column": 10
+          },
+          {
+            "value": ")",
+            "type": "RParen",
+            "line": 5,
+            "length": 1,
+            "column": 11
+          },
+          {
+            "value": ":>",
+            "type": "RtnTypeOp",
+            "line": 5,
+            "length": 2,
+            "column": 13
+          },
+          {
+            "value": "Bool",
+            "type": "Identifier",
+            "line": 5,
+            "length": 4,
+            "column": 16
+          },
+          {
+            "value": "eligible",
+            "type": "Identifier",
+            "line": 6,
+            "length": 8,
+            "column": 3
+          },
+          {
+            "value": "(",
+            "type": "LParen",
+            "line": 6,
+            "length": 1,
+            "column": 11
+          },
+          {
+            "value": "21",
+            "type": "IntegerLiteral",
+            "line": 6,
+            "length": 2,
+            "column": 12
+          },
+          {
+            "value": ",",
+            "type": "Delimitter",
+            "line": 6,
+            "length": 1,
+            "column": 14
+          },
+          {
+            "value": "False",
+            "type": "FalseLiteral",
+            "line": 6,
+            "length": 5,
+            "column": 16
+          },
+          {
+            "value": ")",
+            "type": "RParen",
+            "line": 6,
+            "length": 1,
+            "column": 21
+          },
+          {
+            "value": "end",
+            "type": "EndStmt",
+            "line": 7,
+            "length": 3,
+            "column": 1
+          }
+        ],
+        "path": "generated.bz",
+        "index": [
+          {
+            "type": "Fn(Int, Bool) :> Bool",
+            "scopeLine": 0,
+            "scopeColumn": 0,
+            "returns": "Bool",
+            "name": "eligible",
+            "line": 1,
+            "length": 8,
+            "kind": "Function",
+            "isDefinition": true,
+            "detail": "eligible(age: Int, blocked: Bool) :> Bool",
+            "defLine": 1,
+            "defColumn": 6,
+            "column": 6,
+            "annotated": true
+          },
+          {
+            "type": "",
+            "scopeLine": 1,
+            "scopeColumn": 6,
+            "returns": "",
+            "name": "Bool",
+            "line": 1,
+            "length": 4,
+            "kind": "Type",
+            "isDefinition": false,
+            "detail": "",
+            "defLine": 0,
+            "defColumn": 0,
+            "column": 43,
+            "annotated": true
+          },
+          {
+            "type": "Int",
+            "scopeLine": 1,
+            "scopeColumn": 6,
+            "returns": "",
+            "name": "age",
+            "line": 1,
+            "length": 3,
+            "kind": "FuncParam",
+            "isDefinition": true,
+            "detail": "",
+            "defLine": 1,
+            "defColumn": 15,
+            "column": 15,
+            "annotated": true
+          },
+          {
+            "type": "",
+            "scopeLine": 1,
+            "scopeColumn": 6,
+            "returns": "",
+            "name": "Int",
+            "line": 1,
+            "length": 3,
+            "kind": "Type",
+            "isDefinition": false,
+            "detail": "",
+            "defLine": 0,
+            "defColumn": 0,
+            "column": 20,
+            "annotated": true
+          },
+          {
+            "type": "Bool",
+            "scopeLine": 1,
+            "scopeColumn": 6,
+            "returns": "",
+            "name": "blocked",
+            "line": 1,
+            "length": 7,
+            "kind": "FuncParam",
+            "isDefinition": true,
+            "detail": "",
+            "defLine": 1,
+            "defColumn": 25,
+            "column": 25,
+            "annotated": true
+          },
+          {
+            "type": "",
+            "scopeLine": 1,
+            "scopeColumn": 6,
+            "returns": "",
+            "name": "Bool",
+            "line": 1,
+            "length": 4,
+            "kind": "Type",
+            "isDefinition": false,
+            "detail": "",
+            "defLine": 0,
+            "defColumn": 0,
+            "column": 34,
+            "annotated": true
+          },
+          {
+            "type": "Int",
+            "scopeLine": 1,
+            "scopeColumn": 6,
+            "returns": "",
+            "name": "age",
+            "line": 2,
+            "length": 3,
+            "kind": "FuncParam",
+            "isDefinition": false,
+            "detail": "",
+            "defLine": 1,
+            "defColumn": 15,
+            "column": 5,
+            "annotated": false
+          },
+          {
+            "type": "Int",
+            "scopeLine": 1,
+            "scopeColumn": 6,
+            "returns": "",
+            "name": "18",
+            "line": 2,
+            "length": 2,
+            "kind": "Literal",
+            "isDefinition": false,
+            "detail": "",
+            "defLine": 0,
+            "defColumn": 0,
+            "column": 12,
+            "annotated": false
+          },
+          {
+            "type": "Bool",
+            "scopeLine": 1,
+            "scopeColumn": 6,
+            "returns": "",
+            "name": "blocked",
+            "line": 2,
+            "length": 7,
+            "kind": "FuncParam",
+            "isDefinition": false,
+            "detail": "",
+            "defLine": 1,
+            "defColumn": 25,
+            "column": 23,
+            "annotated": false
+          },
+          {
+            "type": "Fn() :> Bool",
+            "scopeLine": 0,
+            "scopeColumn": 0,
+            "returns": "Bool",
+            "name": "main",
+            "line": 5,
+            "length": 4,
+            "kind": "Function",
+            "isDefinition": true,
+            "detail": "main() :> Bool",
+            "defLine": 5,
+            "defColumn": 6,
+            "column": 6,
+            "annotated": true
+          },
+          {
+            "type": "",
+            "scopeLine": 5,
+            "scopeColumn": 6,
+            "returns": "",
+            "name": "Bool",
+            "line": 5,
+            "length": 4,
+            "kind": "Type",
+            "isDefinition": false,
+            "detail": "",
+            "defLine": 0,
+            "defColumn": 0,
+            "column": 16,
+            "annotated": true
+          },
+          {
+            "type": "Fn(Int, Bool) :> Bool",
+            "scopeLine": 5,
+            "scopeColumn": 6,
+            "returns": "",
+            "name": "eligible",
+            "line": 6,
+            "length": 8,
+            "kind": "Function",
+            "isDefinition": false,
+            "detail": "",
+            "defLine": 1,
+            "defColumn": 6,
+            "column": 3,
+            "annotated": false
+          },
+          {
+            "type": "Int",
+            "scopeLine": 5,
+            "scopeColumn": 6,
+            "returns": "",
+            "name": "21",
+            "line": 6,
+            "length": 2,
+            "kind": "Literal",
+            "isDefinition": false,
+            "detail": "",
+            "defLine": 0,
+            "defColumn": 0,
+            "column": 12,
+            "annotated": false
+          },
+          {
+            "type": "Bool",
+            "scopeLine": 5,
+            "scopeColumn": 6,
+            "returns": "",
+            "name": "False",
+            "line": 6,
+            "length": 5,
+            "kind": "Literal",
+            "isDefinition": false,
+            "detail": "",
+            "defLine": 0,
+            "defColumn": 0,
+            "column": 16,
+            "annotated": false
+          }
+        ],
+        "diagnostics": []
+      }
+    },
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"source\":\"func eligible(age: Int, blocked: Bool) :> Bool\\n  { age >= 18 } && { ~blocked }\\nend\\n\\nfunc main() :> Bool\\n  eligible(21, False)\\nend\",\"validated\":true,\"valid\":true,\"analysis\":{\"tokens\":[{\"value\":\"func\",\"type\":\"FuncStart\",\"line\":1,\"length\":4,\"column\":1},{\"value\":\"eligible\",\"type\":\"Identifier\",\"line\":1,\"length\":8,\"column\":6},{\"value\":\"(\",\"type\":\"LParen\",\"line\":1,\"length\":1,\"column\":14},{\"value\":\"age\",\"type\":\"Identifier\",\"line\":1,\"length\":3,\"column\":15},{\"value\":\":\",\"type\":\"Colon\",\"line\":1,\"length\":1,\"column\":18},{\"value\":\"Int\",\"type\":\"Identifier\",\"line\":1,\"length\":3,\"column\":20},{\"value\":\",\",\"type\":\"Delimitter\",\"line\":1,\"length\":1,\"column\":23},{\"value\":\"blocked\",\"type\":\"Identifier\",\"line\":1,\"length\":7,\"column\":25},{\"value\":\":\",\"type\":\"Colon\",\"line\":1,\"length\":1,\"column\":32},{\"value\":\"Bool\",\"type\":\"Identifier\",\"line\":1,\"length\":4,\"column\":34},{\"value\":\")\",\"type\":\"RParen\",\"line\":1,\"length\":1,\"column\":38},{\"value\":\":>\",\"type\":\"RtnTypeOp\",\"line\":1,\"length\":2,\"column\":40},{\"value\":\"Bool\",\"type\":\"Identifier\",\"line\":1,\"length\":4,\"column\":43},{\"value\":\"{\",\"type\":\"LBrace\",\"line\":2,\"length\":1,\"column\":3},{\"value\":\"age\",\"type\":\"Identifier\",\"line\":2,\"length\":3,\"column\":5},{\"value\":\">=\",\"type\":\"Ge\",\"line\":2,\"length\":2,\"column\":9},{\"value\":\"18\",\"type\":\"IntegerLiteral\",\"line\":2,\"length\":2,\"column\":12},{\"value\":\"}\",\"type\":\"RBrace\",\"line\":2,\"length\":1,\"column\":15},{\"value\":\"&&\",\"type\":\"And\",\"line\":2,\"length\":2,\"column\":17},{\"value\":\"{\",\"type\":\"LBrace\",\"line\":2,\"length\":1,\"column\":20},{\"value\":\"~\",\"type\":\"Not\",\"line\":2,\"length\":1,\"column\":22},{\"value\":\"blocked\",\"type\":\"Identifier\",\"line\":2,\"length\":7,\"column\":23},{\"value\":\"}\",\"type\":\"RBrace\",\"line\":2,\"length\":1,\"column\":31},{\"value\":\"end\",\"type\":\"EndStmt\",\"line\":3,\"length\":3,\"column\":1},{\"value\":\"func\",\"type\":\"FuncStart\",\"line\":5,\"length\":4,\"column\":1},{\"value\":\"main\",\"type\":\"Identifier\",\"line\":5,\"length\":4,\"column\":6},{\"value\":\"(\",\"type\":\"LParen\",\"line\":5,\"length\":1,\"column\":10},{\"value\":\")\",\"type\":\"RParen\",\"line\":5,\"length\":1,\"column\":11},{\"value\":\":>\",\"type\":\"RtnTypeOp\",\"line\":5,\"length\":2,\"column\":13},{\"value\":\"Bool\",\"type\":\"Identifier\",\"line\":5,\"length\":4,\"column\":16},{\"value\":\"eligible\",\"type\":\"Identifier\",\"line\":6,\"length\":8,\"column\":3},{\"value\":\"(\",\"type\":\"LParen\",\"line\":6,\"length\":1,\"column\":11},{\"value\":\"21\",\"type\":\"IntegerLiteral\",\"line\":6,\"length\":2,\"column\":12},{\"value\":\",\",\"type\":\"Delimitter\",\"line\":6,\"length\":1,\"column\":14},{\"value\":\"False\",\"type\":\"FalseLiteral\",\"line\":6,\"length\":5,\"column\":16},{\"value\":\")\",\"type\":\"RParen\",\"line\":6,\"length\":1,\"column\":21},{\"value\":\"end\",\"type\":\"EndStmt\",\"line\":7,\"length\":3,\"column\":1}],\"path\":\"generated.bz\",\"index\":[{\"type\":\"Fn(Int, Bool) :> Bool\",\"scopeLine\":0,\"scopeColumn\":0,\"returns\":\"Bool\",\"name\":\"eligible\",\"line\":1,\"length\":8,\"kind\":\"Function\",\"isDefinition\":true,\"detail\":\"eligible(age: Int, blocked: Bool) :> Bool\",\"defLine\":1,\"defColumn\":6,\"column\":6,\"annotated\":true},{\"type\":\"\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"Bool\",\"line\":1,\"length\":4,\"kind\":\"Type\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":43,\"annotated\":true},{\"type\":\"Int\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"age\",\"line\":1,\"length\":3,\"kind\":\"FuncParam\",\"isDefinition\":true,\"detail\":\"\",\"defLine\":1,\"defColumn\":15,\"column\":15,\"annotated\":true},{\"type\":\"\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"Int\",\"line\":1,\"length\":3,\"kind\":\"Type\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":20,\"annotated\":true},{\"type\":\"Bool\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"blocked\",\"line\":1,\"length\":7,\"kind\":\"FuncParam\",\"isDefinition\":true,\"detail\":\"\",\"defLine\":1,\"defColumn\":25,\"column\":25,\"annotated\":true},{\"type\":\"\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"Bool\",\"line\":1,\"length\":4,\"kind\":\"Type\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":34,\"annotated\":true},{\"type\":\"Int\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"age\",\"line\":2,\"length\":3,\"kind\":\"FuncParam\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":1,\"defColumn\":15,\"column\":5,\"annotated\":false},{\"type\":\"Int\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"18\",\"line\":2,\"length\":2,\"kind\":\"Literal\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":12,\"annotated\":false},{\"type\":\"Bool\",\"scopeLine\":1,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"blocked\",\"line\":2,\"length\":7,\"kind\":\"FuncParam\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":1,\"defColumn\":25,\"column\":23,\"annotated\":false},{\"type\":\"Fn() :> Bool\",\"scopeLine\":0,\"scopeColumn\":0,\"returns\":\"Bool\",\"name\":\"main\",\"line\":5,\"length\":4,\"kind\":\"Function\",\"isDefinition\":true,\"detail\":\"main() :> Bool\",\"defLine\":5,\"defColumn\":6,\"column\":6,\"annotated\":true},{\"type\":\"\",\"scopeLine\":5,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"Bool\",\"line\":5,\"length\":4,\"kind\":\"Type\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":16,\"annotated\":true},{\"type\":\"Fn(Int, Bool) :> Bool\",\"scopeLine\":5,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"eligible\",\"line\":6,\"length\":8,\"kind\":\"Function\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":1,\"defColumn\":6,\"column\":3,\"annotated\":false},{\"type\":\"Int\",\"scopeLine\":5,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"21\",\"line\":6,\"length\":2,\"kind\":\"Literal\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":12,\"annotated\":false},{\"type\":\"Bool\",\"scopeLine\":5,\"scopeColumn\":6,\"returns\":\"\",\"name\":\"False\",\"line\":6,\"length\":5,\"kind\":\"Literal\",\"isDefinition\":false,\"detail\":\"\",\"defLine\":0,\"defColumn\":0,\"column\":16,\"annotated\":false}],\"diagnostics\":[]}}"
+      }
+    ]
+  }
+}

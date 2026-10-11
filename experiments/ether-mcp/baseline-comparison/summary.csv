@@ -1,0 +1,17 @@
+task,arm,compiler_accepted,first_attempt_accepted,repair_rounds,task_correctness,input_tokens,cached_input_tokens,output_tokens,reasoning_output_tokens,total_tokens
+addition,A,True,True,0,pass by independent source review; not executed,39968,25088,46,0,40014
+addition,B,True,True,0,pass by independent source review; not executed,43272,27136,175,0,43447
+boolean,A,True,True,0,pass by independent source review; not executed,39785,25088,49,0,39834
+boolean,B,True,True,0,pass by independent source review; not executed,43301,25088,208,0,43509
+call_arguments,A,True,True,0,pass by independent source review; not executed,39979,25088,52,0,40031
+call_arguments,B,True,True,0,pass by independent source review; not executed,43366,25088,242,0,43608
+case,A,True,True,0,pass by independent source review; not executed,39918,25088,64,0,39982
+case,B,True,True,0,pass by independent source review; not executed,43242,25088,213,0,43455
+collections,A,True,True,0,pass by independent source review; not executed,41009,25088,62,0,41071
+collections,B,True,True,0,pass by independent source review; not executed,44361,25088,240,0,44601
+grouping,A,True,True,0,pass by independent source review; not executed,41519,25088,65,0,41584
+grouping,B,True,True,0,pass by independent source review; not executed,44407,25088,255,0,44662
+lambda,A,True,True,0,pass by independent source review; not executed,41631,25088,77,0,41708
+lambda,B,True,True,0,pass by independent source review; not executed,45013,25088,284,0,45297
+string_escaping,A,True,True,0,pass by independent source review; not executed,38232,25088,43,0,38275
+string_escaping,B,True,True,0,pass by independent source review; not executed,41477,25088,113,0,41590

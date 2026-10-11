@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a12bab-c771-72b0-ba15-e9bda52d2a2d"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"{\"tool\":\"check_program\",\"arguments\":{\"source\":\"fn scaled_sum(a: int, b: int, c: int) -> int {\\n    return (a + b) * c;\\n}\\n\\nfn main() -> int {\\n    return scaled_sum(2, 3, 4);\\n}\"}}\n"}}
+{"type":"turn.completed","usage":{"input_tokens":11672,"cached_input_tokens":9216,"cache_write_input_tokens":0,"output_tokens":89,"reasoning_output_tokens":16}}

@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a12b98-2c92-7353-8d46-ac14dfec6726"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"{\"tool\":\"finish\",\"arguments\":{\"summary\":\"Compiler accepted the complete program on the first submission with no diagnostics. All named and anonymous functions have explicit Int return types; apply_twice applies f twice, and main returns 42.\"}}"}}
+{"type":"turn.completed","usage":{"input_tokens":22715,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":51,"reasoning_output_tokens":0}}

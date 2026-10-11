@@ -1,0 +1,323 @@
+func step1(value: Int) :> Int
+  value + 1
+end
+
+func step2(value: Int) :> Int
+  value + 2
+end
+
+func step3(value: Int) :> Int
+  value + 3
+end
+
+func step4(value: Int) :> Int
+  value + 4
+end
+
+func step5(value: Int) :> Int
+  value + 5
+end
+
+func step6(value: Int) :> Int
+  value + 6
+end
+
+func step7(value: Int) :> Int
+  value + 7
+end
+
+func step8(value: Int) :> Int
+  value + 8
+end
+
+func step9(value: Int) :> Int
+  value + 9
+end
+
+func step10(value: Int) :> Int
+  value + 10
+end
+
+func step11(value: Int) :> Int
+  value + 11
+end
+
+func step12(value: Int) :> Int
+  value + 12
+end
+
+func step13(value: Int) :> Int
+  value + 13
+end
+
+func step14(value: Int) :> Int
+  value + 14
+end
+
+func step15(value: Int) :> Int
+  value + 15
+end
+
+func step16(value: Int) :> Int
+  value + 16
+end
+
+func step17(value: Int) :> Int
+  value + 17
+end
+
+func step18(value: Int) :> Int
+  value + 18
+end
+
+func step19(value: Int) :> Int
+  value + 19
+end
+
+func step20(value: Int) :> Int
+  value + 20
+end
+
+func step21(value: Int) :> Int
+  value + 21
+end
+
+func step22(value: Int) :> Int
+  value + 22
+end
+
+func step23(value: Int) :> Int
+  value + 23
+end
+
+func step24(value: Int) :> Int
+  value + 24
+end
+
+func step25(value: Int) :> Int
+  value + 25
+end
+
+func step26(value: Int) :> Int
+  value + 26
+end
+
+func step27(value: Int) :> Int
+  value + 27
+end
+
+func step28(value: Int) :> Int
+  value + 28
+end
+
+func step29(value: Int) :> Int
+  value + 29
+end
+
+func step30(value: Int) :> Int
+  value + 30
+end
+
+func step31(value: Int) :> Int
+  value + 31
+end
+
+func step32(value: Int) :> Int
+  value + 32
+end
+
+func step33(value: Int) :> Int
+  value + 33
+end
+
+func step34(value: Int) :> Int
+  value + 34
+end
+
+func step35(value: Int) :> Int
+  value + 35
+end
+
+func step36(value: Int) :> Int
+  value + 36
+end
+
+func step37(value: Int) :> Int
+  value + 37
+end
+
+func step38(value: Int) :> Int
+  value + 38
+end
+
+func step39(value: Int) :> Int
+  value + 39
+end
+
+func step40(value: Int) :> Int
+  value + 40
+end
+
+func step41(value: Int) :> Int
+  value + 41
+end
+
+func step42(value: Int) :> Int
+  value + 42
+end
+
+func step43(value: Int) :> Int
+  value + 43
+end
+
+func step44(value: Int) :> Int
+  value + 44
+end
+
+func step45(value: Int) :> Int
+  value + 45
+end
+
+func step46(value: Int) :> Int
+  value + 46
+end
+
+func step47(value: Int) :> Int
+  value + 47
+end
+
+func step48(value: Int) :> Int
+  value + 48
+end
+
+func step49(value: Int) :> Int
+  value + 49
+end
+
+func step50(value: Int) :> Int
+  value + 50
+end
+
+func step51(value: Int) :> Int
+  value + 51
+end
+
+func step52(value: Int) :> Int
+  value + 52
+end
+
+func step53(value: Int) :> Int
+  value + 53
+end
+
+func step54(value: Int) :> Int
+  value + 54
+end
+
+func step55(value: Int) :> Int
+  value + 55
+end
+
+func step56(value: Int) :> Int
+  value + 56
+end
+
+func step57(value: Int) :> Int
+  value + 57
+end
+
+func step58(value: Int) :> Int
+  value + 58
+end
+
+func step59(value: Int) :> Int
+  value + 59
+end
+
+func step60(value: Int) :> Int
+  value + 60
+end
+
+func step61(value: Int) :> Int
+  value + 61
+end
+
+func step62(value: Int) :> Int
+  value + 62
+end
+
+func step63(value: Int) :> Int
+  value + 63
+end
+
+func step64(value: Int) :> Int
+  value + 64
+end
+
+func main() :> Int
+  let total1 = step1(0)
+  let total2 = step2(total1)
+  let total3 = step3(total2)
+  let total4 = step4(total3)
+  let total5 = step5(total4)
+  let total6 = step6(total5)
+  let total7 = step7(total6)
+  let total8 = step8(total7)
+  let total9 = step9(total8)
+  let total10 = step10(total9)
+  let total11 = step11(total10)
+  let total12 = step12(total11)
+  let total13 = step13(total12)
+  let total14 = step14(total13)
+  let total15 = step15(total14)
+  let total16 = step16(total15)
+  let total17 = step17(total16)
+  let total18 = step18(total17)
+  let total19 = step19(total18)
+  let total20 = step20(total19)
+  let total21 = step21(total20)
+  let total22 = step22(total21)
+  let total23 = step23(total22)
+  let total24 = step24(total23)
+  let total25 = step25(total24)
+  let total26 = step26(total25)
+  let total27 = step27(total26)
+  let total28 = step28(total27)
+  let total29 = step29(total28)
+  let total30 = step30(total29)
+  let total31 = step31(total30)
+  let total32 = step32(total31)
+  let total33 = step33(total32)
+  let total34 = step34(total33)
+  let total35 = step35(total34)
+  let total36 = step36(total35)
+  let total37 = step37(total36)
+  let total38 = step38(total37)
+  let total39 = step39(total38)
+  let total40 = step40(total39)
+  let total41 = step41(total40)
+  let total42 = step42(total41)
+  let total43 = step43(total42)
+  let total44 = step44(total43)
+  let total45 = step45(total44)
+  let total46 = step46(total45)
+  let total47 = step47(total46)
+  let total48 = step48(total47)
+  let total49 = step49(total48)
+  let total50 = step50(total49)
+  let total51 = step51(total50)
+  let total52 = step52(total51)
+  let total53 = step53(total52)
+  let total54 = step54(total53)
+  let total55 = step55(total54)
+  let total56 = step56(total55)
+  let total57 = step57(total56)
+  let total58 = step58(total57)
+  let total59 = step59(total58)
+  let total60 = step60(total59)
+  let total61 = step61(total60)
+  let total62 = step62(total61)
+  let total63 = step63(total62)
+  let total64 = step64(total63)
+  total64
+end
