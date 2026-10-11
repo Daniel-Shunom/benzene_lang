@@ -1,288 +1,318 @@
-# Benzene Grammar
+﻿# Benzene EBNF specification
 
-This document specifies the surface grammar of Benzene as currently implemented
-by the `ether` front-end (lexer + parser). It is descriptive — it tracks the
-parser, not a future ideal — and should be updated alongside parser changes.
+This specification describes the current `ether` lexer and parser, inspected on
+2026-10-11. It specifies structurally complete source. Scope resolution and type
+checking impose additional constraints; error recovery can retain malformed ASTs.
 
-Notation: EBNF-ish.
-- `A | B` — alternatives
-- `A?`    — optional
-- `A*`    — zero or more
-- `A+`    — one or more
-- `"x"`   — literal text (token)
-- `<x>`   — terminal token class produced by the lexer
-- All whitespace and comments are skipped between tokens.
+## Notation
 
-## 1. Lexical structure
+`=` defines a production, `;` ends it, `|` means alternative, `[ ... ]` means
+optional, `{ ... }` means repetition, and `( ... )` groups terms. Quoted strings
+are terminals. `(* ... *)` is a specification comment, not a language comment.
+`? ... ?` denotes a special character sequence. `EOF` is end of input.
 
-### 1.1 Tokens
+The syntactic grammar operates on tokens, with whitespace and comments skipped.
+Alternatives follow parser preference and repetitions consume greedily. Pipe
+chains are tried before binary expressions. The lexical grammar operates on
+characters without implicit skipping.
 
-```
-<integer>     ::= digit+
-<float>       ::= digit+ "." digit*
-<string>      ::= '"' string-char* '"'
-<ut-string>   ::= '"' string-char* (newline | EOF)        ; unterminated
-<identifier>  ::= alpha (alpha | digit | "_")*
-<import-mod>  ::= (alpha | "_" | ".")+                    ; emitted after Load
-<unknown>     ::= any single char not consumed elsewhere  ; reported by lexer
-```
+## Complete syntactic grammar
 
-`string-char` accepts the standard escapes `\\ \" \n \t \r \0`. Any other
-escape character is taken literally.
+```ebnf
+program = { expression }, EOF ;
+expression = import-statement | let-binding | constant-declaration
+           | function-declaration | type-declaration | value-expression ;
+body-expression = constant-declaration | let-binding | value-expression ;
 
-### 1.2 Keywords
+import-statement = "Load", import-module ;
+let-binding = "let", identifier, [ type-annotation ], "=", value-expression ;
+constant-declaration = "const", identifier, [ type-annotation ], "=",
+                       constant-value ;
+constant-value = literal | list-expression | tuple-expression ;
+type-annotation = ":", type-expression ;
 
-```
-Load   Cmt   const   let   func   end   case   default
-True   False   Nil
-```
+type-declaration = "type", identifier, [ type-parameters ],
+                   [ "=", type-expression | subtype-body ] ;
+type-parameters = "(", [ identifier-list ], ")" ;
+identifier-list = identifier, { ",", identifier }, [ "," ] ;
+subtype-body = "{", { type-expression }, "}" ;
+type-expression = named-type | function-type | "Nil" ;
+named-type = identifier, [ type-arguments ] ;
+type-arguments = "(", [ labelled-type-list | type-list ], ")" ;
+type-list = type-expression, { ",", type-expression }, [ "," ] ;
+labelled-type-list = labelled-type, { ",", labelled-type }, [ "," ] ;
+labelled-type = identifier, ":", type-expression ;
+function-type = "Fn", "(", [ type-list ], ")", ":>", type-expression ;
 
-`Cmt` introduces a comment and produces no tokens:
+function-declaration = "func", identifier, "(", [ parameter-list ], ")",
+                       [ return-type ], { body-expression }, "end" ;
+lambda-expression = "Fn", "(", [ parameter-list ], ")",
+                    [ return-type ], { body-expression }, "end" ;
+parameter-list = parameter, { ",", parameter }, [ "," ] ;
+parameter = identifier, [ type-annotation ] ;
+return-type = ":>", type-expression ;
 
-```
-Cmt <text-to-newline>
-Cmt "{" <text-with-balanced-content> "}"
-```
+value-expression = pipe-chain | or-expression | case-expression
+                 | lambda-expression ;
+pipe-chain = call-expression, "|=>", call-expression,
+             { "|=>", call-expression } ;
+call-expression = identifier, "(", [ argument-list ], ")" ;
+argument-list = primary-expression, { ",", primary-expression }, [ "," ] ;
 
-### 1.3 Operators and punctuation
+or-expression = and-expression, { "||", and-expression } ;
+and-expression = equality-expression, { "&&", equality-expression } ;
+equality-expression = comparison-expression,
+                      { ( "==" | "~=" ), comparison-expression } ;
+comparison-expression = additive-expression,
+                        { ( "<" | "<=" | ">" | ">=" ), additive-expression } ;
+additive-expression = multiplicative-expression,
+                      { ( "+" | "-" ), multiplicative-expression } ;
+multiplicative-expression = unary-expression,
+                            { ( "*" | "/" ), unary-expression } ;
+unary-expression = [ "-" | "~" ], primary-expression ;
+primary-expression = call-expression | scoped-expression | list-expression
+                   | tuple-expression | literal | identifier ;
+scoped-expression = "{", { expression }, "}" ;
+list-expression = "[", [ expression-list ], "]" ;
+tuple-expression = "@", "{", [ expression-list ], "}" ;
+expression-list = expression, { ",", expression } ;
 
-Listed roughly by binding tightness.
-
-```
-unary    ::= "-" | "~"
-mul      ::= "*" | "/"            ; "%" is lexed but not yet wired in expressions
-add      ::= "+" | "-"
-cmp      ::= "<" | "<=" | ">" | ">="
-eq       ::= "==" | "~="
-and-op   ::= "&&"
-or-op    ::= "||"
-pipe     ::= "|=>"
-arrow    ::= ":>"                 ; return-type / case-arrow
-assign   ::= "="
-punct    ::= "(" | ")" | "{" | "}" | "[" | "]" | ":" | "," | "."
-```
-
-The lexer matches multi-character operators before their single-character
-prefixes (`>=` before `>`, `==` before `=`, etc.).
-
-## 2. Top level
-
-```
-program       ::= top-expr*
-
-top-expr      ::= import-stmt
-                | type-decl
-                | const-decl
-                | let-decl
-                | func-decl
-                | value-expr
-```
-
-Note: `let-decl` and `value-expr` are syntactically accepted at the top level
-but are flagged by the symbol resolver. See §6.
-
-## 3. Declarations
-
-### 3.1 Imports
-
-```
-import-stmt   ::= "Load" <import-mod>
+case-expression = "case", [ case-conditions ], ":", { case-branch }, "end" ;
+case-conditions = value-expression, { ",", value-expression }, [ "," ] ;
+case-branch = pattern-list, ":>", body-expression ;
+pattern-list = value-expression, { ",", value-expression } ;
+literal = integer-literal | float-literal | string-literal
+        | "True" | "False" | "Nil" ;
 ```
 
-### 3.2 Constants
+### Expression boundaries and restrictions
 
-```
-const-decl    ::= "const" <identifier> type-annot? "=" literal
-```
+Newlines normally behave like spaces; expressions are adjacent without statement
+terminators. There are no semicolons. `Load` is the exception: its operand consumes
+the remainder of its physical line. An identifier followed by `(` can form a call
+across whitespace or a newline.
 
-`const` values must be literals (no expressions). Constants are only valid at
-module scope.
+Call targets are single identifiers. Member access, qualified calls, expression
+callees, and postfix invocation such as `f()(x)` have no production. Call arguments
+are primary expressions: `f(1 + 2)`, `f(-1)`, and `f(Fn(x) x end)` are unsupported.
+Use scoped arguments such as `f({ 1 + 2 })`, `f({ -1 })`, or
+`f({ Fn(x) x end })`.
 
-### 3.3 Let bindings
+Parentheses do not group value expressions. Braces introduce scoped expressions;
+tuples use `@{ ... }`. A unary expression has at most one prefix operator, so
+`--x` and `~~x` are unsupported. Pipe chains contain only calls and are separate
+from binary precedence. A chain is not a primary expression or binary operand;
+wrap it in braces when needed.
 
-Benzene has no assignment. A name is introduced by a binding and is never
-rebound, so `x = value` in expression position is rejected by the parser:
+Direct function/lambda bodies and case results use `body-expression`, which
+excludes imports, named function declarations, and type declarations. Scoped
+expressions and collection elements use the broader `expression` rule, subject
+to later scope checks. Constant initializers accept primitive literals, lists,
+and tuples. `const n = -1` is unsupported because `-1` is a unary expression.
+Collection elements use full expressions even in constant initializers; parsing
+does not establish compile-time evaluability.
 
-```
-let x = 1      -- a binding
-x = 2          -- error: `x` is assigned without a binder
-x: Int = 2     -- the same error; an annotation belongs to the binding
-```
+Type bodies contain consecutive type expressions without commas. A declaration
+may be bare, an alias, or have a subtype body; it cannot have both an alias target
+and a subtype body. Labelled and unlabelled type arguments cannot be mixed. A first
+argument beginning with identifier and `:` selects the labelled form. `Fn` types
+use unlabelled type arguments; `Fn` values use named parameters.
 
-The parser reports this and then continues from the assigned value, so the
-statements after it are still parsed rather than discarded.
+Empty bodies, collections, subtype bodies, parameters, and type arguments are
+structurally accepted. Named function parsing reaches an empty body through its
+recovery path. Empty case conditions and branches are accepted by the parser;
+usefulness and type validity require additional checks. Each branch must have
+one pattern per condition: the parser diagnoses mismatches and poisons the case.
 
+### Operator precedence
 
-```
-let-decl      ::= "let" <identifier> type-annot? "=" value-expr
-```
+All binary levels associate left, including comparisons and equality.
+`1 - 2 - 3` produces an AST equivalent to `(1 - 2) - 3`; these explanatory
+parentheses are not legal grouping syntax.
 
-`let` is only valid inside a function body or inside a scoped expression (which
-is itself nested in a function body).
+| Binding, strongest first | Operators |
+| --- | --- |
+| Primary | Calls, scopes, lists, tuples, literals, identifiers |
+| Unary | `-`, `~` (one prefix) |
+| Multiplicative | `*`, `/` |
+| Additive | `+`, `-` |
+| Comparison | `<`, `<=`, `>`, `>=` |
+| Equality | `==`, `~=` |
+| Logical AND | `&&` |
+| Logical OR | `||` |
 
-### 3.4 Type annotations
+### Separators
 
-```
-type-annot    ::= ":" type-expr
-```
+| Sequence | Empty allowed | Trailing comma allowed |
+| --- | --- | --- |
+| Call arguments | Yes | Yes |
+| Function/lambda parameters | Yes | Yes |
+| Type declaration parameters | Yes | Yes |
+| Named type arguments | Yes | Yes |
+| Function type parameters | Yes | Yes |
+| List/tuple elements | Yes | No |
+| Case conditions | Yes | Yes |
+| Case branch patterns | No | No |
+| Subtype body | Yes | No commas at all |
 
-Type expressions retain their structure for later type checking.
+## Lexical grammar
 
-```
-type-decl     ::= "type" <identifier> type-params? ("=" type-expr | "{" type-expr* "}")?
-type-params   ::= "(" (<identifier> ("," <identifier>)* ","?)? ")"
-type-expr     ::= <identifier> type-args?
-                | "Fn" "(" type-list? ")" ":>" type-expr
-                | "Nil"
-type-args     ::= "(" (type-list | labelled-list)? ")"
-type-list     ::= type-expr ("," type-expr)* ","?
-labelled-list ::= <identifier> ":" type-expr ("," <identifier> ":" type-expr)* ","?
-```
+```ebnf
+letter = ? character accepted by std::isalpha ? ;
+digit = ? character accepted by std::isdigit ? ;
+alphanumeric = ? character accepted by std::isalnum ? ;
+identifier-character = alphanumeric | "_" ;
+identifier-spelling = letter, { identifier-character } | "_" ;
+identifier = ? identifier-spelling other than a reserved keyword ? ;
+integer-literal = digit, { digit } ;
+float-literal = digit, { digit }, ".", { digit } ;
+string-literal = '"', { string-character | escape-sequence }, '"' ;
+string-character = ? any character except double quote, backslash, LF ? ;
+escape-sequence = '\', ? any following character ? ;
+horizontal-space = " " | ? tab U+0009 ? | ? carriage return U+000D ? ;
+newline = ? line feed U+000A ? ;
+whitespace = horizontal-space | newline ;
 
-Declaration parameters are names. Type arguments are recursive expressions;
-an argument list uses either labelled or unlabelled arguments throughout.
-Subtype bodies contain consecutive type expressions without commas.
+(* Contextual token scanned immediately after Load. *)
+import-module = { horizontal-space | import-character } ;
+import-character = ? any character except horizontal-space and LF ? ;
 
-Generic constructor fields refer to the parameters declared by their parent:
-
-```benzene
-type Result(a, b) { Ok(a) Error(b) }
-```
-
-For `Result(Int, String)`, `Ok` carries an `Int` and `Error` carries a
-`String`. Each constructor use gets fresh parameters, so separate uses may
-have different types. Fields can also use concrete declared types and nested
-applications such as `List(a)`. An undeclared parameter such as `c` in
-`Ok(c)`, a duplicate parameter name, or applying a parameter as `a(Int)` is
-an error. Parameters are visible only within their type declaration.
-
-Parameterized aliases substitute their arguments into the complete target
-type. For example, `type Handler(data) = Fn(data) :> String` makes
-`Handler(Int)` equivalent to `Fn(Int) :> String`. An annotated binding can
-hold a function with that signature. Alias applications must supply exactly
-the declared number of arguments.
-
-### 3.5 Function declarations
-
-```
-func-decl     ::= "func" <identifier> "(" param-list? ")" return-type? body "end"
-
-param-list    ::= param ("," param)*
-param         ::= <identifier> type-annot?
-
-return-type   ::= ":>" type-expr
-
-body          ::= top-expr*       ; same shapes as top-expr; resolver applies
-                                  ; function-scope rules
-```
-
-## 4. Expressions
-
-### 4.1 Value expressions
-
-```
-value-expr    ::= pipe-chain
-                | binary-expr
-                | case-expr
-
-pipe-chain    ::= call-expr ( "|=>" call-expr )+
-
-call-expr     ::= <identifier> "(" arg-list? ")"
-
-arg-list      ::= primary-expr ("," primary-expr)*
+line-comment = "Cmt", { horizontal-space }, line-comment-tail ;
+line-comment-tail = ? remainder of line not starting with '{', through LF or EOF ? ;
+block-comment = "Cmt", { horizontal-space }, "{",
+                { block-comment-character | comment-escape }, "}" ;
+block-comment-character = ? any character except '}' and backtick ? ;
+comment-escape = "`", ? any following character ? ;
 ```
 
-A call followed by no `|=>` is parsed via `binary-expr` (which descends to
-`primary-expr`); the dedicated pipe-chain arm exists so that the trailing
-`|=>` is not orphaned.
+### Identifiers and keywords
 
-### 4.2 Binary expressions and precedence
+The lexer scans a whole identifier before keyword lookup. Keywords are
+case-sensitive:
 
-From lowest to highest precedence (left-associative at every level):
-
-```
-or-expr       ::= and-expr   ( "||"        and-expr   )*
-and-expr      ::= eq-expr    ( "&&"        eq-expr    )*
-eq-expr       ::= cmp-expr   ( ("=="|"~=") cmp-expr   )*
-cmp-expr      ::= add-expr   ( cmp         add-expr   )*
-add-expr      ::= mul-expr   ( ("+"|"-")   mul-expr   )*
-mul-expr      ::= unary-expr ( ("*"|"/")   unary-expr )*
-unary-expr    ::= ("-"|"~")? primary-expr
+```text
+Load  Cmt  type  const  let  Nil  True  False  func  Fn  end  case  default
 ```
 
-### 4.3 Primary expressions
+In the usual C locale, letters are ASCII `A` through `Z` and `a` through `z`, and
+digits are `0` through `9`. Classification uses C++ character functions; there is
+no defined Unicode identifier standard. An isolated `_` is an identifier token,
+used as a wildcard in patterns. Leading underscores in longer names such as
+`_name` and `__` are unsupported: the first underscore is an unknown character.
+Underscores after an initial letter are allowed. Built-in type names such as
+`Int`, `String`, and `List` are identifiers rather than keywords.
 
+### Numbers and strings
+
+Numbers have no exponent, base prefix, separator, or leading sign. `1.` is a
+float; `.5` is a dot token followed by an integer. Numeric scanning consumes a
+dot immediately after digits, including in text resembling member access.
+
+Strings use double quotes. `\\`, `\"`, `\n`, `\t`, `\r`, and `\0` decode to
+backslash, quote, LF, tab, CR, and NUL. Other escaped characters are preserved
+with the preceding backslash discarded. Escaped physical LF is accepted;
+unescaped physical LF ends an unterminated string. There are no single-quoted,
+raw, or interpolated strings.
+
+### Imports
+
+After `Load`, the lexer scans until LF or EOF, removes all spaces, tabs, and
+carriage returns, and copies every other character into one `ImportModule` token.
+The path is not restricted to identifiers and dots: `Load foo . bar` produces
+`foo.bar`. An empty token is possible. Module existence and path validity are
+separate concerns. Comment-like text and declarations on the same line become
+part of the module value. The terminating LF is ordinary whitespace.
+
+### Comments
+
+`Cmt` must be a whole keyword: `CmtThing` is an identifier. After horizontal
+whitespace, `{` selects a block comment; otherwise the remainder of the line is
+a line comment. A newline between `Cmt` and `{` does not open a block comment.
+Block comments end at the first unescaped `}` and do not nest. A backtick escapes
+the following character, including `}`. Unterminated block comments are silently
+consumed to EOF. Comments emit no tokens. `--`, `//`, and `/* ... */` are not
+comments.
+
+### Operators and punctuation
+
+Multi-character operators are checked before shorter prefixes:
+
+```text
+|=>  >=  <=  ~=  ==  &&  ||  :>  +  -  *  /  %  >  <  =  ~
+(  )  {  }  [  ]  :  ,  .  @
 ```
-primary-expr  ::= call-expr
-                | scoped-expr
-                | <integer> | <float> | <string> | <ut-string>
-                | "True" | "False" | "Nil"
-                | <identifier>
 
-scoped-expr   ::= "{" top-expr* "}"
-```
+`%`, `.`, and `default` are recognized tokens without current syntactic
+productions. Other unrecognized characters emit unknown tokens and lexer
+diagnostics. Unmapped internal token enum entries introduce no source syntax.
 
-A scoped expression is a block of zero or more expressions whose value is the
-last expression. Scoped expressions are valid inside function bodies and
-inside other scoped expressions.
+## Constraints outside EBNF
 
-### 4.4 Case expressions
+`SymbolResolver` enforces these enclosing scopes after parsing:
 
-```
-case-expr     ::= "case" value-expr ("," value-expr)* ":" case-branch+ "end"
+| Construct | Allowed enclosing scopes |
+| --- | --- |
+| Import, type declaration, named function declaration | Module |
+| Constant declaration | Module, Application |
+| Let binding | FunctionDeclaration, LambdaExpression, ScopedExpression, CaseExpression |
+| Call, pipe chain, lambda, scope, case | FunctionDeclaration, LambdaExpression, ScopedExpression, CaseExpression |
+| Literal, identifier reference | Module and the four expression scopes above |
 
-case-branch   ::= value-expr ("," value-expr)* ":>" value-expr
-```
+Top-level lets, calls, lambdas, scopes, and cases may parse but fail resolution.
+Named functions inside braces also parse but fail scope checks. Name lookup,
+duplicate declarations, and type compatibility impose further restrictions.
 
-Each branch has one pattern per condition. Constructor patterns validate
-their fields recursively against the declared constructor signature;
-nullary constructors can be written as bare names. A pattern identifier binds
-a value within that branch, and `_` ignores a value without introducing a
-binding. Duplicate binders within a branch are errors. Names may be reused
-in other branches. Literal patterns must match the corresponding condition's
-type, and all branch results must have compatible types. Calls in branch
-results are ordinary expressions, including calls to constructors.
+Benzene has no assignment. `x = value` and `x: Int = value` are diagnosed as
+assignments without a binder; use `let` or `const` to introduce a name.
+Annotations belong to bindings and parameters, not general values.
 
-## 5. Comments
+Type parameters are unique names local to their declaration and cannot be
+applied as constructors. Fields and alias targets can use them recursively.
+Alias applications must supply the declared number of arguments; substitution
+includes nested constructor and function types. For example,
+`type Handler(a) = Fn(a) :> String` is a parameterized alias.
 
-Comments produce no tokens.
+Patterns use the value-expression parser, then semantic validation restricts
+their meaning. Identifiers bind values within their branch, `_` ignores a value,
+and literals must match the corresponding condition type. Constructor fields
+are validated recursively; nullary constructors may be bare names. Duplicate
+binders within a branch are errors, but names may be reused in other branches.
+Branch results must have compatible types. `default` has no branch production;
+a binder or `_` can provide an applicable catch-all pattern.
 
-```
-single-line   ::= "Cmt" <chars-until-newline>
-multi-line    ::= "Cmt" "{" <any-chars-incl-newlines> "}"
-```
+## Recovery and implementation edge cases
 
-A `\`` inside a multi-line comment escapes the next character.
+These behaviors are not additional well-formed productions:
 
-## 6. Scope rules (resolver, not parser)
+- `parse_literal` also accepts `UTStringLiteral`. An unescaped LF inside a
+  string emits this token and consumes the LF. A missing closing quote at EOF
+  currently emits an ordinary `StringLiteral`, even after a dangling backslash.
+- Function, lambda, and scope parsing can skip malformed content to a closing
+  delimiter and retain a partial AST. An AST does not establish conformance.
+- A physically exhausted token stream without EOF can let call parsing exit
+  without its closing `)`. Normal lexer output includes EOF; the grammar
+  requires the delimiter in either case.
+- Assignment recovery reports an error and may retain the right-hand value to
+  continue processing subsequent expressions.
+- Top-level recovery skips input and synchronizes at `Load`, `type`, `let`,
+  `const`, `func`, or `case`. The resulting AST may omit invalid source.
 
-The parser accepts more shapes than the language permits at any given scope.
-The symbol resolver (`SymbolResolver`) enforces the following:
+## Implementation references
 
-| Construct              | Allowed scopes                                              |
-| ---------------------- | ----------------------------------------------------------- |
-| `Load` import          | Module                                                       |
-| `const`                | Module, Application                                          |
-| `let`                  | FunctionExpression, ScopedExpression                         |
-| `func`                 | Module, FunctionExpression, ScopedExpression                 |
-| scoped expression `{}` | FunctionExpression, ScopedExpression                         |
-| `case`                 | FunctionExpression, ScopedExpression                         |
-| call expression        | CaseExpression, FunctionExpression, ScopedExpression         |
-| identifier reference   | Module, FunctionExpression, ScopedExpression                 |
-| literal                | Module, FunctionExpression, ScopedExpression                 |
+Lexical rules: [lexer.cpp](../core/src/lexer/lexer.cpp),
+[keywords](../core/include/ether/tables/keyword_table.hpp),
+[operators](../core/include/ether/tables/operator_table.hpp), and
+[literals](../core/include/ether/tables/literal_table.hpp).
 
-Violations mark the offending node `is_poisoned` and emit a `Resolver`-phase
-diagnostic. The parser does not attempt any structural rewrite based on these
-rules.
+Syntactic rules: [dispatch](../core/src/parser/parsers.cpp),
+[declarations](../core/src/parser/declarations.cpp),
+[types](../core/src/parser/types.cpp),
+[functions](../core/src/parser/functions.cpp),
+[calls](../core/src/parser/calls.cpp),
+[operators](../core/src/parser/operators.cpp),
+[collections](../core/src/parser/collections.cpp),
+[control flow](../core/src/parser/control_flow.cpp), and
+[tokens](../core/src/parser/tokens.cpp).
 
-## 7. Reserved or partially-implemented forms
-
-The following are recognized by the lexer but not yet wired into the parser
-or are accepted in syntax only:
-
-- `%` (PercentOp) is lexed but not used in any precedence level.
-- `default` is lexed but the case-expression parser does not yet consume it.
-- `[` and `]` (LBrac, RBrac) are lexed but no list/array syntax is parsed.
-- Multi-pattern case branches are not yet supported.
-
-These are kept reserved so future revisions don't have to break tokenization.
+Scope rules: [symbol resolver](../core/src/ast_passes/symbol_resolver/symbol_resolver.cpp).
+Existing syntax tests: [test_parser.cpp](../tests/unit/test_parser.cpp).
